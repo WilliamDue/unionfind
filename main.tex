@@ -173,69 +173,118 @@
 \section{Definitions}
 
 \begin{definition}[Union-Find]\label{def:union-find} The
-    union-find data structure $D$ represents a partition of a set
-    $S$ if:
+    union-find data structure $U$ represents a partition of a set $S$ if:
     \begin{enumerate}
-        \item $a \neq \emptyset$ for all $a \in \mathcal{C}(D)$
-        \item $a \cap b = \emptyset$ for all $a, b \in \mathcal{C}(D)$ where $a \neq b$
-        \item $\bigcup_{a \in \mathcal{C}(D)} a = S$
+        \item $a \neq \emptyset$ for all $a \in \mathcal{C}(U)$
+        \item $a \cap b = \emptyset$ for all $a, b \in \mathcal{C}(U)$ where $a
+        \neq b$
+        \item $\bigcup_{a \in \mathcal{C}(U)} a = S$
     \end{enumerate}
-    where $\mathcal{C} : \mathbb{P}(D) \to \mathbb{P}(\mathbb{P}(S))$ converts the data structure $D$ into a set of sets of positive integers.
+    where $\mathcal{C} : \mathbb{P}(U) \to \mathbb{P}(\mathbb{P}(S))$ converts
+    the data structure $U$ into a partition of $S$.
 \end{definition}
 
-\begin{definition}{Union-find set}
-    The set $\mathbb{U}_n = \mathbb{P}(\mathbb{N}_{\leq n} \times (\mathbb{N}_{\leq n} \cup \{0\}) \times S)$ is the set of all union-find data structures of size $n$. Each element $U \in \mathbb{U}_n$ is a set of tuples $(i, p, s)$ where:
+\begin{definition}[Union-Find Set]
+    The set $\mathbb{U}_n := \mathbb{P}(\mathbb{N}_{\leq n} \times
+    (\mathbb{N}_{\leq n} \cup \{0\}))$ is the set of all union-find
+    data structures of size $n$. Each element $U \in \mathbb{U}_n$ is a set
+    containing tuples $(i, p)$ where:
     \begin{enumerate}
-        \item $i \in \mathbb{N}_{\leq n}$ is a unique index identifying the element.
-        \item $p \in \mathbb{N}_{\leq n} \cup \{0\}$ is the index of the parent element. If $p = 0$ then the element is a root.
-        \item $s \in S$ is the value associated with the element.
+        \item $i \in \mathbb{N}_{\leq n}$ is a unique index identifying the
+        element i.e. $|\{\pi_1(u) : u \in U\}| = n$.
+        \item $p \in \mathbb{N}_{\leq n} \cup \{0\}$ is the index of the parent
+        element. If $p = 0$ then the element is a root.
     \end{enumerate}
 \end{definition}
 
-\begin{definition}[Cycle]\label{def:cycle}
-    A cycle exists in a set $U \in \mathbb{U}_n$ if:
+\begin{definition}[Cycle]\label{def:cycle} A cycle exists in a set $U \in
+    \mathbb{U}_n$ if:
     \begin{enumerate}
-        \item $i = p$ for some $(i, p, s) \in U$ or
-        \item $p_1 = i_2, p_2 = i_3, \ldots, p_m = i_1$ for some $(i_1, p_1, s_1), (i_2, p_2, s_2), \ldots, (i_m, p_m, s_m) \in U$ where $m > 1$.
+        \item $i = p$ for some $(i, p) \in U$ or
+        \item $p_1 = i_2, p_2 = i_3, \ldots, p_m = i_1$ for some $(i_1, p_1),
+        (i_2, p_2), \ldots, (i_m, p_m) \in U$ where $m > 1$.
     \end{enumerate}
 \end{definition}
 
 \begin{definition}[Find Root]
-    The root of an element $i$ in a cycleless union-find data structure $U \in \mathbb{U}_n$ is defined as:
+    The root of an element $i$ in a cycleless union-find data structure $U \in
+    \mathbb{U}_n$ is defined as:
     \begin{align*}
         \mathcal{P}_U(i) = 
         \begin{cases}
             i & \text{if } p = 0 \\
             \mathcal{P}_U(p) & \text{if } p \neq 0
-        \end{cases} \text{ where } (j, p, s) \in U \land i = j.
+        \end{cases} \text{ where } (j, p) \in U \land i = j.
     \end{align*}
 \end{definition}
 
 \begin{proposition}[Termination of Find Root]
-    The function $\mathcal{P}_U(i)$ defined in definition \ref{def:cycle} terminates for all $i$ where $1 \leq i \leq n$ if $U \in \mathbb{U}_n$ has no cycles.
+    The function $\mathcal{P}_U(i)$ defined in definition \ref{def:cycle}
+    terminates for all $i$ where $1 \leq i \leq n$ if $U \in \mathbb{U}_n$ has
+    no cycles.
 \end{proposition}
 \begin{proof}
     The proof is trivially true.
 \end{proof}
 
-\begin{proposition}[Representation of Union-Find]\label{def:representation-union-find}
-    The union-find structure $U \in \mathbb{U}_n$ fulfills definition \ref{def:union-find} if:
-    \begin{enumerate}
-        \item Unique indices i.e. $|U| = |A|$ where $A = \{\pi_1(t) : t \in U\}$.
-        \item $U$ has no cycles.
-        \item The following conversion function:
-        \begin{align*}
-            \mathcal{C}(D) := \{\{\pi_3(t) : t \in U \land \mathcal{P}_U(\pi_1(t)) = p \} : p \in \mathbb{N}_{\leq n}\} \backslash \{\emptyset\}
-        \end{align*}
-    \end{enumerate}
+\begin{proposition}[Representation of
+    Union-Find]\label{def:representation-union-find} A cycleless union-find structure $U
+    \in \mathbb{U}_n$ fulfills definition \ref{def:union-find} for the following conversion function:
+    \begin{align*}
+        \mathcal{C}(U) := \{\{f(\pi_1(u)) : u \in U \land \mathcal{P}_U(\pi_1(u)) = p \} : p \in \mathbb{N}_{\leq n}\} \backslash \{\emptyset\}
+    \end{align*}
+    where $f : \mathbb{N}_{\leq n} \to S$ is a bijective function mapping
+    indices to elements in the set $S$.
 \end{proposition}
 \begin{proof}
-    Let $U \in \mathbb{U}_n$ be a union-find data structure fulfilling the three criteria in proposition \ref{def:representation-union-find}. We will show that $U$ fulfills the three criteria in definition \ref{def:union-find}.
+    Let $U \in \mathbb{U}_n$ be a union-find data structure fulfilling the three
+    criteria in proposition \ref{def:representation-union-find}. We will show
+    that $U$ fulfills the three criteria in definition \ref{def:union-find}.
 
     \begin{enumerate}
-        \item By definition of $\mathcal{C}$ it is clear that $a \neq \emptyset$ for all $a \in \mathcal{C}(D)$ since $\mathcal{C}$ only includes non-empty sets.
-        \item Let $a, b \in \mathcal{C}(D)$ where $a \neq b$. 
+        \item By definition of $\mathcal{C}$ it is clear that $a \neq \emptyset$
+        for all $a \in \mathcal{C}(D)$ since $\mathcal{C}$ only includes
+        non-empty sets.
+        \item Let $a, b \in \mathcal{C}(D)$ where $a \neq b$ then by definition
+        $a = \{f(\pi_1(u)) : u \in U \land \mathcal{P}_U(\pi_1(u)) = p_a \}$ and
+        $b = \{f(\pi_1(u)) : u \in U \land \mathcal{P}_U(\pi_1(u)) = p_b \}$ for
+        some $p_a, p_b \in \mathbb{N}_{\leq n}$ where $p_a \neq p_b$. Since if
+        $p_a = p_b$ then $a = b$ it follows that $a \cap b = \emptyset$.
+        \item Let $s \in S$ then since $U$ is a union-find data structure of size
+        $n$ there exists $(i, p, s) \in U$ for some $i$ and $p$. Let $r =
+        \mathcal{P}_U(i)$ then by definition of $\mathcal{C}$ it follows that $s \in
+        \{f(\pi_1(u)) : u \in U \land \mathcal{P}_U(\pi_1(u)) = r \} \in \mathcal{C}(U)$. Since $s$ was arbitrary it follows that $\bigcup_{a \in \mathcal{C}(U)} a = S$.
     \end{enumerate}
 \end{proof}
+\begin{definition}[Equivalence Set]
+    The set of equivalent indices of an element $i$ in a cycleless union-find
+    data structure $U \in \mathbb{U}_n$ is defined as:
+    \begin{align*}
+        \mathcal{E}_U(i) := \{j : j \in \mathbb{N}_{\leq n} \land \mathcal{P}_U(j) = \mathcal{P}_U(i)\}
+    \end{align*}
+\end{definition}
 
+\begin{definition}[Equivalent Union-Find Structures]
+    Two cycleless union-find data structures $U, U' \in \mathbb{U}_n$ are
+    equivalent if:
+    \begin{align*}
+        \mathcal{E}_{U'}(i) = \mathcal{E}_U(i) \text{ for all } i \in \mathbb{N}_{\leq n}
+    \end{align*}
+\end{definition}
+
+\begin{definition}[Well-formed Union]
+    For a cycleless union-find data structure $U \in \mathbb{U}_n$ the union of
+    two elements $i \sim j$ where $i, j \in \mathbb{N}_{\leq n}$ is well-formed
+    if it results in a cycleless union-find data structure $U' \in \mathbb{U}_n$
+    such that:
+    \begin{enumerate}
+        \item $\mathcal{E}_{U'}(i) = \mathcal{E}_U(i) \cup \mathcal{E}_U(j)$ and
+        \item $\mathcal{E}_{U'}(k) = \mathcal{E}_U(k) \text{ for all } k \in
+        \mathbb{N}_{\leq n} \backslash \{i, j\}$.
+    \end{enumerate}
+\end{definition}
+
+\begin{definition}[Sequential Union]
+    
+\end{definition}
 \end{document}
