@@ -1,0 +1,241 @@
+% !TeX encoding = UTF-8 Unicode
+\documentclass[a4paper,12pt]{article}
+\usepackage[english]{babel}
+\usepackage[english]{isodate}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{centernot}
+\usepackage{xfrac}
+\usepackage{mathtools}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{xcolor}
+\usepackage{changepage}
+\usepackage{amsthm}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{soul}
+\usepackage{float}
+\usepackage{centernot}
+\usepackage{tcolorbox}
+\usepackage{titling}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{etoolbox}
+\usepackage{listings}
+\usepackage{biblatex}
+\usepackage{csquotes}
+\usepackage{titlesec}
+\usepackage{tikz}
+
+\addbibresource{bibliography.bib}
+
+\patchcmd{\section}{\bfseries}{\bfseries\boldmath }{}{}
+\patchcmd{\subsection}{\bfseries}{\bfseries\boldmath }{}{}
+\patchcmd{\subsubsection}{\bfseries}{\bfseries\boldmath }{}{}
+
+\hypersetup{
+  colorlinks=True,
+  urlcolor=blue,
+  citecolor=red,
+  menucolor=black,
+}
+
+\renewcommand{\UrlFont}{\ttfamily\footnotesize}
+
+\lstdefinelanguage{futhark}
+{
+  % list of keywords
+  morekeywords={
+    do,
+    else,
+    for,
+    if,
+    in,
+    include,
+    let,
+    loop,
+    then,
+    type,
+    val,
+    while,
+    with,
+    module,
+    def,
+    entry,
+    local,
+    open,
+    import,
+    assert,
+    match,
+    case,
+  },
+  sensitive=true, % Keywords are case sensitive.
+  morecomment=[l]{--}, % l is for line comment.
+  morestring=[b]" % Strings are enclosed in double quotes.
+}
+
+
+\lstset{
+    language=futhark,
+    showspaces=false,
+    showstringspaces=false,
+    mathescape=true,
+    aboveskip=0pt,
+    belowskip=6pt,
+    numberstyle=\tiny,
+    numbers=left, 
+    firstnumber=1,
+    numberfirstline=true,
+    tabsize=4,
+    breaklines=true,
+}
+
+\newcommand\LAST{\text{LAST}}
+\newcommand\defiff{\mathrel{\stackrel{\makebox[0pt]{\mbox{\normalfont\tiny def}}}{\iff}}}
+\newcommand\defeq{\mathrel{\stackrel{\makebox[0pt]{\mbox{\normalfont\tiny def}}}{=}}}
+\newcommand\concat{\: \mathrlap{+} \: +}
+\newcommand\map{\textbf{map}\ }
+\newcommand\reduce{\textbf{reduce}\ }
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{proposition}{Proposition}[section]
+\newtheorem{corollary}{Corollary}[section]
+\newtheorem*{remark}{Remark}
+\newtheorem{lemma}{Lemma}[section]
+\newtheorem{theorem}{Theorem}
+\newtheorem{algorithm}{Algorithm}[section]
+\newtheorem{example}{Example}[section]
+\DeclareMathOperator{\sign}{sign}
+\newcommand\doubleplus{+\kern-1.3ex+\kern0.8ex}
+\newcommand\mdoubleplus{\ensuremath{\mathbin{+\mkern-10mu+}}}
+
+\newcommand{\id}[1]{\ensuremath{\mathit{#1}}}
+\newcommand{\kw}[1]{\ensuremath{\mathtt{#1}}}
+\newcommand{\Let}{\kw{let}}
+\newcommand{\In}{\kw{in}}
+\newcommand{\If}{\kw{if}}
+\newcommand{\Then}{\kw{then}}
+\newcommand{\Else}{\kw{else}}
+\newcommand{\Filter}{\kw{filter}}
+\newcommand{\Or}{\kw{or}}
+\newcommand{\Groupby}{\kw{groupby}}
+\newcommand{\Partition}{\kw{partition}}
+\newcommand{\Scatter}{\kw{scatter}}
+\newcommand{\Hist}{\kw{hist}}
+\newcommand{\Map}{\kw{map}}
+\newcommand{\Sum}{\kw{sum}}
+\newcommand{\Mod}{\kw{mod}}
+\newcommand{\Fst}{\kw{fst}}
+\newcommand{\Snd}{\kw{snd}}
+\newcommand{\Presum}{\kw{presum}}
+\newcommand{\True}{\kw{true}}
+\newcommand{\False}{\kw{false}}
+\newcommand{\Sort}{\kw{sort}}
+\newcommand{\Segor}{\kw{segor}}
+\newcommand{\Hash}{\kw{hash}}
+\newcommand{\Random}{\kw{random}}
+\newcommand{\Iota}{\kw{iota}}
+\newcommand{\Unzip}{\kw{unzip}}
+\newcommand{\Unit}{\mathbf{unit}}
+\newcommand{\Int}{\mathbf{int}}
+\newcommand{\Bool}{\mathbf{bool}}
+\newcommand{\Def}{\kw{def}}
+\newcommand{\Rep}{\kw{rep}}
+\newcommand{\Zip}{\kw{zip}}
+
+\fancyhf{}
+\setlength{\headheight}{14.49998pt}
+\pretitle{\vspace{-120pt}\begin{center}}
+\posttitle{\par\end{center}\vspace{-80pt}}
+\fancyhead[C]{}
+\fancyfoot[R]{Page \thepage \hspace{1pt} of \pageref{LastPage}}
+\pagestyle{fancy}
+\fancypagestyle{firstpage}{%
+    \fancyhf{}
+    \renewcommand{\headrulewidth}{0pt}
+    \fancyfoot[R]{Page \thepage \hspace{1pt} of \pageref{LastPage}}
+}
+\title{
+    {\Large \textsc{University of Copenhagen}} \\[5pt]
+    {\large Applied High Performance Computing} \\[10pt]
+    Author: William Henrich Due \\[0pt]
+}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+\thispagestyle{firstpage}
+
+\section{Definitions}
+
+\begin{definition}[Union-Find]\label{def:union-find} The
+    union-find data structure $D$ represents a partition of a set
+    $S$ if:
+    \begin{enumerate}
+        \item $a \neq \emptyset$ for all $a \in \mathcal{C}(D)$
+        \item $a \cap b = \emptyset$ for all $a, b \in \mathcal{C}(D)$ where $a \neq b$
+        \item $\bigcup_{a \in \mathcal{C}(D)} a = S$
+    \end{enumerate}
+    where $\mathcal{C} : \mathbb{P}(D) \to \mathbb{P}(\mathbb{P}(S))$ converts the data structure $D$ into a set of sets of positive integers.
+\end{definition}
+
+\begin{definition}{Union-find set}
+    The set $\mathbb{U}_n = \mathbb{P}(\mathbb{N}_{\leq n} \times (\mathbb{N}_{\leq n} \cup \{0\}) \times S)$ is the set of all union-find data structures of size $n$. Each element $U \in \mathbb{U}_n$ is a set of tuples $(i, p, s)$ where:
+    \begin{enumerate}
+        \item $i \in \mathbb{N}_{\leq n}$ is a unique index identifying the element.
+        \item $p \in \mathbb{N}_{\leq n} \cup \{0\}$ is the index of the parent element. If $p = 0$ then the element is a root.
+        \item $s \in S$ is the value associated with the element.
+    \end{enumerate}
+\end{definition}
+
+\begin{definition}[Cycle]\label{def:cycle}
+    A cycle exists in a set $U \in \mathbb{U}_n$ if:
+    \begin{enumerate}
+        \item $i = p$ for some $(i, p, s) \in U$ or
+        \item $p_1 = i_2, p_2 = i_3, \ldots, p_m = i_1$ for some $(i_1, p_1, s_1), (i_2, p_2, s_2), \ldots, (i_m, p_m, s_m) \in U$ where $m > 1$.
+    \end{enumerate}
+\end{definition}
+
+\begin{definition}[Find Root]
+    The root of an element $i$ in a cycleless union-find data structure $U \in \mathbb{U}_n$ is defined as:
+    \begin{align*}
+        \mathcal{P}_U(i) = 
+        \begin{cases}
+            i & \text{if } p = 0 \\
+            \mathcal{P}_U(p) & \text{if } p \neq 0
+        \end{cases} \text{ where } (j, p, s) \in U \land i = j.
+    \end{align*}
+\end{definition}
+
+\begin{proposition}[Termination of Find Root]
+    The function $\mathcal{P}_U(i)$ defined in definition \ref{def:cycle} terminates for all $i$ where $1 \leq i \leq n$ if $U \in \mathbb{U}_n$ has no cycles.
+\end{proposition}
+\begin{proof}
+    The proof is trivially true.
+\end{proof}
+
+\begin{proposition}[Representation of Union-Find]\label{def:representation-union-find}
+    The union-find structure $U \in \mathbb{U}_n$ fulfills definition \ref{def:union-find} if:
+    \begin{enumerate}
+        \item Unique indices i.e. $|U| = |A|$ where $A = \{\pi_1(t) : t \in U\}$.
+        \item $U$ has no cycles.
+        \item The following conversion function:
+        \begin{align*}
+            \mathcal{C}(D) := \{\{\pi_3(t) : t \in U \land \mathcal{P}_U(\pi_1(t)) = p \} : p \in \mathbb{N}_{\leq n}\} \backslash \{\emptyset\}
+        \end{align*}
+    \end{enumerate}
+\end{proposition}
+\begin{proof}
+    Let $U \in \mathbb{U}_n$ be a union-find data structure fulfilling the three criteria in proposition \ref{def:representation-union-find}. We will show that $U$ fulfills the three criteria in definition \ref{def:union-find}.
+
+    \begin{enumerate}
+        \item By definition of $\mathcal{C}$ it is clear that $a \neq \emptyset$ for all $a \in \mathcal{C}(D)$ since $\mathcal{C}$ only includes non-empty sets.
+        \item Let $a, b \in \mathcal{C}(D)$ where $a \neq b$. 
+    \end{enumerate}
+\end{proof}
+
+\end{document}
