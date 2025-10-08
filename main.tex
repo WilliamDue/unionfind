@@ -307,8 +307,7 @@
     defined as:
     \begin{align*}
         U_0 &:= \{(i, 0) : i \in \mathbb{N}_{\leq n}\} \\
-        q_k &:= \min \{\mathcal{P}_{U_{k-1}}(j_k), \mathcal{P}_{U_{k-1}}(i_k)\} \text{ for } 1 \leq k \leq m \\
-        p_k &:= \max \{\mathcal{P}_{U_{k-1}}(j_k), \mathcal{P}_{U_{k-1}}(i_k)\} \text{ for } 1 \leq k \leq m \\
+        (q_k, p_k) &:= (\mathcal{P}_{U_{k-1}}(i_k), \mathcal{P}_{U_{k-1}}(j_k)) \text{ for } 1 \leq k \leq m \\
         U_k &:= \begin{cases}
             U_{k-1} & \text{if } p_k = q_k \\
             \mathcal{S}_{U_{k-1}}(q_k, p_k) & \text{if } p_k \neq q_k
@@ -332,9 +331,8 @@
         \item For $U_0$ it is clear that $\mathcal{E}_{U_0}(i) = \{i\}$ for all $i \in
         \mathbb{N}_{\leq n}$ since all elements are their own root.
         \item Assume that $U_{k-1}$ is well-formed for some $1 \leq k \leq m$.
-        We will show that $U_k$ is well-formed. Let $q_k = \min
-        \{\mathcal{P}_{U_{k-1}}(j_k), \mathcal{P}_{U_{k-1}}(i_k)\}$ and $p_k =
-        \max \{\mathcal{P}_{U_{k-1}}(j_k), \mathcal{P}_{U_{k-1}}(i_k)\}$.
+        We will show that $U_k$ is well-formed. Let $q_k
+        =\mathcal{P}_{U_{k-1}}(i_k)$ and $p_k = \mathcal{P}_{U_{k-1}}(i_k)$.
         \begin{enumerate}
             \item If $p_k = q_k$ then by definition $U_k = U_{k-1}$ and thus
             $U_k$ is well-formed by the inductive hypothesis.
