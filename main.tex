@@ -160,7 +160,7 @@
 }
 \title{
     {\Large \textsc{University of Copenhagen}} \\[5pt]
-    {\large Applied High Performance Computing} \\[10pt]
+    {\large Union-Find} \\[10pt]
     Author: William Henrich Due \\[0pt]
 }
 \author{}
@@ -208,14 +208,16 @@
 
 \begin{definition}[Find Root]
     The root of an element $i$ in a cycleless union-find data structure $U \in
-    \mathbb{U}_n$ is defined as:
+    \mathbb{U}_n$ is denoted $\mathcal{P}_U : \mathbb{N}_{\leq n} \to \mathbb{N}_{\leq n}$ defined as:
     \begin{align*}
-        \mathcal{P}_U(i) = 
+        \mathcal{P}_U(i) := 
         \begin{cases}
             i & \text{if } p = 0 \\
             \mathcal{P}_U(p) & \text{if } p \neq 0
         \end{cases} \text{ where } (j, p) \in U \land i = j.
     \end{align*}
+    The root represents the set that the element $i$ belongs to, i.e. all
+    elements with the same root belong to the same set.
 \end{definition}
 
 \begin{proposition}[Termination of Find Root]
@@ -251,11 +253,24 @@
         some $p_a, p_b \in \mathbb{N}_{\leq n}$ where $p_a \neq p_b$. Since if
         $p_a = p_b$ then $a = b$ it follows that $a \cap b = \emptyset$.
         \item Let $s \in S$ then since $U$ is a union-find data structure of size
-        $n$ there exists $(i, p, s) \in U$ for some $i$ and $p$. Let $r =
-        \mathcal{P}_U(i)$ then by definition of $\mathcal{C}$ it follows that $s \in
-        \{f(\pi_1(u)) : u \in U \land \mathcal{P}_U(\pi_1(u)) = r \} \in \mathcal{C}(U)$. Since $s$ was arbitrary it follows that $\bigcup_{a \in \mathcal{C}(U)} a = S$.
+        $n$ there exists $(i, p) \in U$ for some $i$ and $p$. Let $r =
+        \mathcal{P}_U(i)$ then by definition of $\mathcal{C}$ it follows that $s
+        \in \{f(\pi_1(u)) : u \in U \land \mathcal{P}_U(\pi_1(u)) = r \} \in
+        \mathcal{C}(U)$. Since $s$ was arbitrary it follows that $\bigcup_{a \in
+        \mathcal{C}(U)} a = S$.
     \end{enumerate}
 \end{proof}
+
+\begin{definition}[Substitute Parent]
+    The function for substitutin a parent of an element $i$ to $p$ in a
+    cycleless union-find data structure $U \in \mathbb{U}_n$ is denoted
+    $\mathcal{S}_U : \mathbb{N}_{\leq n} \times \mathbb{N}_{\leq n} \to
+    \mathbb{P}(\mathbb{U}_n)$ and defined as:
+    \begin{align*}
+        \mathcal{S}_U(i, p) := (U \backslash \{(i, p')\}) \cup \{(i, p)\} \text{ where } (i, p') \in U
+    \end{align*}
+\end{definition}
+
 \begin{definition}[Equivalence Set]
     The set of equivalent indices of an element $i$ in a cycleless union-find
     data structure $U \in \mathbb{U}_n$ is defined as:
@@ -280,11 +295,67 @@
     \begin{enumerate}
         \item $\mathcal{E}_{U'}(i) = \mathcal{E}_U(i) \cup \mathcal{E}_U(j)$ and
         \item $\mathcal{E}_{U'}(k) = \mathcal{E}_U(k) \text{ for all } k \in
-        \mathbb{N}_{\leq n} \backslash \{i, j\}$.
+        \mathbb{N}_{\leq n} \backslash (\mathcal{E}_U(i) \cup \mathcal{E}_U(j))$.
     \end{enumerate}
 \end{definition}
 
-\begin{definition}[Sequential Union]
-    
+\begin{definition}[Sequential Unions]\label{def:sequential-unions}
+    Given a sequence of union relations $i_1 \sim j_1, i_2 \sim j_2, \ldots, i_m
+    \sim j_m$ where $i_k, j_k \in \mathbb{N}_{\leq n}$ for all $1 \leq k \leq m$
+    and a initial  $U \in \mathbb{U}_n$. The final union-find data structure $U'
+    \in \mathbb{U}_n$ is
+    defined as:
+    \begin{align*}
+        U_0 &:= \{(i, 0) : i \in \mathbb{N}_{\leq n}\} \\
+        q_k &:= \min \{\mathcal{P}_{U_{k-1}}(j_k), \mathcal{P}_{U_{k-1}}(i_k)\} \text{ for } 1 \leq k \leq m \\
+        p_k &:= \max \{\mathcal{P}_{U_{k-1}}(j_k), \mathcal{P}_{U_{k-1}}(i_k)\} \text{ for } 1 \leq k \leq m \\
+        U_k &:= \begin{cases}
+            U_{k-1} & \text{if } p_k = q_k \\
+            \mathcal{S}_{U_{k-1}}(q_k, p_k) & \text{if } p_k \neq q_k
+        \end{cases} \text{ for } 1 \leq k \leq m \\
+        U' &:= U_m
+    \end{align*}
 \end{definition}
+
+\begin{proposition}[Sequential Unions is Well-formed]
+    Given a sequence of union relationss $i_1 \sim j_1, i_2 \sim j_2, \ldots,
+    i_m \sim j_m$ where $i_k, j_k \in \mathbb{N}_{\leq n}$ for all $1 \leq k
+    \leq m$ and a cycleless union-find data structure $U \in \mathbb{U}_n$. The
+    final union-find data structure $U' \in \mathbb{U}_n$ defined in definition
+    \ref{def:sequential-unions} is well-formed.
+\end{proposition}
+\begin{proof}
+    To prove that $U'$ is well-formed we need to show that each union in the
+    sequence is well-formed. This can be shown by induction on the index $k$ of
+    the union in the sequence.
+    \begin{itemize}
+        \item For $U_0$ it is clear that $\mathcal{E}_{U_0}(i) = \{i\}$ for all $i \in
+        \mathbb{N}_{\leq n}$ since all elements are their own root.
+        \item Assume that $U_{k-1}$ is well-formed for some $1 \leq k \leq m$.
+        We will show that $U_k$ is well-formed. Let $q_k = \min
+        \{\mathcal{P}_{U_{k-1}}(j_k), \mathcal{P}_{U_{k-1}}(i_k)\}$ and $p_k =
+        \max \{\mathcal{P}_{U_{k-1}}(j_k), \mathcal{P}_{U_{k-1}}(i_k)\}$.
+        \begin{enumerate}
+            \item If $p_k = q_k$ then by definition $U_k = U_{k-1}$ and thus
+            $U_k$ is well-formed by the inductive hypothesis.
+            \item If $p_k \neq q_k$ then since $q_k$ is a root $(q_k, 0) \in U_{k - 1}$ and by definition
+            of $\mathcal{S}$.
+            \begin{align*}
+                U_k := (U_{k-1} \backslash \{(q_k, 0)\}) \cup \{(q_k, p_k)\} \text{ where } (q_k, 0) \in U_{k-1}
+            \end{align*}
+            Now $p_k = \mathcal{P}_{U_k}(q_k)$ hence $\mathcal{P}_{U_k}(q) = p_k$ for all $q
+            \in \mathcal{E}_{U_{k - 1}}(q_k)$. And by definition of $p_k$ it
+            follows that $\mathcal{P}_{U_k}(p) = p_k$ for all $p \in
+            \mathcal{E}_{U_{k - 1}}(p_k)$. Thus $\mathcal{E}_{U_k}(i_k) =
+            \mathcal{E}_{U_{k - 1}}(i_k) \cup \mathcal{E}_{U_{k - 1}}(j_k)$ and
+            since all other elements are unaffected by the union it follows that
+            $\mathcal{E}_{U_k}(l) = \mathcal{E}_{U_{k - 1}}(l)$ for all $l \in
+            \mathbb{N}_{\leq n} \backslash (\mathcal{E}_U(i) \cup
+            \mathcal{E}_U(j))$.
+
+            Finally since $U_{k-1}$ is cycleless and $q_k$ is a root it follows
+            that $U_k$ is cycleless and thus $U_k$ is well-formed.
+        \end{enumerate}
+    \end{itemize}
+\end{proof}
 \end{document}
