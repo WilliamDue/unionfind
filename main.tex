@@ -262,7 +262,7 @@
 \end{proof}
 
 \begin{definition}[Substitute Parent]
-    The function for substitutin a parent of an element $i$ to $p$ in a
+    The function for substitution a parent of an element $i$ to $p$ in a
     cycleless union-find data structure $U \in \mathbb{U}_n$ is denoted
     $\mathcal{S}_U : \mathbb{N}_{\leq n} \times \mathbb{N}_{\leq n} \to
     \mathbb{P}(\mathbb{U}_n)$ and defined as:
@@ -279,6 +279,11 @@
     \end{align*}
 \end{definition}
 
+\begin{definition}[Parent]
+    A element $i \in \mathbb{N}_{\leq n}$ has a parent $p \in \mathbb{N}_{\leq n} 
+    \cup \{0\}$ if 
+\end{definition}
+
 \begin{definition}[Equivalent Union-Find Structures]
     Two cycleless union-find data structures $U, U' \in \mathbb{U}_n$ are
     equivalent if:
@@ -286,6 +291,17 @@
         \mathcal{E}_{U'}(i) = \mathcal{E}_U(i) \text{ for all } i \in \mathbb{N}_{\leq n}
     \end{align*}
 \end{definition}
+\begin{lemma}[Cycleless substitution]
+    A parent substitution $\mathcal{S}_U(i, p)$ of a cycleless union-find
+    data structure $U \in \mathbb{U}_n$ will result in a cycleless union-find
+    data structure if:
+    \begin{align*}
+        \mathcal{P}_U(i) \neq \mathcal{P}_U(p)
+    \end{align*} 
+\end{lemma}
+\begin{proof}
+    
+\end{proof}
 
 \begin{definition}[Well-formed Union]
     For a cycleless union-find data structure $U \in \mathbb{U}_n$ the union of
@@ -356,4 +372,7 @@
         \end{enumerate}
     \end{itemize}
 \end{proof}
+
+\begin{definition}[Parallel Unions]
+\end{definition}
 \end{document}
