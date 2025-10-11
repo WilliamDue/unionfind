@@ -184,49 +184,57 @@
     the data structure $U$ into a partition of $S$.
 \end{definition}
 
-\begin{definition}[Union-Find Set]
-    The set $\mathbb{U}_n := \mathbb{P}(\mathbb{N}_{\leq n} \times
-    (\mathbb{N}_{\leq n} \cup \{0\}))$ is the set of all union-find
-    data structures of size $n$. Each element $U \in \mathbb{U}_n$ is a set
-    containing tuples $(i, p)$ where:
+\begin{definition}[Cycle]
+    A cycle in a directed graph $G = (V, E)$ is a sequence of directed edges
+    $e_1, e_2, \ldots, e_m \in E$ where $e_i = (v_{i-1}, v_i)$ for $1 \leq i
+    \leq m$ such that $v_0 = v_m$ and $m > 0$.
+\end{definition}
+
+\begin{definition}[Forest]
+    A forest is a directed graph $F = (V, E)$ where $V$ is a set of vertices and $E
+    \subseteq V \times V$ is a set of directed edges such that:
     \begin{enumerate}
-        \item $i \in \mathbb{N}_{\leq n}$ is a unique index identifying the
-        element i.e. $|\{\pi_1(u) : u \in U\}| = n$.
-        \item $p \in \mathbb{N}_{\leq n} \cup \{0\}$ is the index of the parent
-        element. If $p = 0$ then the element is a root.
+        \item There are no cycles.
+        \item Each node has at most one parent i.e. for all $(u, v_1), (u, v_2) \in E$ it
+        holds that $v_1 = v_2$.
     \end{enumerate}
 \end{definition}
 
-\begin{definition}[Cycle]\label{def:cycle} A cycle exists in a set $U \in
-    \mathbb{U}_n$ if:
-    \begin{enumerate}
-        \item $i = p$ for some $(i, p) \in U$ or
-        \item $p_1 = i_2, p_2 = i_3, \ldots, p_m = i_1$ for some $(i_1, p_1),
-        (i_2, p_2), \ldots, (i_m, p_m) \in U$ where $m > 1$.
-    \end{enumerate}
+\begin{definition}[Reachability]
+    A node $v$ is \emph{reachable} from a node $u$ in a directed graph $G = (V,
+    E)$ if there exists a sequence of directed edges $e_1, e_2, \ldots, e_m \in
+    E$ (possibly $m = 0$) where $e_i = (v_{i-1}, v_i)$ for $1 \leq i \leq m$,
+    such that $v_0 = u$ and $v_m = v$. We denote this by $u \leadsto v$.
+\end{definition}
+
+\begin{definition}[Union-Find Structure]
+    The union-find data structure $U$ is a forest $U = (V, E)$ where the
+    vertices $V = S$. The edges $E \subseteq V \times V$ represent parent
+    relations between elements in $S$ such that $(u, v) \in E$ means that $u$ has
+    parent $v$. An element $u$ with no parent is represented by $(u, 0) \in E$ where
+    $0 \notin S$.
+\end{definition}
+
+\begin{definition}[Root]
+    A node $v \in V$ in a union-find data structure $U = (V, E)$ is a root if it
+    has no parent i.e. $\mathcal{R}_U(v) : |\{u : u \in V \land v \leadsto u\}| = 1$.
 \end{definition}
 
 \begin{definition}[Find Root]
-    The root of an element $i$ in a cycleless union-find data structure $U \in
-    \mathbb{U}_n$ is denoted $\mathcal{P}_U : \mathbb{N}_{\leq n} \to \mathbb{N}_{\leq n}$ defined as:
-    \begin{align*}
-        \mathcal{P}_U(i) := 
-        \begin{cases}
-            i & \text{if } p = 0 \\
-            \mathcal{P}_U(p) & \text{if } p \neq 0
-        \end{cases} \text{ where } (j, p) \in U \land i = j.
-    \end{align*}
-    The root represents the set that the element $i$ belongs to, i.e. all
-    elements with the same root belong to the same set.
+    The root $r \in V$ of node $v \in V$ in a union-find data structure $U = (V,
+    E)$ is defined as:
+    \begin{enumerate}
+        \item $r$ is a root node and
+        \item there is path from $v$ to $r$ i.e. $v \leadsto r$.
+    \end{enumerate}
 \end{definition}
 
-\begin{proposition}[Termination of Find Root]
-    The function $\mathcal{P}_U(i)$ defined in definition \ref{def:cycle}
-    terminates for all $i$ where $1 \leq i \leq n$ if $U \in \mathbb{U}_n$ has
-    no cycles.
+\begin{proposition}[Unique Root]
+    In a union-find data structure $U = (V, E)$ each node $v \in V$ has exactly
+    one root.
 \end{proposition}
 \begin{proof}
-    The proof is trivially true.
+    
 \end{proof}
 
 \begin{proposition}[Representation of
