@@ -184,57 +184,127 @@
     the data structure $U$ into a partition of $S$.
 \end{definition}
 
+\begin{definition}[Reachability]
+    A node $v$ is \emph{reachable} from a node $u$ in a directed graph $G = (V,
+    E)$ if there exists a sequence of directed edges $e_1, e_2, \ldots, e_m \in
+    E$ where $m \geq 1$ and $e_i = (v_{i-1}, v_i)$ for $1 \leq i \leq m$,
+    such that $v_0 = u$ and $v_m = v$. We denote this by $u \leadsto v$.
+\end{definition}
+
 \begin{definition}[Cycle]
-    A cycle in a directed graph $G = (V, E)$ is a sequence of directed edges
-    $e_1, e_2, \ldots, e_m \in E$ where $e_i = (v_{i-1}, v_i)$ for $1 \leq i
-    \leq m$ such that $v_0 = v_m$ and $m > 0$.
+    A cycle in a directed graph $G = (V, E)$ has a cycle if there exists
+    $v \in V$ such that $v \leadsto v$.
 \end{definition}
 
 \begin{definition}[Forest]
     A forest is a directed graph $F = (V, E)$ where $V$ is a set of vertices and $E
     \subseteq V \times V$ is a set of directed edges such that:
     \begin{enumerate}
-        \item There are no cycles.
-        \item Each node has at most one parent i.e. for all $(u, v_1), (u, v_2) \in E$ it
-        holds that $v_1 = v_2$.
+        \item There are no cycles $v \centernot\leadsto v$ for all $v \in V$, and
+        \item each node has at most one parent i.e. for all $(u, v_1), (u, v_2)
+        \in E$ it holds that $v_1 = v_2$.
     \end{enumerate}
-\end{definition}
-
-\begin{definition}[Reachability]
-    A node $v$ is \emph{reachable} from a node $u$ in a directed graph $G = (V,
-    E)$ if there exists a sequence of directed edges $e_1, e_2, \ldots, e_m \in
-    E$ (possibly $m = 0$) where $e_i = (v_{i-1}, v_i)$ for $1 \leq i \leq m$,
-    such that $v_0 = u$ and $v_m = v$. We denote this by $u \leadsto v$.
-\end{definition}
-
-\begin{definition}[Union-Find Structure]
-    The union-find data structure $U$ is a forest $U = (V, E)$ where the
-    vertices $V = S$. The edges $E \subseteq V \times V$ represent parent
-    relations between elements in $S$ such that $(u, v) \in E$ means that $u$ has
-    parent $v$. An element $u$ with no parent is represented by $(u, 0) \in E$ where
-    $0 \notin S$.
 \end{definition}
 
 \begin{definition}[Root]
-    A node $v \in V$ in a union-find data structure $U = (V, E)$ is a root if it
-    has no parent i.e. $\mathcal{R}_U(v) : |\{u : u \in V \land v \leadsto u\}| = 1$.
+    A node $v \in V$ in a forest $F = (V, E)$ is a root if it has no parent.
+    This is defined as the predicate:
+    \begin{align*}
+        \mathcal{R}_F(v) : v \centernot\leadsto u \text{ for all } u \in V
+    \end{align*}
 \end{definition}
 
-\begin{definition}[Find Root]
-    The root $r \in V$ of node $v \in V$ in a union-find data structure $U = (V,
-    E)$ is defined as:
-    \begin{enumerate}
-        \item $r$ is a root node and
-        \item there is path from $v$ to $r$ i.e. $v \leadsto r$.
-    \end{enumerate}
+\begin{definition}[Tree]
+    A tree is a forest $T = (V, E)$ where there exists a unique root $r \in V$
+    such that $v \leadsto r$ for all $v \in V\backslash
+    \{r\}$.
 \end{definition}
 
-\begin{proposition}[Unique Root]
-    In a union-find data structure $U = (V, E)$ each node $v \in V$ has exactly
-    one root.
+\begin{proposition}[Forest Tree Relation]\label{prop:forest-tree}
+    A forest $F = (V, E)$ where $|V| = n$ and $|E| = n - 1$ is a tree.
+\end{proposition}
+
+\begin{proof}
+    Let $F = (V, E)$ be a forest where $|V| = n$ and $|E| = n - 1$. By second property of a forest then $n - 1$ vertices must have a parent. Since there are $n$ vertices in total it follows that there is exactly one vertex $r \in V$ that has no parent. Hence $\mathcal{R}_F(r)$. 
+\end{proof}
+
+\begin{proposition}[Forest Edge Limit]\label{prop:forest-edge-limit}
+    A forest $F = (V, E)$ where $|V| = n$ and $|E| > n - 1$ is not a forest.
+\end{proposition}
+
+\begin{proof}
+    Let $F = (V, E)$ be a forest where $|V| = n$ and $|E| > n - 1$. By
+    proposition \ref{prop:forest-tree} $F$ must either have a cycle or a vertex
+    with two parents. Hence $F$ is not a forest.
+\end{proof}
+
+\begin{proposition}[Roots Exist]
+    In a forest $F = (V, E)$ there is at least one root $r \in V$ such that
+    $\mathcal{R}_F(r)$.
+\end{proposition}
+
+\begin{proof}
+    Let $F = (V, E)$ be a forest. The negation of $\mathcal{R}_F(v)$ is $v
+    \leadsto u$ for some $u \in V$. If there is no root in $F$ then for all $v
+    \in V$ it holds that $v \leadsto u$ for some $u \in V$. So for all $v \in V$
+    an edge $(v, w) \in E$ for some $w \in V$ exists. So the number of edges is
+    $|E| > n - 1$ for $|V| = n$. Hence by proposition
+    \ref{prop:forest-edge-limit} $F$ is not a forest which is a contradiction.
+    Thus there exists at least one root $r \in V$ such that $\mathcal{R}_F(r)$.
+\end{proof}
+
+\begin{proposition}[Roots Path Exist]
+    In a forest $F = (V, E)$ for each element $v \in V$ there exists at least
+    one root $r \in V$ such that $\mathcal{R}_F(r)$ and $v \leadsto r$.
+\end{proposition}
+
+\begin{proof}
+    Let $F = (V, E)$ be a forest and let $v \in V$ be an arbitrary element in
+    $V$. By proposition \ref{prop:forest-tree} there exists at least one root $r
+    \in V$ such that $\mathcal{R}_F(r)$. If $v$ is a root then we are done.
+    Otherwise since $F$ is forest there exists a path from $v$ to some root $r
+    \in V$ such that $v \leadsto r$. Hence for each element $v \in V$ there
+    exists at least one root $r \in V$ such that $\mathcal{R}_F(r)$ and $v
+    \leadsto r$.
+\end{proof}
+
+\begin{definition}[Union-Find Structure]
+    The union-find structure $U$ is a forest $U = (V, E)$ where the
+    vertices $V = S$ for some set of elements $S$. The edges $E \subseteq V \times V$ represent parent
+    relations between elements in $S$ such that $(u, v) \in E$ means that $u$ has
+    parent $v$.
+\end{definition}
+
+\begin{definition}[Representative]
+    The representative of an element $v \in V$ in a union-find structure $U =
+    (V, E)$ is the root $r \in V$ such that there is a path from $v$ to $r$.
+    This is defined as the function:
+    \begin{align*}
+        \rho_U(v) := r \text{ where } r \in V \land \mathcal{R}_U(r) \land v \leadsto r
+    \end{align*}
+\end{definition}
+
+\begin{proposition}[Representative Exists]
+    In a union-find structure $U = (V, E)$ each element $v \in V$ has at least
+    one representative $\rho_U(v)$.
+\end{proposition}
+
+\begin{proof}
+    Let $v \in V$ be an arbitrary element in the union-find structure $U =
+    (V, E)$. By proposition \ref{prop:forest-tree} there exists at least one root
+    $r \in V$ such that $\mathcal{R}_U(r)$. If $v$ is a root then $\rho_U(v) = v$
+    and we are done. Otherwise since $U$ is a forest there exists a path from
+    $v$ to some root $r \in V$ such that $v \leadsto r$. Hence $\rho_U(v) = r$
+    and thus each element $v \in V$ has at least one representative.
+\end{proof}
+
+\begin{proposition}[Unique Representative]
+    In a union-find structure $U = (V, E)$ each element $v \in V$ has a unique
+    representative $\rho_U(v)$.
 \end{proposition}
 \begin{proof}
-    
+    Let $v \in V$ be an arbitrary element in the union-find structure $U =
+    (V, E)$.
 \end{proof}
 
 \begin{proposition}[Representation of
