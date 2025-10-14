@@ -285,7 +285,7 @@
     \end{align*}
 \end{definition}
 
-\begin{definition}[Partition]\label{def:partition} The
+\begin{definition}[Partition]\label{def:partition}
     The set $P \subseteq \mathbb{P}(S)$ is a partition of a set $S$ if:
     \begin{enumerate}
         \item $a \neq \emptyset$ for all $a \in P$
@@ -371,7 +371,7 @@
     \end{enumerate}
 \end{definition}
 
-\begin{proposition}[Tree Union by Parent]\label{def:sequential-unions}
+\begin{proposition}[Tree Union by Parent]\label{def:tree-union-by-parent}
     Let forest $F = (V, E)$, $p = \rho_F(u)$ be the representative of $u$ and
     let $q = \rho_F(v)$ be the representative of $v$. Then defined $F'$ as:
     \begin{align*}
@@ -405,11 +405,20 @@
     \end{itemize}
 \end{proof}
 
+\begin{proposition}
+    Let forest $F = (V, E)$ and $X \subseteq V \times V$ be a subset of pairs of
+    elements in $V$ that should be unioned. Then $X$ can be partioned into a set
+    $\emptyset \neq X' \subseteq X $ and $X \backslash X'$ such that if $F'$
+    is the forest after performing all 
+\end{proposition}
+
 \begin{definition}[Union-Find Structure]
     The union-find structure $U$ is a forest $U = (V, E)$ where the vertices $V
     = S$ for some set of elements $S$. The edges $E \subseteq V \times V$
     represent parent relations between elements in $S$ such that $(u, v) \in E$
     means that $u$ has parent $v$.
 \end{definition}
+
+
 
 \end{document}
