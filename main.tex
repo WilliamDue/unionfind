@@ -170,20 +170,7 @@
 \maketitle
 \thispagestyle{firstpage}
 
-\section{Definitions}
-
-\begin{definition}[Union-Find]\label{def:union-find} The
-    union-find data structure $U$ represents a partition of a set $S$ if:
-    \begin{enumerate}
-        \item $a \neq \emptyset$ for all $a \in \mathcal{C}(U)$
-        \item $a \cap b = \emptyset$ for all $a, b \in \mathcal{C}(U)$ where $a
-        \neq b$
-        \item $\bigcup_{a \in \mathcal{C}(U)} a = S$
-    \end{enumerate}
-    where $\mathcal{C} : \mathbb{P}(U) \to \mathbb{P}(\mathbb{P}(S))$ converts
-    the data structure $U$ into a partition of $S$.
-\end{definition}
-
+\section{Theory}
 \begin{definition}[Reachability]
     A node $v$ is \emph{reachable} from a node $u$ in a directed graph $G = (V,
     E)$ if there exists a sequence of directed edges $e_1, e_2, \ldots, e_m \in
@@ -220,12 +207,37 @@
     \{r\}$.
 \end{definition}
 
-\begin{proposition}[Forest Tree Relation]\label{prop:forest-tree}
-    A forest $F = (V, E)$ where $|V| = n$ and $|E| = n - 1$ is a tree.
+\begin{proposition}[Forest Root Count]\label{prop:forest-root-count}
+    A forest $F = (V, E)$ where $|V| = n$ and $|E| = n - k$ has $k$ roots.
 \end{proposition}
 
 \begin{proof}
-    Let $F = (V, E)$ be a forest where $|V| = n$ and $|E| = n - 1$. By second property of a forest then $n - 1$ vertices must have a parent. Since there are $n$ vertices in total it follows that there is exactly one vertex $r \in V$ that has no parent. Hence $\mathcal{R}_F(r)$. 
+    Let $F = (V, E)$ be a forest where $|V| = n$ and $|E| = n - k$. By the
+    second property of a forest then $n - k$ vertices must have a parent. Since
+    there are $n$ vertices in total it follows that there are exactly $k$
+    vertices $r_1, r_2, \ldots, r_k \in V$ that has no parent. Hence there are
+    exactly $k$ roots in $F$.
+\end{proof}
+
+\begin{proposition}[Roots Path Exist]\label{prop:roots-path-exist}
+    In a forest $F = (V, E)$ for each element $v \in V$ there exists at least
+    one root $r \in V$ such that $\mathcal{R}_F(r)$ and $v \leadsto r$.
+\end{proposition}
+
+\begin{proof}
+    Let $F = (V, E)$ be a forest and let $v \in V$ be an arbitrary element in
+    $V$. By proposition \ref{prop:forest-root-count} there exists at least one
+    root $r \in V$ such that $\mathcal{R}_F(r)$. This can be shown by structural
+    induction on a vertex $v \in V$ that any $p \in V$ such that $v \leadsto p$
+    has a path $p \leadsto r$.
+    \begin{itemize}
+        \item If $v$ is a root then we are done.
+        \item By induction hypothesis $v$ has a path to a root $r \in V$ such
+        that $\mathcal{R}_F(r)$. Since $v$ is not a root it must have a parent
+        $p \in V$ such that $(v, p) \in E$. Since $v \leadsto r$, $v \leadsto p$
+        and $v$ only has one parent it follows that $p \leadsto r$. Hence $p
+        \leadsto r$ for some root $r \in V$ such that $\mathcal{R}_F(r)$.
+    \end{itemize}
 \end{proof}
 
 \begin{proposition}[Forest Edge Limit]\label{prop:forest-edge-limit}
@@ -234,223 +246,169 @@
 
 \begin{proof}
     Let $F = (V, E)$ be a forest where $|V| = n$ and $|E| > n - 1$. By
-    proposition \ref{prop:forest-tree} $F$ must either have a cycle or a vertex
-    with two parents. Hence $F$ is not a forest.
+    proposition \ref{prop:forest-root-count} a forest with $n - 1$ has exactly
+    one root, so it is a tree. By adding one more edge to the tree it must make
+    one vertex have two parents. Or since every vertex $v \in V$ has a path to
+    the root $r \in V$ it must create a cycle $v \leadsto v$ for some $v \in V$.
+    In both cases it contradicts the properties of a forest.
 \end{proof}
-
-\begin{proposition}[Roots Exist]
-    In a forest $F = (V, E)$ there is at least one root $r \in V$ such that
-    $\mathcal{R}_F(r)$.
-\end{proposition}
-
-\begin{proof}
-    Let $F = (V, E)$ be a forest. The negation of $\mathcal{R}_F(v)$ is $v
-    \leadsto u$ for some $u \in V$. If there is no root in $F$ then for all $v
-    \in V$ it holds that $v \leadsto u$ for some $u \in V$. So for all $v \in V$
-    an edge $(v, w) \in E$ for some $w \in V$ exists. So the number of edges is
-    $|E| > n - 1$ for $|V| = n$. Hence by proposition
-    \ref{prop:forest-edge-limit} $F$ is not a forest which is a contradiction.
-    Thus there exists at least one root $r \in V$ such that $\mathcal{R}_F(r)$.
-\end{proof}
-
-\begin{proposition}[Roots Path Exist]
-    In a forest $F = (V, E)$ for each element $v \in V$ there exists at least
-    one root $r \in V$ such that $\mathcal{R}_F(r)$ and $v \leadsto r$.
-\end{proposition}
-
-\begin{proof}
-    Let $F = (V, E)$ be a forest and let $v \in V$ be an arbitrary element in
-    $V$. By proposition \ref{prop:forest-tree} there exists at least one root $r
-    \in V$ such that $\mathcal{R}_F(r)$. If $v$ is a root then we are done.
-    Otherwise since $F$ is forest there exists a path from $v$ to some root $r
-    \in V$ such that $v \leadsto r$. Hence for each element $v \in V$ there
-    exists at least one root $r \in V$ such that $\mathcal{R}_F(r)$ and $v
-    \leadsto r$.
-\end{proof}
-
-\begin{definition}[Union-Find Structure]
-    The union-find structure $U$ is a forest $U = (V, E)$ where the
-    vertices $V = S$ for some set of elements $S$. The edges $E \subseteq V \times V$ represent parent
-    relations between elements in $S$ such that $(u, v) \in E$ means that $u$ has
-    parent $v$.
-\end{definition}
 
 \begin{definition}[Representative]
-    The representative of an element $v \in V$ in a union-find structure $U =
-    (V, E)$ is the root $r \in V$ such that there is a path from $v$ to $r$.
-    This is defined as the function:
+    The representative of an element $v \in V$ in a forest $F = (V, E)$ is the
+    root $r \in V$ such that there is a path from $v$ to $r$. This is defined as
+    the function:
     \begin{align*}
-        \rho_U(v) := r \text{ where } r \in V \land \mathcal{R}_U(r) \land v \leadsto r
+        \rho_F(v) := r \text{ where } r \in V \land \mathcal{R}_F(r) \land (v \leadsto r \lor v = r)
     \end{align*}
 \end{definition}
-
-\begin{proposition}[Representative Exists]
-    In a union-find structure $U = (V, E)$ each element $v \in V$ has at least
-    one representative $\rho_U(v)$.
-\end{proposition}
-
-\begin{proof}
-    Let $v \in V$ be an arbitrary element in the union-find structure $U =
-    (V, E)$. By proposition \ref{prop:forest-tree} there exists at least one root
-    $r \in V$ such that $\mathcal{R}_U(r)$. If $v$ is a root then $\rho_U(v) = v$
-    and we are done. Otherwise since $U$ is a forest there exists a path from
-    $v$ to some root $r \in V$ such that $v \leadsto r$. Hence $\rho_U(v) = r$
-    and thus each element $v \in V$ has at least one representative.
-\end{proof}
 
 \begin{proposition}[Unique Representative]
-    In a union-find structure $U = (V, E)$ each element $v \in V$ has a unique
-    representative $\rho_U(v)$.
+    In a forest $F = (V, E)$ each element $v \in V$ has a unique
+    representative $\rho_F(v)$.
 \end{proposition}
+
 \begin{proof}
-    Let $v \in V$ be an arbitrary element in the union-find structure $U =
-    (V, E)$.
+    Let $U = (V, E)$ be a union-find structure and let $v \in V$ be an arbitrary
+    element in $V$. By proposition \ref{prop:roots-path-exist} there exists at
+    least one root $r \in V$ such that $\mathcal{R}_U(r)$ and $v \leadsto r$.
+    Now assume that there exists another root $r' \in V$ such that $\mathcal{R}_U(r')$
+    and $v \leadsto r'$. Since $U$ is a forest it follows by the second property
+    of a forest that $r = r'$ hence the representative is unique.
 \end{proof}
 
-\begin{proposition}[Representation of
-    Union-Find]\label{def:representation-union-find} A cycleless union-find structure $U
-    \in \mathbb{U}_n$ fulfills definition \ref{def:union-find} for the following conversion function:
+\begin{definition}[Tree Set]
+    The set of vertices of the same tree $\mathcal{E}_F(v)$ in a
+    forest $F = (V, E)$ is defined as:
     \begin{align*}
-        \mathcal{C}(U) := \{\{f(\pi_1(u)) : u \in U \land \mathcal{P}_U(\pi_1(u)) = p \} : p \in \mathbb{N}_{\leq n}\} \backslash \{\emptyset\}
+        \mathcal{E}_F(v) := \{u : u \in V \land \rho_F(u) = \rho_F(v))\}
     \end{align*}
-    where $f : \mathbb{N}_{\leq n} \to S$ is a bijective function mapping
-    indices to elements in the set $S$.
-\end{proposition}
-\begin{proof}
-    Let $U \in \mathbb{U}_n$ be a union-find data structure fulfilling the three
-    criteria in proposition \ref{def:representation-union-find}. We will show
-    that $U$ fulfills the three criteria in definition \ref{def:union-find}.
+\end{definition}
 
+\begin{definition}[Partition]\label{def:partition} The
+    The set $P \subseteq \mathbb{P}(S)$ is a partition of a set $S$ if:
     \begin{enumerate}
-        \item By definition of $\mathcal{C}$ it is clear that $a \neq \emptyset$
-        for all $a \in \mathcal{C}(D)$ since $\mathcal{C}$ only includes
-        non-empty sets.
-        \item Let $a, b \in \mathcal{C}(D)$ where $a \neq b$ then by definition
-        $a = \{f(\pi_1(u)) : u \in U \land \mathcal{P}_U(\pi_1(u)) = p_a \}$ and
-        $b = \{f(\pi_1(u)) : u \in U \land \mathcal{P}_U(\pi_1(u)) = p_b \}$ for
-        some $p_a, p_b \in \mathbb{N}_{\leq n}$ where $p_a \neq p_b$. Since if
-        $p_a = p_b$ then $a = b$ it follows that $a \cap b = \emptyset$.
-        \item Let $s \in S$ then since $U$ is a union-find data structure of size
-        $n$ there exists $(i, p) \in U$ for some $i$ and $p$. Let $r =
-        \mathcal{P}_U(i)$ then by definition of $\mathcal{C}$ it follows that $s
-        \in \{f(\pi_1(u)) : u \in U \land \mathcal{P}_U(\pi_1(u)) = r \} \in
-        \mathcal{C}(U)$. Since $s$ was arbitrary it follows that $\bigcup_{a \in
-        \mathcal{C}(U)} a = S$.
-    \end{enumerate}
-\end{proof}
-
-\begin{definition}[Substitute Parent]
-    The function for substitution a parent of an element $i$ to $p$ in a
-    cycleless union-find data structure $U \in \mathbb{U}_n$ is denoted
-    $\mathcal{S}_U : \mathbb{N}_{\leq n} \times \mathbb{N}_{\leq n} \to
-    \mathbb{P}(\mathbb{U}_n)$ and defined as:
-    \begin{align*}
-        \mathcal{S}_U(i, p) := (U \backslash \{(i, p')\}) \cup \{(i, p)\} \text{ where } (i, p') \in U
-    \end{align*}
-\end{definition}
-
-\begin{definition}[Equivalence Set]
-    The set of equivalent indices of an element $i$ in a cycleless union-find
-    data structure $U \in \mathbb{U}_n$ is defined as:
-    \begin{align*}
-        \mathcal{E}_U(i) := \{j : j \in \mathbb{N}_{\leq n} \land \mathcal{P}_U(j) = \mathcal{P}_U(i)\}
-    \end{align*}
-\end{definition}
-
-\begin{definition}[Parent]
-    A element $i \in \mathbb{N}_{\leq n}$ has a parent $p \in \mathbb{N}_{\leq n} 
-    \cup \{0\}$ if 
-\end{definition}
-
-\begin{definition}[Equivalent Union-Find Structures]
-    Two cycleless union-find data structures $U, U' \in \mathbb{U}_n$ are
-    equivalent if:
-    \begin{align*}
-        \mathcal{E}_{U'}(i) = \mathcal{E}_U(i) \text{ for all } i \in \mathbb{N}_{\leq n}
-    \end{align*}
-\end{definition}
-\begin{lemma}[Cycleless substitution]
-    A parent substitution $\mathcal{S}_U(i, p)$ of a cycleless union-find
-    data structure $U \in \mathbb{U}_n$ will result in a cycleless union-find
-    data structure if:
-    \begin{align*}
-        \mathcal{P}_U(i) \neq \mathcal{P}_U(p)
-    \end{align*} 
-\end{lemma}
-\begin{proof}
-    
-\end{proof}
-
-\begin{definition}[Well-formed Union]
-    For a cycleless union-find data structure $U \in \mathbb{U}_n$ the union of
-    two elements $i \sim j$ where $i, j \in \mathbb{N}_{\leq n}$ is well-formed
-    if it results in a cycleless union-find data structure $U' \in \mathbb{U}_n$
-    such that:
-    \begin{enumerate}
-        \item $\mathcal{E}_{U'}(i) = \mathcal{E}_U(i) \cup \mathcal{E}_U(j)$ and
-        \item $\mathcal{E}_{U'}(k) = \mathcal{E}_U(k) \text{ for all } k \in
-        \mathbb{N}_{\leq n} \backslash (\mathcal{E}_U(i) \cup \mathcal{E}_U(j))$.
+        \item $a \neq \emptyset$ for all $a \in P$
+        \item $a \cap b = \emptyset$ for all $a, b \in P$ where $a
+        \neq b$
+        \item $\bigcup_{a \in P} a = S$
     \end{enumerate}
 \end{definition}
 
-\begin{definition}[Sequential Unions]\label{def:sequential-unions}
-    Given a sequence of union relations $i_1 \sim j_1, i_2 \sim j_2, \ldots, i_m
-    \sim j_m$ where $i_k, j_k \in \mathbb{N}_{\leq n}$ for all $1 \leq k \leq m$
-    and a initial  $U \in \mathbb{U}_n$. The final union-find data structure $U'
-    \in \mathbb{U}_n$ is
-    defined as:
+\begin{proposition}[Forest Partition]\label{prop:forest-partition}
+    A forest $F = (V, E)$ is a partition of $V$ for the following set:
     \begin{align*}
-        U_0 &:= \{(i, 0) : i \in \mathbb{N}_{\leq n}\} \\
-        (q_k, p_k) &:= (\mathcal{P}_{U_{k-1}}(i_k), \mathcal{P}_{U_{k-1}}(j_k)) \text{ for } 1 \leq k \leq m \\
-        U_k &:= \begin{cases}
-            U_{k-1} & \text{if } p_k = q_k \\
-            \mathcal{S}_{U_{k-1}}(q_k, p_k) & \text{if } p_k \neq q_k
-        \end{cases} \text{ for } 1 \leq k \leq m \\
-        U' &:= U_m
+        \{\mathcal{E}_F(v) : v \in V\}
+    \end{align*}
+\end{proposition}
+
+\begin{proof}
+    Let $F = (V, E)$ be a forest. We will show that the set in the proposition
+    is a partition of $V$ by showing that it satisfies the three properties in
+    definition \ref{def:partition}.
+    \begin{enumerate}
+        \item By definition of $\mathcal{E}_F(v)$ it can not be empty since for
+        $\mathcal{E}_F(v)$ then $\rho_F(v) = \rho_F(v)$. Hence $\mathcal{E}_F(v)
+        \neq \emptyset$ for all $v \in V$.
+        \item Let $a$ and $b$ be two arbitrary elements in the set such that $a
+        \neq b$. By definition of $a$ and $b$ there exists $v_1, v_2 \in V$ such
+        that $a = \{u : u \in V \land \rho_F(u) = \rho_F(v_1)\}$ and $b = \{u :
+        u \in V \land \rho_F(u) = \rho_F(v_2)\}$. Since $a \neq b$ it follows
+        that $\rho_F(v_1) \neq \rho_F(v_2)$ since otherwise $a = b$, hence $a
+        \cap b = \emptyset$.
+        \item Let $v$ be an arbitrary element in $V$. By proposition
+        \ref{prop:roots-path-exist} there exists a root $r \in V$ such that
+        $\mathcal{R}_F(r)$ and $v \leadsto r$. By definition of the
+        representative it follows that $\rho_F(v) = r$. Now let $a = \{u : u \in
+        V \land \rho_F(u) = \rho_F(v)\}$. By definition of $a$ it follows that
+        $v \in a$. Since $v$ was arbitrary it follows that $\bigcup_{a \in P} a
+        = V$.
+    \end{enumerate}
+\end{proof}
+
+\begin{definition}[Same Tree Relation]
+    The relation $\sim$ on a forest $F$ is defined as:
+    \begin{align*}
+        u \sim v :\iff u \in \mathcal{E}_F(v)
     \end{align*}
 \end{definition}
 
-\begin{proposition}[Sequential Unions is Well-formed]
-    Given a sequence of union relationss $i_1 \sim j_1, i_2 \sim j_2, \ldots,
-    i_m \sim j_m$ where $i_k, j_k \in \mathbb{N}_{\leq n}$ for all $1 \leq k
-    \leq m$ and a cycleless union-find data structure $U \in \mathbb{U}_n$. The
-    final union-find data structure $U' \in \mathbb{U}_n$ defined in definition
-    \ref{def:sequential-unions} is well-formed.
-\end{proposition}
-\begin{proof}
-    To prove that $U'$ is well-formed we need to show that each union in the
-    sequence is well-formed. This can be shown by induction on the index $k$ of
-    the union in the sequence.
+\begin{corollary}[Same Tree Relation is an Equivalence Relation]
+    The relation $\sim$ on a forest $F$ is an equivalence relation due to
+    $\{\mathcal{E}_F(v) : v \in V\}$ being a partition of $V$. by proposition
+    \ref{prop:forest-partition}.
+\end{corollary}
+
+\begin{definition}[Forests with Equivalent Tree Sets]
+    Two forests $F = (V, E)$ and $F' = (V', E')$ have equivalent tree sets $F
+    \cong F'$ if $V = V$ and
     \begin{itemize}
-        \item For $U_0$ it is clear that $\mathcal{E}_{U_0}(i) = \{i\}$ for all $i \in
-        \mathbb{N}_{\leq n}$ since all elements are their own root.
-        \item Assume that $U_{k-1}$ is well-formed for some $1 \leq k \leq m$.
-        We will show that $U_k$ is well-formed. Let $q_k
-        =\mathcal{P}_{U_{k-1}}(i_k)$ and $p_k = \mathcal{P}_{U_{k-1}}(i_k)$.
-        \begin{enumerate}
-            \item If $p_k = q_k$ then by definition $U_k = U_{k-1}$ and thus
-            $U_k$ is well-formed by the inductive hypothesis.
-            \item If $p_k \neq q_k$ then since $q_k$ is a root $(q_k, 0) \in U_{k - 1}$ and by definition
-            of $\mathcal{S}$.
-            \begin{align*}
-                U_k := (U_{k-1} \backslash \{(q_k, 0)\}) \cup \{(q_k, p_k)\} \text{ where } (q_k, 0) \in U_{k-1}
-            \end{align*}
-            Now $p_k = \mathcal{P}_{U_k}(q_k)$ hence $\mathcal{P}_{U_k}(q) = p_k$ for all $q
-            \in \mathcal{E}_{U_{k - 1}}(q_k)$. And by definition of $p_k$ being
-            a root it follows that $\mathcal{P}_{U_k}(p) = p_k$ for all $p \in
-            \mathcal{E}_{U_{k - 1}}(p_k)$. Thus $\mathcal{E}_{U_k}(i_k) =
-            \mathcal{E}_{U_{k - 1}}(i_k) \cup \mathcal{E}_{U_{k - 1}}(j_k)$ and
-            since all other elements are unaffected by the union it follows that
-            $\mathcal{E}_{U_k}(l) = \mathcal{E}_{U_{k - 1}}(l)$ for all $l \in
-            \mathbb{N}_{\leq n} \backslash (\mathcal{E}_U(i) \cup
-            \mathcal{E}_U(j))$.
+        \item Vertices are the same $V = V'$.
+        \item The tree sets are equivalent $\mathcal{E}_{F}(v) =
+        \mathcal{E'}_F(v)$ for all $v \in V$.
+    \end{itemize}
+\end{definition}
 
-            Finally since $U_{k-1}$ is cycleless and $q_k$ is a root it follows
-            that $U_k$ is cycleless and thus $U_k$ is well-formed.
-        \end{enumerate}
+\begin{definition}[Change Parent]
+    The function for changing a parent of an element $i$ to $p$ in a forest
+    $F = (V, E)$ is defined as:
+    \begin{align*}
+        \mathcal{S}_F(i, p) := \begin{cases}
+            (V, (E \backslash \{(i, p')\}) \cup \{(i, p)\}) & \text{if } (i, p') \in E \\
+            (V, E \cup \{(i, p)\}) & \text{if } (i, p') \notin E
+        \end{cases}
+    \end{align*}
+\end{definition}
+
+\begin{definition}[Tree Union]
+    The tree union of two elements $v$ and $u$ for a forest $F = (V, E)$ is such
+    that $v \sim u$ in a new forest $F' = (V', E')$ and $F'$ satify the
+    following properties:
+    \begin{enumerate}
+        \item $\mathcal{E}_{F'}(v) = \mathcal{E}_{F'}(u) = \mathcal{E}_F(v) \cup \mathcal{E}_F(u)$ and
+        \item $\mathcal{E}_{F'}(w) = \mathcal{E}_F(w) \text{ for all } w \in V
+        \backslash (\mathcal{E}_F(v) \cup \mathcal{E}_F(u))$.
+    \end{enumerate}
+\end{definition}
+
+\begin{proposition}[Tree Union by Parent]\label{def:sequential-unions}
+    Let forest $F = (V, E)$, $p = \rho_F(u)$ be the representative of $u$ and
+    let $q = \rho_F(v)$ be the representative of $v$. Then defined $F'$ as:
+    \begin{align*}
+        F' &:= \begin{cases}
+            F & \text{if } p = q \\
+            \mathcal{S}_{F}(q, p) & \text{if } p \neq q
+        \end{cases}
+    \end{align*}
+    Then $u \sim v$ in $F'$ and $F'$ will satisfy the properties of a tree
+    union.
+\end{proposition}
+
+\begin{proof}
+    Let $F = (V, E)$, $p = \rho_F(u)$ be the representative of $u$ and
+    let $q = \rho_F(v)$ be the representative of $v$.
+    \begin{itemize}
+        \item If $p = q$ hence we already have $u \sim v$ in $F$ and since the
+        tree sets are equivalent $F' \cong F$ then the properties are satisfied.
+        \item If $p \neq q$ then by definition of changing parent then $q$ will
+        have parent $p$ in $F'$ and since $q$ is a root it has no parent and $F'
+        = (V, E \cup \{(q, p)\})$. Now for all $w \in \mathcal{E}_F(q)$ it holds
+        that $w \leadsto q$ or $q = w$ and since $q \leadsto p$ it follows that
+        $w \leadsto p$. Hence $w \in \mathcal{E}_{F'}(p)$ for all $w \in
+        \mathcal{E}_F(q)$ and trivially $w \in \mathcal{E}_{F'}(p)$ for all $w
+        \in \mathcal{E}_F(p)$ so it follows that $\mathcal{E}_{F'}(v) =
+        \mathcal{E}_{F'}(u) = \mathcal{E}_F(v) \cup \mathcal{E}_F(u)$. Now let
+        $w \in V \backslash (\mathcal{E}_F(v) \cup \mathcal{E}_F(u))$ be an
+        arbitrary element. Since $w \centernot\leadsto p$ and $w \centernot\leadsto
+        q$ it follows that $w$ has the same parent in $F'$ as in $F$ hence
+        $\mathcal{E}_{F'}(w) = \mathcal{E}_F(w)$. 
     \end{itemize}
 \end{proof}
 
-\begin{definition}[Parallel Unions]
+\begin{definition}[Union-Find Structure]
+    The union-find structure $U$ is a forest $U = (V, E)$ where the vertices $V
+    = S$ for some set of elements $S$. The edges $E \subseteq V \times V$
+    represent parent relations between elements in $S$ such that $(u, v) \in E$
+    means that $u$ has parent $v$.
 \end{definition}
+
 \end{document}
