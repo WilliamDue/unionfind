@@ -327,9 +327,9 @@
 \end{proof}
 
 \begin{definition}[Same Tree Relation]
-    The relation $\sim$ on a forest $F$ is defined as:
+    The relation $\sim_F$ on a forest $F$ is defined as:
     \begin{align*}
-        u \sim v :\iff u \in \mathcal{E}_F(v)
+        u \sim_F v :\iff u \in \mathcal{E}_F(v)
     \end{align*}
 \end{definition}
 
@@ -362,7 +362,7 @@
 
 \begin{definition}[Tree Union]
     The tree union of two elements $v$ and $u$ for a forest $F = (V, E)$ is such
-    that $v \sim u$ in a new forest $F' = (V', E')$ and $F'$ satify the
+    that $v \sim_{F'} u$ in a new forest $F' = (V', E')$ and $F'$ satify the
     following properties:
     \begin{enumerate}
         \item $\mathcal{E}_{F'}(v) = \mathcal{E}_{F'}(u) = \mathcal{E}_F(v) \cup \mathcal{E}_F(u)$ and
@@ -380,7 +380,7 @@
             \mathcal{S}_{F}(q, p) & \text{if } p \neq q
         \end{cases}
     \end{align*}
-    Then $u \sim v$ in $F'$ and $F'$ will satisfy the properties of a tree
+    Then $u \sim_{F'} v$ in $F'$ and $F'$ will satisfy the properties of a tree
     union.
 \end{proposition}
 
@@ -388,7 +388,7 @@
     Let $F = (V, E)$, $p = \rho_F(u)$ be the representative of $u$ and
     let $q = \rho_F(v)$ be the representative of $v$.
     \begin{itemize}
-        \item If $p = q$ hence we already have $u \sim v$ in $F$ and since the
+        \item If $p = q$ hence we already have $u \sim_{F} v$ in $F$ and since the
         tree sets are equivalent $F' \cong F$ then the properties are satisfied.
         \item If $p \neq q$ then by definition of changing parent then $q$ will
         have parent $p$ in $F'$ and since $q$ is a root it has no parent and $F'
