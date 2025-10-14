@@ -269,11 +269,11 @@
 \end{proposition}
 
 \begin{proof}
-    Let $U = (V, E)$ be a union-find structure and let $v \in V$ be an arbitrary
+    Let $F = (V, E)$ be a union-find structure and let $v \in V$ be an arbitrary
     element in $V$. By proposition \ref{prop:roots-path-exist} there exists at
-    least one root $r \in V$ such that $\mathcal{R}_U(r)$ and $v \leadsto r$.
-    Now assume that there exists another root $r' \in V$ such that $\mathcal{R}_U(r')$
-    and $v \leadsto r'$. Since $U$ is a forest it follows by the second property
+    least one root $r \in V$ such that $\mathcal{R}_F(r)$ and $v \leadsto r$.
+    Now assume that there exists another root $r' \in V$ such that $\mathcal{R}_F(r')$
+    and $v \leadsto r'$. Since $F$ is a forest it follows by the second property
     of a forest that $r = r'$ hence the representative is unique.
 \end{proof}
 
