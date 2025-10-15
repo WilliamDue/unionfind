@@ -318,7 +318,7 @@
         \cap b = \emptyset$.
         \item Let $v$ be an arbitrary element in $V$. By proposition
         \ref{prop:roots-path-exist} there exists a root $r \in V$ such that
-        $\mathcal{R}_F(r)$ and $v \leadsto r$. By definition of the
+        $\mathcal{R}_F(r)$ and $v \leadsto r$ or $v = r$. By definition of the
         representative it follows that $\rho_F(v) = r$. Now let $a = \{u : u \in
         V \land \rho_F(u) = \rho_F(v)\}$. By definition of $a$ it follows that
         $v \in a$. Since $v$ was arbitrary it follows that $\bigcup_{a \in P} a
@@ -334,7 +334,7 @@
 \end{definition}
 
 \begin{corollary}[Same Tree Relation is an Equivalence Relation]
-    The relation $\sim$ on a forest $F$ is an equivalence relation due to
+    The relation $\sim_F$ on a forest $F$ is an equivalence relation due to
     $\{\mathcal{E}_F(v) : v \in V\}$ being a partition of $V$. by proposition
     \ref{prop:forest-partition}.
 \end{corollary}
@@ -373,12 +373,10 @@
 
 \begin{proposition}[Tree Union by Parent]\label{def:tree-union-by-parent}
     Let forest $F = (V, E)$, $p = \rho_F(u)$ be the representative of $u$ and
-    let $q = \rho_F(v)$ be the representative of $v$. Then defined $F'$ as:
+    let $q = \rho_F(v)$ be the representative of $v$ where $q \neq p$. Then
+    defined $F'$ as:
     \begin{align*}
-        F' &:= \begin{cases}
-            F & \text{if } p = q \\
-            \mathcal{S}_{F}(q, p) & \text{if } p \neq q
-        \end{cases}
+        F' &:= \mathcal{S}_{F}(q, p)
     \end{align*}
     Then $u \sim_{F'} v$ in $F'$ and $F'$ will satisfy the properties of a tree
     union.
@@ -407,8 +405,20 @@
 
 \begin{definition}[Multiple Tree Unions]
     Let forest $F = (V, E)$ and $X \subseteq V \times V$ be a subset of pairs of
-    elements in $V$ that should be unioned. We now define the $\{(\rho_F(u),
-    \rho_F(v)) : (u, v) \in X \land \rho_F(u) \neq \rho_F(v)\}$
+    elements in $V$ that should be unioned. Then the multiple tree unions of $X$
+    in $F$ is defined as the following sequence of tree unions reuslt in a new
+    forest $F'$ is:
+    \begin{align*}
+        F_0 &:= F \\
+        F_i &:= \mathcal{S}_{F_{i-1}}(\rho_F(u_i), \rho_F(v_i)) \text{ for all } 1 \leq i \leq |X| \land \rho_F(u_i)\neq \rho_F(v_i) \\
+        F' &:= F_{|X|}
+    \end{align*}
+    And $X$ must be a set such that $F' \cong F''$ where $F''$ is defined as:
+    \begin{align*}
+        F_0 &:= F \\
+        F_i &:= \mathcal{S}_{F_{i-1}}(\rho_{F_{i - 1}}(u_i), \rho_{F_{i - 1}}(v_i)) \text{ for all } 1 \leq i \leq |X| \land \rho_{F_{i - 1}}(u_i)\neq \rho_{F_{i - 1}}(v_i) \\
+        F'' &:= F_{|X|}
+    \end{align*}
 \end{definition}
 
 \begin{definition}[Union-Find Structure]
