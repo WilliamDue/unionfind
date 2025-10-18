@@ -403,23 +403,68 @@
     \end{itemize}
 \end{proof}
 
-\begin{definition}[Multiple Tree Unions]
-    Let forest $F = (V, E)$ and $X \subseteq V \times V$ be a subset of pairs of
-    elements in $V$ that should be unioned. Then the multiple tree unions of $X$
-    in $F$ is defined as the following sequence of tree unions reuslt in a new
-    forest $F'$ is:
-    \begin{align*}
-        F_0 &:= F \\
-        F_i &:= \mathcal{S}_{F_{i-1}}(\rho_F(u_i), \rho_F(v_i)) \text{ for all } 1 \leq i \leq |X| \land \rho_F(u_i)\neq \rho_F(v_i) \\
-        F' &:= F_{|X|}
-    \end{align*}
-    And $X$ must be a set such that $F' \cong F''$ where $F''$ is defined as:
-    \begin{align*}
-        F_0 &:= F \\
-        F_i &:= \mathcal{S}_{F_{i-1}}(\rho_{F_{i - 1}}(u_i), \rho_{F_{i - 1}}(v_i)) \text{ for all } 1 \leq i \leq |X| \land \rho_{F_{i - 1}}(u_i)\neq \rho_{F_{i - 1}}(v_i) \\
-        F'' &:= F_{|X|}
-    \end{align*}
+\begin{definition}[Conflict-free Set]
+    Let forest $F$ be a forest, $X \subseteq V \times V$ be a set of pairs of
+    elements in $V$ and $Y = \{(\rho_F(u), \rho_F(v)) : (u, v) \in X\}$. Then
+    $X$ is a conflict-free set in $F$ if $(V, Y)$ is a forest.
 \end{definition}
+
+\begin{proposition}
+    Let forest $F$ be a forest and let $X \subseteq V \times V$ be a
+    conflict-free set in $F$. Then defining the following forests:
+    \begin{align*}
+        F_0 &:= F \\
+        F_{i} &:= S_{F}(\rho_F(u_i), \rho_F(v_i)) \text{ for } (u_i, v_i) \in X \text{ and } 1 \leq i \leq |X| \\
+        G_0 &:= F \\
+        G_{i} &:= S_{G_{i-1}}(\rho_{G_{i -1}}(u_i), \rho_{G_{i -1}}(v_i)) \text{ for } (u_i, v_i) \in X \text{ and } 1 \leq i \leq |X| \\
+    \end{align*}
+    Then $F_{|X|} \cong G_{|X|}$.
+\end{proposition}
+\begin{proof}
+    Let forest $F$ be a forest and let $X \subseteq V \times V$ be a
+    conflict-free set in $F$. We will show by induction on $i$ that $F_i \cong
+    G_i$ for all $0 \leq i \leq |X|$.
+    \begin{itemize}
+        \item Base case: For $i = 0$ then $F_0 = F \cong F = G_0$.
+        \item Induction step: Assume that $F_{i-1} \cong G_{i-1}$ for some $1
+        \leq i \leq |X|$. Let $(u_i, v_i) \in X$ be the $i$th element in $X$ and
+        $Y = \{(\rho_F(u), \rho_F(v)) : (u, v) \in X\}$.
+        
+        First we need to show that $F_i$ is a forest and that $G_i$ is a forest.
+        $G_i$ is a forest by definition of the tree union since $G_{i-1}$ is a
+        forest by the induction hypothesis.
+        
+        Now we need to show that $F_i$ is a forest. Since $X$ is a conflict-free
+        set in $F$ it follows that $\rho_F(u_i) \neq y$ forall $(y, w) \in Y
+        \backslash \{(\rho_F(u_i), \rho_F(v_i))\}$ so $\rho_F(u_i)$ can not have
+        multiple parents in $F_i$ since otherwise $(V, Y)$ would not be a
+        forest. Futhermore, $(\rho_F(u_i), \rho_F(v_i))$ can not be part of a
+        cycle in $F_i$ due to $\rho_F(u_i)$ and $\rho_F(v_i)$ both being roots
+        and $(V, Y)$ being a forest. Hence $F_i$
+        is a forest.
+
+        Now we need to show that $F_i \cong G_i$. By the induction hypothesis it
+        holds that $F_{i-1} \cong G_{i-1}$. Since $\rho_F(u_i) \neq y$ forall
+        $(y, w) \in Y \backslash \{(\rho_F(u_i), \rho_F(v_i))\}$ it follows that $\rho_{F_{i-1}}(u_i) = \rho_F(u_i)$ and
+        $\rho_{F_{i-1}}(v_i) = \rho_F(v_i)$. Hence by applying proposition
+        \ref{def:tree-union-by-parent} it follows that $F_i \cong G_i$. 
+    \end{itemize}
+    By induction it follows that $F_{|X|} \cong G_{|X|}$.
+\end{proof}
+
+\begin{algorithm}[Conflict-free Tree Union]
+    Let forest $F$ be a tree and let $Z \subseteq V \times V$ be a set of pairs
+    of elements in $V$ that will be unioned in parallel. The conflict-free tree
+    union algorithm is defined as:
+    \begin{align*}
+        & \kw{while} \: Z \neq \emptyset \: \kw{do} \\
+        & \quad F' := F \\
+        & \quad \text{pick conflict-free } X \subseteq Z \\
+        & \quad \kw{for} \: (u, v) \in X \: \kw{do} \\
+        & \quad \quad F := S_{F'}(u, v) \\
+        & \quad Z := Z \backslash X
+    \end{align*}
+\end{algorithm}
 
 \begin{definition}[Union-Find Structure]
     The union-find structure $U$ is a forest $U = (V, E)$ where the vertices $V
