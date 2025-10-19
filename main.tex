@@ -440,11 +440,11 @@
     that $F_n \cong G_n$. We know that for some $(y, w) \in Y$ then $y \neq y'$
     for all  $(y', w') \in Y \backslash \{(y, w)\}$ since otherwise $(V, Y)$
     would not be a forest and $X$ would not be a conflict-free set in $F$. So
-    all substitutions $\mathcal{S}$ will only give a root $y$ a new parent $w$
-    once. So $\rho_{F_n}(y) = \rho_{F_n}(w)$ and $\rho_{G_n}(y) = \rho_{G_n}(w)$
-    hence $y$ remains in the same tree in both $F_n$ and $G_n$. Since this holds
-    for all $(y, w) \in Y$ it follows that all elements in $V$ remains in the
-    same tree in both $F_n$ and $G_n$. Hence $F_n \cong G_n$.
+    all edge set unions will only give a root $y$ a new parent $w$ once. So
+    $\rho_{F_n}(y) = \rho_{F_n}(w)$ and $\rho_{G_n}(y) = \rho_{G_n}(w)$ hence
+    $y$ remains in the same tree in both $F_n$ and $G_n$. Since this holds for
+    all $(y, w) \in Y$ it follows that all elements in $V$ remains in the same
+    tree in both $F_n$ and $G_n$. Hence $F_n \cong G_n$.
 \end{proof}
 
 \begin{algorithm}[Conflict-free Tree Union]
@@ -458,8 +458,13 @@
         & \quad \kw{parfor} \: (u, v) \in X \: \kw{do} \\
         & \quad \quad E := E \cup \{(\rho_F(u), \rho_F(v))\} \\
         & \quad F := (V, E) \\
-        & \quad Z := Z \backslash X
+        & \quad Z := \{(u, v) : (u, v) \in Z \backslash X \land \rho_F(u) \neq \rho_F(v)\} \\
     \end{align*}
+\end{algorithm}
+
+\begin{algorithm}[Conflict-free Find]
+    Let forest $F = (V, E)$ be a forest, $(V, \leq)$ be a total ordering and $Z
+    \subseteq V \times V$ be a set of pairs of elements in $V$.
 \end{algorithm}
 
 \begin{definition}[Union-Find Structure]
