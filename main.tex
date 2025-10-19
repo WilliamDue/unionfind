@@ -411,45 +411,56 @@
 
 \begin{proposition}
     Let forest $F$ be a forest and let $X \subseteq V \times V$ be a
-    conflict-free set in $F$. Then defining the following forests:
+    conflict-free set in $F$ where $|X| = n$. Then defining the following forests:
     \begin{align*}
         F_0 &:= F \\
-        F_{i} &:= S_{F}(\rho_F(u_i), \rho_F(v_i)) \text{ for } (u_i, v_i) \in X \text{ and } 1 \leq i \leq |X| \\
-        G_0 &:= F \\
-        G_{i} &:= S_{G_{i-1}}(\rho_{G_{i -1}}(u_i), \rho_{G_{i -1}}(v_i)) \text{ for } (u_i, v_i) \in X \text{ and } 1 \leq i \leq |X| \\
+        F_{i} &:= S_{F}(\rho_F(u_i), \rho_F(v_i)) \text{ for } (u_i, v_i) \in X \text{ and } 1 \leq i \leq n
     \end{align*}
-    Then $F_{|X|} \cong G_{|X|}$.
+    Then $F_{n}$ is a forest.
+\end{proposition}
+
+\begin{proof}
+    Let forest $F$ be a forest, $X \subseteq V \times V$ be a
+    conflict-free set in $F$ and $Y = \{(\rho_F(u), \rho_F(v)) : (u, v) \in
+    X\}$. We will show that $F_n$ is a forest by induction on $i$.
+    \begin{itemize}
+        \item Base case: If $i = 0$ then $F_i = F_0 = F$ which is a forest by
+        assumption.
+        \item Induction hypothesis: Assume that $F_{i - 1}$ is a forest for all
+        $1 \leq i < n$.  Let $(y, w) \in Y$ be the pair corresponding to $(u_i,
+        v_i) \in X$ such that  $(\rho_F(u_i), \rho_F(v_i)) = (y, w) \in Y$. We
+        know that $y \neq y'$ for all  $(y', w') \in Y \backslash \{(y, w)\}$
+        since otherwise $(V, Y)$ would not be a forest and $X$ would not be a
+        conflict-free set in $F$. So $y$ will only have one parent in $F_i$ since
+        it only appears once as a child in $Y$ once. Secondly since $(V, Y)$ is
+        a forest there are no cycles $y \centernot\leadsto y$ for all $y \in V$.
+        And also since none of the edges in $Y$ is made of roots in $F$ it
+        follows that no cycles are made in $F_i$. Hence $F_i$ is a forest.
+    \end{itemize}
+\end{proof}
+
+\begin{proposition}
+    Let forest $F$ be a forest and let $X \subseteq V \times V$ be a
+    conflict-free set in $F$ where $|X| = n$. Then defining the following forests:
+    \begin{align*}
+        F_0 &:= F \\
+        F_{i} &:= S_{F}(\rho_F(u_i), \rho_F(v_i)) \text{ for } (u_i, v_i) \in X \text{ and } 1 \leq i \leq n \\
+        G_0 &:= F \\
+        G_{j} &:= S_{G_{j-1}}(\rho_{G_{j - 1}}(u_j), \rho_{G_{j - 1}}(v_j)) \text{ for } (u_j, v_j) \in X \text{ and } 1 \leq j \leq n
+    \end{align*}
+    Then $F_{n} \cong G_{n}$.
 \end{proposition}
 \begin{proof}
-    Let forest $F$ be a forest and let $X \subseteq V \times V$ be a
-    conflict-free set in $F$. We will show by induction on $i$ that $F_i \cong
-    G_i$ for all $0 \leq i \leq |X|$.
-    \begin{itemize}
-        \item Base case: For $i = 0$ then $F_0 = F \cong F = G_0$.
-        \item Induction step: Assume that $F_{i-1} \cong G_{i-1}$ for some $1
-        \leq i \leq |X|$. Let $(u_i, v_i) \in X$ be the $i$th element in $X$ and
-        $Y = \{(\rho_F(u), \rho_F(v)) : (u, v) \in X\}$.
-        
-        First we need to show that $F_i$ is a forest and that $G_i$ is a forest.
-        $G_i$ is a forest by definition of the tree union since $G_{i-1}$ is a
-        forest by the induction hypothesis.
-        
-        Now we need to show that $F_i$ is a forest. Since $X$ is a conflict-free
-        set in $F$ it follows that $\rho_F(u_i) \neq y$ forall $(y, w) \in Y
-        \backslash \{(\rho_F(u_i), \rho_F(v_i))\}$ so $\rho_F(u_i)$ can not have
-        multiple parents in $F_i$ since otherwise $(V, Y)$ would not be a
-        forest. Futhermore, $(\rho_F(u_i), \rho_F(v_i))$ can not be part of a
-        cycle in $F_i$ due to $\rho_F(u_i)$ and $\rho_F(v_i)$ both being roots
-        and $(V, Y)$ being a forest. Hence $F_i$
-        is a forest.
-
-        Now we need to show that $F_i \cong G_i$. By the induction hypothesis it
-        holds that $F_{i-1} \cong G_{i-1}$. Since $\rho_F(u_i) \neq y$ forall
-        $(y, w) \in Y \backslash \{(\rho_F(u_i), \rho_F(v_i))\}$ it follows that $\rho_{F_{i-1}}(u_i) = \rho_F(u_i)$ and
-        $\rho_{F_{i-1}}(v_i) = \rho_F(v_i)$. Hence by applying proposition
-        \ref{def:tree-union-by-parent} it follows that $F_i \cong G_i$. 
-    \end{itemize}
-    By induction it follows that $F_{|X|} \cong G_{|X|}$.
+    Let forest $F$ be a forest, $X \subseteq V \times V$ be a conflict-free set
+    in $F$ and $Y = \{(\rho_F(u), \rho_F(v)) : (u, v) \in X\}$. We will show
+    that $F_n \cong G_n$. We know that for some $(y, w) \in Y$ then $y \neq y'$
+    for all  $(y', w') \in Y \backslash \{(y, w)\}$ since otherwise $(V, Y)$
+    would not be a forest and $X$ would not be a conflict-free set in $F$. So
+    all substitutions $\mathcal{S}$ will only give a root $y$ a new parent $w$
+    once. So $\rho_{F_n}(y) = \rho_{F_n}(w)$ and $\rho_{G_n}(y) = \rho_{G_n}(w)$
+    hence $y$ remains in the same tree in both $F_n$ and $G_n$. Since this holds
+    for all $(y, w) \in Y$ it follows that all elements in $V$ remains in the
+    same tree in both $F_n$ and $G_n$. Hence $F_n \cong G_n$.
 \end{proof}
 
 \begin{algorithm}[Conflict-free Tree Union]
