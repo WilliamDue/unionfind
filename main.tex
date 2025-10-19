@@ -341,23 +341,12 @@
 
 \begin{definition}[Forests with Equivalent Tree Sets]
     Two forests $F = (V, E)$ and $F' = (V', E')$ have equivalent tree sets $F
-    \cong F'$ if $V = V$ and
+    \cong F'$ if:
     \begin{itemize}
         \item Vertices are the same $V = V'$.
         \item The tree sets are equivalent $\mathcal{E}_{F}(v) =
         \mathcal{E'}_F(v)$ for all $v \in V$.
     \end{itemize}
-\end{definition}
-
-\begin{definition}[Change Parent]
-    The function for changing a parent of an element $i$ to $p$ in a forest
-    $F = (V, E)$ is defined as:
-    \begin{align*}
-        \mathcal{S}_F(i, p) := \begin{cases}
-            (V, (E \backslash \{(i, p')\}) \cup \{(i, p)\}) & \text{if } (i, p') \in E \\
-            (V, E \cup \{(i, p)\}) & \text{if } (i, p') \notin E
-        \end{cases}
-    \end{align*}
 \end{definition}
 
 \begin{definition}[Tree Union]
@@ -371,36 +360,31 @@
     \end{enumerate}
 \end{definition}
 
-\begin{proposition}[Tree Union by Parent]\label{def:tree-union-by-parent}
+\begin{proposition}[Tree Union]\label{def:tree-union}
     Let forest $F = (V, E)$, $p = \rho_F(u)$ be the representative of $u$ and
     let $q = \rho_F(v)$ be the representative of $v$ where $q \neq p$. Then
     defined $F'$ as:
     \begin{align*}
-        F' &:= \mathcal{S}_{F}(q, p)
+        F' &:= (V, E \cup \{(q, p)\})
     \end{align*}
     Then $u \sim_{F'} v$ in $F'$ and $F'$ will satisfy the properties of a tree
     union.
 \end{proposition}
 
 \begin{proof}
-    Let $F = (V, E)$, $p = \rho_F(u)$ be the representative of $u$ and
-    let $q = \rho_F(v)$ be the representative of $v$.
-    \begin{itemize}
-        \item If $p = q$ hence we already have $u \sim_{F} v$ in $F$ and since the
-        tree sets are equivalent $F' \cong F$ then the properties are satisfied.
-        \item If $p \neq q$ then by definition of changing parent then $q$ will
-        have parent $p$ in $F'$ and since $q$ is a root it has no parent and $F'
-        = (V, E \cup \{(q, p)\})$. Now for all $w \in \mathcal{E}_F(q)$ it holds
-        that $w \leadsto q$ or $q = w$ and since $q \leadsto p$ it follows that
-        $w \leadsto p$. Hence $w \in \mathcal{E}_{F'}(p)$ for all $w \in
-        \mathcal{E}_F(q)$ and trivially $w \in \mathcal{E}_{F'}(p)$ for all $w
-        \in \mathcal{E}_F(p)$ so it follows that $\mathcal{E}_{F'}(v) =
-        \mathcal{E}_{F'}(u) = \mathcal{E}_F(v) \cup \mathcal{E}_F(u)$. Now let
-        $w \in V \backslash (\mathcal{E}_F(v) \cup \mathcal{E}_F(u))$ be an
-        arbitrary element. Since $w \centernot\leadsto p$ and $w
-        \centernot\leadsto q$ it follows that $w$ has the same representative in
-        $F'$ as in $F$ hence $\mathcal{E}_{F'}(w) = \mathcal{E}_F(w)$. 
-    \end{itemize}
+    Let $F = (V, E)$, $p = \rho_F(u)$ be the representative of $u$ and let $q =
+    \rho_F(v)$ be the representative of $v$. By definition $q$ will have parent
+    $p$ in $F'$ and since $q$ is a root it has no parent then $F'$ is a forest.
+    Now for all $w \in \mathcal{E}_F(q)$ it holds that $w \leadsto q$ or $q = w$
+    and since $q \leadsto p$ it follows that $w \leadsto p$. Hence $w \in
+    \mathcal{E}_{F'}(p)$ for all $w \in \mathcal{E}_F(q)$ and trivially $w \in
+    \mathcal{E}_{F'}(p)$ for all $w \in \mathcal{E}_F(p)$ so it follows that
+    $\mathcal{E}_{F'}(v) = \mathcal{E}_{F'}(u) = \mathcal{E}_F(v) \cup
+    \mathcal{E}_F(u)$. Now let $w \in V \backslash (\mathcal{E}_F(v) \cup
+    \mathcal{E}_F(u))$ be an arbitrary element. Since $w \centernot\leadsto p$,
+    $w \neq p$, $w \centernot\leadsto q$, and $w \neq q$ it follows that $w$ has
+    the same representative in $F'$ as in $F$ hence $\mathcal{E}_{F'}(w) =
+    \mathcal{E}_F(w)$.
 \end{proof}
 
 \begin{definition}[Conflict-free Set]
@@ -410,33 +394,33 @@
 \end{definition}
 
 \begin{proposition}
-    Let forest $F$ be a forest and let $X \subseteq V \times V$ be a
+    Let forest $F = (V, E)$ be a forest and let $X \subseteq V \times V$ be a
     conflict-free set in $F$ where $|X| = n$. Then defining the following forests:
     \begin{align*}
         F_0 &:= F \\
-        F_{i} &:= S_{F}(\rho_F(u_i), \rho_F(v_i)) \text{ for } (u_i, v_i) \in X \text{ and } 1 \leq i \leq n
+        F_{i} &:= (V, E_{i - 1} \cup \{(\rho_F(u_i), \rho_F(v_i))\}) \text{ for } (u_i, v_i) \in X \text{ and } 1 \leq i \leq n
     \end{align*}
-    Then $F_{n}$ is a forest.
+    Then $F_n$ is a forest.
 \end{proposition}
 
 \begin{proof}
-    Let forest $F$ be a forest, $X \subseteq V \times V$ be a
+    Let forest $F = (V, E)$ be a forest, $X \subseteq V \times V$ be a
     conflict-free set in $F$ and $Y = \{(\rho_F(u), \rho_F(v)) : (u, v) \in
     X\}$. We will show that $F_n$ is a forest by induction on $i$.
     \begin{itemize}
-        \item Base case: If $i = 0$ then $F_i = F_0 = F$ which is a forest by
-        assumption.
+        \item Base case: If $i = 0$ then $F_i = F_0 = F$ which is a forest.
         \item Induction hypothesis: Assume that $F_{i - 1}$ is a forest for all
         $1 \leq i < n$.  Let $(y, w) \in Y$ be the pair corresponding to $(u_i,
         v_i) \in X$ such that  $(\rho_F(u_i), \rho_F(v_i)) = (y, w) \in Y$. We
         know that $y \neq y'$ for all  $(y', w') \in Y \backslash \{(y, w)\}$
         since otherwise $(V, Y)$ would not be a forest and $X$ would not be a
-        conflict-free set in $F$. So $y$ will only have one parent in $F_i$ since
-        it only appears once as a child in $Y$ once. Secondly since $(V, Y)$ is
-        a forest there are no cycles $y \centernot\leadsto y$ for all $y \in V$.
-        And also since none of the edges in $Y$ is made of roots in $F$ it
-        follows that no cycles are made in $F_i$. Hence $F_i$ is a forest.
+        conflict-free set in $F$. So $y$ will only have one parent in $F_i$
+        since it only appears once as a child in $Y$. By definition all of the
+        edges in $Y$ consists of roots in $F$, and since $(V, Y)$ is a forest
+        there are no cycles $y \centernot\leadsto y$ for all $y \in V$ in $F_i$.
+        Hence $F_i$ is a forest.
     \end{itemize}
+    Thus by induction $F_n$ is a forest.
 \end{proof}
 
 \begin{proposition}
@@ -444,9 +428,9 @@
     conflict-free set in $F$ where $|X| = n$. Then defining the following forests:
     \begin{align*}
         F_0 &:= F \\
-        F_{i} &:= S_{F}(\rho_F(u_i), \rho_F(v_i)) \text{ for } (u_i, v_i) \in X \text{ and } 1 \leq i \leq n \\
+        F_{i} &:= (V, E_{i - 1} \cup \{(\rho_F(u_i), \rho_F(v_i))\}) \text{ for } (u_i, v_i) \in X \text{ and } 1 \leq i \leq n \\
         G_0 &:= F \\
-        G_{j} &:= S_{G_{j-1}}(\rho_{G_{j - 1}}(u_j), \rho_{G_{j - 1}}(v_j)) \text{ for } (u_j, v_j) \in X \text{ and } 1 \leq j \leq n
+        G_{j} &:= (V, E_{i - 1} \cup \{(\rho_{G_{j - 1}}(u_j), \rho_{G_{j - 1}}(v_j))\}) \text{ for } (u_j, v_j) \in X \text{ and } 1 \leq j \leq n
     \end{align*}
     Then $F_{n} \cong G_{n}$.
 \end{proposition}
@@ -469,10 +453,11 @@
     union algorithm is defined as:
     \begin{align*}
         & \kw{while} \: Z \neq \emptyset \: \kw{do} \\
-        & \quad F' := F \\
+        & \quad E := \pi_2(F) \\
         & \quad \text{pick conflict-free } X \subseteq Z \\
-        & \quad \kw{for} \: (u, v) \in X \: \kw{do} \\
-        & \quad \quad F := S_{F'}(u, v) \\
+        & \quad \kw{parfor} \: (u, v) \in X \: \kw{do} \\
+        & \quad \quad E := E \cup \{(\rho_F(u), \rho_F(v))\} \\
+        & \quad F := (V, E) \\
         & \quad Z := Z \backslash X
     \end{align*}
 \end{algorithm}
