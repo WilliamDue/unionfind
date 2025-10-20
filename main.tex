@@ -467,6 +467,15 @@
     \subseteq V \times V$ be a set of pairs of elements in $V$.
 \end{algorithm}
 
+\begin{proof}
+    Let $G = (V, E)$ be a graph where $(v, v) \notin E$, it will show that:
+    \begin{gather*}
+        \left| \left\{v : (v, u) \in E\right\} \right| < \left\lfloor \frac{|V|}{2} \right\rfloor \\
+        \iff \\
+        \left| \left\{u : (v, u) \in E\right\} \right| \geq \left\lfloor \frac{|V|}{2} \right\rfloor 
+    \end{gather*}
+\end{proof}
+
 \begin{definition}[Union-Find Structure]
     The union-find structure $U$ is a forest $U = (V, E)$ where the vertices $V
     = S$ for some set of elements $S$. The edges $E \subseteq V \times V$
