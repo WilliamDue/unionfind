@@ -259,7 +259,7 @@
     root $r \in V$ such that there is a path from $v$ to $r$. This is defined as
     the function:
     \begin{align*}
-        \rho_F(v) := r \text{ where } r \in V \land \mathcal{R}_F(r) \land (v \leadsto r \lor v = r)
+        \rho_F(v) := r \text{ where } r \in V \text{ such that } \mathcal{R}_F(r) \land (v \leadsto r \lor v = r)
     \end{align*}
 \end{definition}
 
@@ -281,7 +281,7 @@
     The set of vertices of the same tree $\mathcal{E}_F(v)$ in a
     forest $F = (V, E)$ is defined as:
     \begin{align*}
-        \mathcal{E}_F(v) := \{u : u \in V \land \rho_F(u) = \rho_F(v))\}
+        \mathcal{E}_F(v) := \{u : u \in V \text{ where } \rho_F(u) = \rho_F(v))\}
     \end{align*}
 \end{definition}
 
@@ -388,9 +388,9 @@
 \end{proof}
 
 \begin{definition}[Conflict-free Set]
-    Let forest $F$ be a forest, $X \subseteq V \times V$ be a set of pairs of
-    elements in $V$ and $Y = \{(\rho_F(u), \rho_F(v)) : (u, v) \in X\}$. Then
-    $X$ is a conflict-free set in $F$ if $(V, Y)$ is a forest.
+    Let $F$ be a forest, $X \subseteq \{(\rho_F(v), \rho_F(u)) : (v, u) \in V
+    \times V\}$ be a set of root pairs. Then $X$ is a conflict-free set in $F$
+    if $(V, Y)$ is a forest.
 \end{definition}
 
 \begin{proposition}
@@ -398,27 +398,26 @@
     conflict-free set in $F$ where $|X| = n$. Then defining the following forests:
     \begin{align*}
         F_0 &:= F \\
-        F_{i} &:= (V, E_{i - 1} \cup \{(\rho_F(u_i), \rho_F(v_i))\}) \text{ for } (u_i, v_i) \in X \text{ and } 1 \leq i \leq n
+        F_{i} &:= (V, E_{i - 1} \cup \{(v_i, u_i)\}) \text{ for } (v_i, u_i) \in X \text{ and } 1 \leq i \leq n
     \end{align*}
     Then $F_n$ is a forest.
 \end{proposition}
 
 \begin{proof}
     Let forest $F = (V, E)$ be a forest, $X \subseteq V \times V$ be a
-    conflict-free set in $F$ and $Y = \{(\rho_F(u), \rho_F(v)) : (u, v) \in
-    X\}$. We will show that $F_n$ is a forest by induction on $i$.
+    conflict-free set in $F$. We will show that $F_n$ is a forest by induction
+    on $i$.
     \begin{itemize}
         \item Base case: If $i = 0$ then $F_i = F_0 = F$ which is a forest.
         \item Induction hypothesis: Assume that $F_{i - 1}$ is a forest for all
-        $1 \leq i < n$.  Let $(y, w) \in Y$ be the pair corresponding to $(u_i,
-        v_i) \in X$ such that  $(\rho_F(u_i), \rho_F(v_i)) = (y, w) \in Y$. We
-        know that $y \neq y'$ for all  $(y', w') \in Y \backslash \{(y, w)\}$
-        since otherwise $(V, Y)$ would not be a forest and $X$ would not be a
-        conflict-free set in $F$. So $y$ will only have one parent in $F_i$
-        since it only appears once as a child in $Y$. By definition all of the
-        edges in $Y$ consists of roots in $F$, and since $(V, Y)$ is a forest
-        there are no cycles $y \centernot\leadsto y$ for all $y \in V$ in $F_i$.
-        Hence $F_i$ is a forest.
+        $1 \leq i < n$.  Let $(v_i, u_i) \in X$, we know that $v_i \neq v_j$ for
+        all $(v_j, u_j) \in Y \backslash \{(v_i, u_i)\}$ since otherwise $(V,
+        X)$ would not be a forest and $X$ would not be a conflict-free set in
+        $F$. So $v_i$ will only have one parent in $F_i$ since it only appears
+        once as a child in $(V, X)$. By definition all of the edges in $X$
+        consists of roots in $F$, and since $(V, X)$ is a forest there are no
+        cycles $y \centernot\leadsto y$ for all $y \in V$ in $F_i$. Hence $F_i$
+        is a forest.
     \end{itemize}
     Thus by induction $F_n$ is a forest.
 \end{proof}
@@ -428,24 +427,34 @@
     conflict-free set in $F$ where $|X| = n$. Then defining the following forests:
     \begin{align*}
         F_0 &:= F \\
-        F_{i} &:= (V, E_{i - 1} \cup \{(\rho_F(u_i), \rho_F(v_i))\}) \text{ for } (u_i, v_i) \in X \text{ and } 1 \leq i \leq n \\
+        F_{i} &:= (V, E_{i - 1} \cup \{(v_i, u_i)\}) \text{ for } (v_i, u_i) \in X \text{ and } 1 \leq i \leq n \\
         G_0 &:= F \\
-        G_{j} &:= (V, E_{i - 1} \cup \{(\rho_{G_{j - 1}}(u_j), \rho_{G_{j - 1}}(v_j))\}) \text{ for } (u_j, v_j) \in X \text{ and } 1 \leq j \leq n
+        G_{j} &:= (V, E_{i - 1} \cup \{(\rho_{G_{j - 1}}(v_j), \rho_{G_{j - 1}}(u_j))\}) \text{ for } (v_j, u_j) \in X \text{ and } 1 \leq j \leq n
     \end{align*}
     Then $F_{n} \cong G_{n}$.
 \end{proposition}
 \begin{proof}
     Let forest $F$ be a forest, $X \subseteq V \times V$ be a conflict-free set
-    in $F$ and $Y = \{(\rho_F(u), \rho_F(v)) : (u, v) \in X\}$. We will show
-    that $F_n \cong G_n$. We know that for some $(y, w) \in Y$ then $y \neq y'$
-    for all  $(y', w') \in Y \backslash \{(y, w)\}$ since otherwise $(V, Y)$
-    would not be a forest and $X$ would not be a conflict-free set in $F$. So
-    all edge set unions will only give a root $y$ a new parent $w$ once. So
-    $\rho_{F_n}(y) = \rho_{F_n}(w)$ and $\rho_{G_n}(y) = \rho_{G_n}(w)$ hence
-    $y$ remains in the same tree in both $F_n$ and $G_n$. Since this holds for
-    all $(y, w) \in Y$ it follows that all elements in $V$ remains in the same
-    tree in both $F_n$ and $G_n$. Hence $F_n \cong G_n$.
+    in $F$. We will show that $F_n \cong G_n$. We know that for some $(v_i, u_i)
+    \in X$ then $v_i \neq y$ for all  $(y, w) \in X \backslash \{(v_i, u_i)\}$
+    since otherwise $(V, X)$ would not be a forest and $X$ would not be a
+    conflict-free set in $F$. So all edge set unions will only give a root $v_i$
+    a new parent $u_i$ once. So $\rho_{F_n}(v_i) = \rho_{F_n}(u_i)$ and
+    $\rho_{G_n}(u_i) = \rho_{G_n}(v_i)$ hence $v_i$ remains in the same tree in
+    both $F_n$ and $G_n$. Since this holds for all $(v_i, u_i) \in X$ it follows
+    that all elements in $V$ remains in the same tree in both $F_n$ and $G_n$.
+    Hence $F_n \cong G_n$.
 \end{proof}
+
+
+\begin{definition}[Split]
+    A split of a set $Z \subseteq V \times V$ into two sets $X, Z' \subseteq Y$
+    such that $X$ is a conflict-free set in forest $F$ and $X = Y \backslash Z'$
+    where: 
+    \begin{align*}
+        Y = \{(a, b) : (v, u) \in X \text{ where } \{a, b\} = \{\rho_F(v), \rho_F(u)\} \land a \neq b \}
+    \end{align*}
+\end{definition}
 
 \begin{algorithm}[Conflict-free Tree Union]
     Let forest $F$ be a tree and let $Z \subseteq V \times V$ be a set of pairs
@@ -453,19 +462,40 @@
     union algorithm is defined as:
     \begin{align*}
         & \kw{while} \: Z \neq \emptyset \: \kw{do} \\
-        & \quad E := \pi_2(F) \\
-        & \quad \text{pick conflict-free } X \subseteq Z \\
+        & \quad E \leftarrow \pi_2(F) \\
+        & \quad \text{split } Z \text{ into } X, Z' \\
         & \quad \kw{parfor} \: (u, v) \in X \: \kw{do} \\
-        & \quad \quad E := E \cup \{(\rho_F(u), \rho_F(v))\} \\
-        & \quad F := (V, E) \\
-        & \quad Z := \{(u, v) : (u, v) \in Z \backslash X \land \rho_F(u) \neq \rho_F(v)\} \\
+        & \quad \quad E \leftarrow E \cup \{(u, v)\} \\
+        & \quad F \leftarrow (V, E) \\
+        & \quad Z \leftarrow Z'
     \end{align*}
 \end{algorithm}
 
-\begin{algorithm}[Conflict-free Find]
-    Let forest $F = (V, E)$ be a forest, $(V, \leq)$ be a total ordering and $Z
-    \subseteq V \times V$ be a set of pairs of elements in $V$.
-\end{algorithm}
+\begin{definition}[Strongly Connected Graph]
+    A strongly connected graph $G = (V, E)$ is a directed graph where for if $G'
+    = (V, E \cup \{(u, v) : (v, u) \in E\})$. Then for all $u, v \in V$ it holds
+    that $u \leadsto v$.
+\end{definition}
+
+\begin{proposition}[Maximum Edges in Conflict-free Set]
+    Let $V$ be a set and $Z \subseteq V \times V$ be a set that will be split into
+    a conflict-free set $X$ and a remainder set $Z'$. Then it is possible to
+    find the maximum conflict-free set $X$ such that $|Z| = 0$ and $|X| = |V| -
+    k$ where $k$ is the number of strongly connected components in the graph
+    $G = (V, Z)$.
+\end{proposition}
+
+\begin{proof}
+    By definition of a split then we can swap the components of any pair in $Z$.
+    So if we consider the undirected graph $G' = (V, A)$ where $A = \{\{u, v\} :
+    (u, v) \in Z\}$ then it has $k$ strongly connected components. Now by
+    choosing some arbitrary tree which connects all vertices in each strongly
+    connected component and directing the edges such that the tree has some
+    arbitrary root in each component it will create a conflict-free set $X$
+    where $|X| = |V| - k$ since each tree will have exactly one root that will
+    not have a parent. And since all other edges in $Z$ will already be in some
+    tree in $(V, X)$ it follows that $Z' = \emptyset$.
+\end{proof}
 
 \begin{proof}
     Let $G = (V, E)$ be a graph where $(v, v) \notin E$, it will show that:
