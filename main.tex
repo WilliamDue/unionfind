@@ -497,14 +497,17 @@
     tree in $(V, X)$ it follows that $Z' = \emptyset$.
 \end{proof}
 
-\begin{proof}
-    Let $G = (V, E)$ be a graph where $(v, v) \notin E$, it will show that:
-    \begin{gather*}
-        \left| \left\{v : (v, u) \in E\right\} \right| < \left\lfloor \frac{|V|}{2} \right\rfloor \\
-        \iff \\
-        \left| \left\{u : (v, u) \in E\right\} \right| \geq \left\lfloor \frac{|V|}{2} \right\rfloor 
-    \end{gather*}
-\end{proof}
+\begin{definition}[Isolated Vertex]
+    An \emph{isolated vertex} in a directed graph $G = (V, E)$ is a $v \in V$
+    such that $(u, v) \notin E$ and $(u, v) \notin E$ for some $u \in V$.
+\end{definition}
+
+\begin{proposition}[Edge Swap Bound]
+    Let $G = (V, E)$ be a directed graph where all edges occur in atleast
+    \begin{align*}
+        |\{v : (v, u) \in E\}| < \frac{|V|}{2} \implies |\{u : (v, u) \in E\}| \geq \frac{|V|}{2} 
+    \end{align*}
+\end{proposition}
 
 \begin{definition}[Union-Find Structure]
     The union-find structure $U$ is a forest $U = (V, E)$ where the vertices $V
