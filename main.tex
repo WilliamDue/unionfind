@@ -503,11 +503,20 @@
 \end{definition}
 
 \begin{proposition}[Edge Swap Bound]
-    Let $G = (V, E)$ be a directed graph where all edges occur in atleast
+    Let $G = (V, E)$ be a directed graph without isolated vertices then:
     \begin{align*}
-        |\{v : (v, u) \in E\}| < \frac{|V|}{2} \implies |\{u : (v, u) \in E\}| \geq \frac{|V|}{2} 
+        |\{v : (v, u) \in E\}| < \frac{|V|}{2} \implies |\{u : (v, u) \in E\}| > \frac{|V|}{2} 
     \end{align*}
 \end{proposition}
+\begin{proof}
+    Let $G = (V, E)$ without any isolated vertices and $|\{v : (v, u) \in E\}| < \frac{|V|}{2}$.
+    Let $A = \{v : (v, u) \in E\}$, $B = \{u : (v, u) \in E\}$ and $C = B \backslash A$.
+    By definition of $C$ we have $A \cap C = \emptyset$ so $|A| + |C| = |V|$ and since $|B| \geq |C|$ we can conclude that:
+    \begin{align*}
+        |B| \geq |C| = |V| - |A| > |V| - \frac{|V|}{2} = \frac{|V|}{2}
+    \end{align*}
+    Hence $|\{u : (v, u) \in E\}| > \frac{|V|}{2}$.
+\end{proof}
 
 \begin{definition}[Union-Find Structure]
     The union-find structure $U$ is a forest $U = (V, E)$ where the vertices $V
