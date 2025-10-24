@@ -229,15 +229,14 @@
     Let $F = (V, E)$ be a forest and let $v \in V$ be an arbitrary element in
     $V$. By proposition \ref{prop:forest-root-count} there exists at least one
     root $r \in V$ such that $\mathcal{R}_F(r)$. This can be shown by structural
-    induction on a vertex $v \in V$ that any $p \in V$ such that $v \leadsto p$
-    has a path $p \leadsto r$.
+    induction on a vertex $v \in V$ that any $(v, p) \in E$ then either $p = r$
+    or $p$ has a path to some root $r \in V$.
     \begin{itemize}
-        \item If $v$ is a root then we are done.
-        \item By induction hypothesis $v$ has a path to a root $r \in V$ such
-        that $\mathcal{R}_F(r)$. Since $v$ is not a root it must have a parent
-        $p \in V$ such that $(v, p) \in E$. Since $v \leadsto r$, $v \leadsto p$
-        and $v$ only has one parent it follows that $p \leadsto r$. Hence $p
-        \leadsto r$ for some root $r \in V$ such that $\mathcal{R}_F(r)$.
+        \item If $p = r$ then $p$ is a root and $v$ has a path to a root $r$ by
+        $(v, r) \in E$.
+        \item By induction hypothesis $p$ has a path to a root $r \in V$ such
+        that $\mathcal{R}_F(r)$. Since $(v, p) \in E$ it follows that $v
+        \leadsto p \leadsto r$ so .
     \end{itemize}
 \end{proof}
 
