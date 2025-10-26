@@ -392,7 +392,7 @@
     if $(V, Y)$ is a forest.
 \end{definition}
 
-\begin{proposition}
+\begin{proposition}[Conflict-free Forest Union]\label{prop:conflict-free-forest-union}
     Let forest $F = (V, E)$ be a forest and let $X \subseteq V \times V$ be a
     conflict-free set in $F$ where $|X| = n$. Then defining the following forests:
     \begin{align*}
@@ -421,7 +421,7 @@
     Thus by induction $F_n$ is a forest.
 \end{proof}
 
-\begin{proposition}
+\begin{proposition}[Conflict-free Set Equivalence]\label{prop:conflict-free-set-equivalence}
     Let forest $F$ be a forest and let $X \subseteq V \times V$ be a
     conflict-free set in $F$ where $|X| = n$. Then defining the following forests:
     \begin{align*}
@@ -445,16 +445,6 @@
     Hence $F_n \cong G_n$.
 \end{proof}
 
-
-\begin{definition}[Split]
-    A split of a set $Z \subseteq V \times V$ into two sets $X, Z' \subseteq Y$
-    such that $X$ is a conflict-free set in forest $F$ and $X = Y \backslash Z'$
-    where: 
-    \begin{align*}
-        Y = \{(a, b) : (v, u) \in X \text{ where } \{a, b\} = \{\rho_F(v), \rho_F(u)\} \land a \neq b \}
-    \end{align*}
-\end{definition}
-
 \begin{algorithm}[Conflict-free Tree Union]
     Let forest $F$ be a tree and let $Z \subseteq V \times V$ be a set of pairs
     of elements in $V$ that will be unioned in parallel. The conflict-free tree
@@ -470,52 +460,112 @@
     \end{align*}
 \end{algorithm}
 
-\begin{definition}[Strongly Connected Graph]
-    A strongly connected graph $G = (V, E)$ is a directed graph where for if $G'
-    = (V, E \cup \{(u, v) : (v, u) \in E\})$. Then for all $u, v \in V$ it holds
-    that $u \leadsto v$.
-\end{definition}
-
-\begin{proposition}[Maximum Edges in Conflict-free Set]
-    Let $V$ be a set and $Z \subseteq V \times V$ be a set that will be split into
-    a conflict-free set $X$ and a remainder set $Z'$. Then it is possible to
-    find the maximum conflict-free set $X$ such that $|Z| = 0$ and $|X| = |V| -
-    k$ where $k$ is the number of strongly connected components in the graph
-    $G = (V, Z)$.
-\end{proposition}
-
-\begin{proof}
-    By definition of a split then we can swap the components of any pair in $Z$.
-    So if we consider the undirected graph $G' = (V, A)$ where $A = \{\{u, v\} :
-    (u, v) \in Z\}$ then it has $k$ strongly connected components. Now by
-    choosing some arbitrary tree which connects all vertices in each strongly
-    connected component and directing the edges such that the tree has some
-    arbitrary root in each component it will create a conflict-free set $X$
-    where $|X| = |V| - k$ since each tree will have exactly one root that will
-    not have a parent. And since all other edges in $Z$ will already be in some
-    tree in $(V, X)$ it follows that $Z' = \emptyset$.
-\end{proof}
 
 \begin{definition}[Isolated Vertex]
     An \emph{isolated vertex} in a directed graph $G = (V, E)$ is a $v \in V$
     such that $(u, v) \notin E$ and $(u, v) \notin E$ for some $u \in V$.
 \end{definition}
-
-\begin{proposition}[Edge Swap Bound]
+\begin{proposition}[Edge Vertex Cover]
     Let $G = (V, E)$ be a directed graph without isolated vertices then:
     \begin{align*}
-        |\{v : (v, u) \in E\}| < \frac{|V|}{2} \implies |\{u : (v, u) \in E\}| > \frac{|V|}{2} 
+        \{v : (v, u) \in E\} \cup \{u : (v, u) \in E\} = V
     \end{align*}
 \end{proposition}
 \begin{proof}
-    Let $G = (V, E)$ without any isolated vertices and $|\{v : (v, u) \in E\}| < \frac{|V|}{2}$.
-    Let $A = \{v : (v, u) \in E\}$, $B = \{u : (v, u) \in E\}$ and $C = B \backslash A$.
-    By definition of $C$ we have $A \cap C = \emptyset$ so $|A| + |C| = |V|$ and since $|B| \geq |C|$ we can conclude that:
-    \begin{align*}
-        |B| \geq |C| = |V| - |A| > |V| - \frac{|V|}{2} = \frac{|V|}{2}
-    \end{align*}
-    Hence $|\{u : (v, u) \in E\}| > \frac{|V|}{2}$.
+    Let $G = (V, E)$ without any isolated vertices. Let $v \in V$ be an
+    arbitrary element in $V$. Since $v$ is not an isolated vertex it follows
+    that there exists some $u \in V$ such that either $(v, u) \in E$ or $(u, v)
+    \in E$. In the first case it follows that $v \in \{v : (v, u) \in E\}$ and
+    in the second case it follows that $v \in \{u : (v, u) \in E\}$. Since $v$
+    was arbitrary it follows that $\{v : (v, u) \in E\} \cup \{u : (v, u) \in
+    E\} = V$.
 \end{proof}
+
+\begin{proposition}[Ordered Edges Implies Acyclicity]
+    Let $G = (V, E)$ be a directed graph where for all $(v, u) \in E$ it holds
+    that $v < u$ for some total order $(V, <)$. Then $G$ has no cycles.
+\end{proposition}
+
+\begin{proof}
+    Let $G = (V, E)$ be a directed graph where for all $(u, v) \in E$ it holds
+    that $u < v$ for some total order $(V, <)$. Let edges $e_1, e_2, \ldots, e_m
+    \in E$ where $m \geq 1$ and $e_i = (v_{i-1}, v_i)$ for $1 \leq i \leq m$ be
+    some path in $G$. Since the edges are ordered it follows that:
+    \begin{align*}
+        v_0 < v_1 < v_2 < \cdots < v_{m - 1} < v_m
+    \end{align*}
+    Hence by transitivity of the total order it follows that $v_0 < v_m$. So
+    $v_0 \neq v_m$ hence there are no cycles in $G$.
+\end{proof}
+
+\begin{proposition}[Inverted Acyclic Graph is Acyclic]
+    Let $G = (V, E)$ be a directed acyclic graph. Then the inverted graph $G' =
+    (V, E')$ where $E' = \{(u, v) : (v, u) \in E\}$ is also acyclic.
+\end{proposition}
+\begin{proof}
+    Let $G = (V, E)$ be a directed acyclic graph and $G' = (V, E')$ where $E' =
+    \{(u, v) : (v, u) \in E\}$ is the inverted graph. Let edges $e_1, e_2,
+    \ldots, e_m \in E'$ where $m \geq 1$ and $e_i = (v_{i-1}, v_i)$ for $1 \leq
+    i \leq m$ be some path in $G'$. By definition of $E'$ it follows that there
+    exists edges $e'_1, e'_2, \ldots, e'_m \in E$ where $e'_i = (v_i, v_{i-1})$
+    for $1 \leq i \leq m$. If there was a cycle in $G'$ then it would hold that
+    $v_0 = v_m$. But since $G$ is acyclic it follows that $v_0 \neq v_m$. Hence
+    there are no cycles in $G'$.  
+\end{proof}
+
+\begin{algorithm}[Left Maximal Union]
+    Let forest $F = (V, E)$ be a forest and let $Z \subseteq \{(\rho_F(v),
+    \rho_F(u)) : (v, u) \in V \times V\}$ be a set of root pairs $F$ and $(V,
+    Z)$ is an acyclic directed graph. The left maximal conflict-free set
+    algorithm is defined as:
+    \begin{align*}
+        & \id{LeftMaximalUnion}(F, Z) \\ 
+        1. & \qquad (V, E) \leftarrow F \\
+        2. & \qquad \text{Let } X \subseteq Z \text{ where } \{v : (v, u) \in X\} = \{v : (v, u) \in Z\} \\
+        & \qquad \qquad \qquad \quad \: \: \: 
+        \: \text{ and } |X| = |\{v : (v, u) \in Z\}| \\
+        3. & \qquad E \leftarrow E \cup X \\
+        4. & \qquad \kw{return} \: ((V, E), Z \backslash X)
+    \end{align*}
+\end{algorithm}
+\begin{proposition}[Left Maximal Union Correctness]
+    Let forest $F = (V, E)$ be a forest and let $Z \subseteq \{(\rho_F(v),
+    \rho_F(u)) : (v, u) \in V \times V\}$ be a set of root pairs $F$ and $(V,
+    Z)$ is an acyclic directed graph. Then the left maximal conflict-free set
+    algorithm returns a forest $F' = (V, E')$ and a conflict-free set $X
+    \subseteq Z$ in $F$.
+\end{proposition}
+\begin{proof}
+    Let forest $F = (V, E)$ be a forest and let $Z \subseteq \{(\rho_F(v),
+    \rho_F(u)) : (v, u) \in V \times V\}$ be a set of root pairs $F$ and $(V,
+    Z)$ is an acyclic directed graph. Since $X$ is defined such that $\{v : (v,
+    u) \in X\} = \{v : (v, u) \in Z\}$ and $|X| = |\{v : (v, u) \in Z\}|$ it
+    follows that $X$ is a conflict-free set in $F$ since no vertex $v$ appears
+    more than once as a child in $X$ i.e. $(V, X)$ is a forest. By adding the
+    edges in $X$ to $E$ it follows by proposition
+    \ref{prop:conflict-free-forest-union} that $F' = (V, E')$ is a forest where
+    $E' = E \cup X$.
+\end{proof}
+
+\begin{algorithm}[Parallel Tree Union]
+    Let forest $F = (V, E)$ be a tree and let $A \subseteq V \times V$ be a set of pairs
+    of elements in $V$ that will be unioned in parallel. The parallel tree union
+    algorithm is defined as:
+    \begin{align*}
+        1. & \quad Z' \leftarrow \{(\rho_F(v), \rho_F(u)) : (v, u) \in A \land \rho_F(v) \neq \rho_F(u)\} \\
+        2. & \quad Z'' \leftarrow \{(\min \{v, u\}, \max \{v, u\}) : (v, u) \in Z'\} \\
+        3. & \quad (F_1, Z_1) \leftarrow \id{LeftMaximalUnion}(F, Z'') \\
+        4. & \quad Z_1' \leftarrow \{(\rho_{F_1}(u), \rho_{F_1}(v)) : (v, u) \in Z_1 \land \rho_{F_1}(v) \neq \rho_{F_1}(u)\} \\
+        5. & \quad (F_2, Z_2) \leftarrow \id{LeftMaximalUnion}(F_1, Z_1') \\
+        6. & \quad \kw{return} \: F_2
+    \end{align*}
+\end{algorithm}
+\begin{proposition}[Parallel Tree Union Correctness]
+    Let forest $F = (V, E)$ be a tree and let $A \subseteq V \times V$ be a set of pairs
+    of elements in $V$ that will be unioned in parallel. Then the parallel tree union
+    algorithm returns a forest $F' = (V, E')$ where for all $(v, u) \in A$ it holds that
+    $v \sim_{F'} u$.
+\end{proposition}
 
 \begin{definition}[Union-Find Structure]
     The union-find structure $U$ is a forest $U = (V, E)$ where the vertices $V
