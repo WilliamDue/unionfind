@@ -481,7 +481,7 @@
     E\} = V$.
 \end{proof}
 
-\begin{proposition}[Ordered Edges Implies Acyclicity]
+\begin{proposition}[Ordered Edges Implies Acyclicity]\label{prop:ordered-edges-implies-acyclicity}
     Let $G = (V, E)$ be a directed graph where for all $(v, u) \in E$ it holds
     that $v < u$ for some total order $(V, <)$. Then $G$ has no cycles.
 \end{proposition}
@@ -498,7 +498,7 @@
     $v_0 \neq v_m$ hence there are no cycles in $G$.
 \end{proof}
 
-\begin{proposition}[Inverted Acyclic Graph is Acyclic]
+\begin{proposition}[Inverted Acyclic Graph is Acyclic]\label{prop:inverted-acyclic-graph}
     Let $G = (V, E)$ be a directed acyclic graph. Then the inverted graph $G' =
     (V, E')$ where $E' = \{(u, v) : (v, u) \in E\}$ is also acyclic.
 \end{proposition}
@@ -513,7 +513,7 @@
     there are no cycles in $G'$.  
 \end{proof}
 
-\begin{algorithm}[Left Maximal Union]
+\begin{algorithm}[Left Maximal Union]\label{alg:left-maximal-union}
     Let forest $F = (V, E)$ be a forest and let $Z \subseteq \{(\rho_F(v),
     \rho_F(u)) : (v, u) \in V \times V\}$ be a set of root pairs $F$ and $(V,
     Z)$ is an acyclic directed graph. The left maximal conflict-free set
@@ -528,7 +528,7 @@
         4. & \qquad \kw{return} \: ((V, E), Z \backslash X)
     \end{align*}
 \end{algorithm}
-\begin{proposition}[Left Maximal Union Correctness]
+\begin{proposition}[Left Maximal Union Correctness]\label{prop:left-maximal-union-correctness}
     Let forest $F = (V, E)$ be a forest and let $Z \subseteq \{(\rho_F(v),
     \rho_F(u)) : (v, u) \in V \times V\}$ be a set of root pairs $F$ and $(V,
     Z)$ is an acyclic directed graph. Then the left maximal conflict-free set
@@ -547,25 +547,119 @@
     $E' = E \cup X$.
 \end{proof}
 
+\begin{proposition}[Left Maximal Union Time Complexity]
+    Let forest $F = (V, E)$ be a forest and let $Z \subseteq \{(\rho_F(v),
+    \rho_F(u)) : (v, u) \in V \times V\}$ be a set of root pairs $F$ and $(V,
+    Z)$ is an acyclic directed graph. Then the left maximal conflict-free set
+    algorithm runs in $O(|Z|)$ work and $O(\log |Z|)$ depth.
+\end{proposition}
+
+\begin{proof}
+    For step 1. it takes $O(1)$ work and $O(1)$ if we assume that $E$ is only
+    used once in this function. Step 2. can be implemented by a parallel sort on
+    the first element of each pair in $Z$ followed by a parallel filter that
+    selects the first occurrence of each unique first element. This takes
+    $O(|Z|)$ work using radix sort with a fixed key length and $O(\log |Z|)$
+    depth. Step 3. takes $O(|X|)$ work and $O(1)$ depth to add the edges in $X$
+    to $E$. Step 4. takes $O(|Z|)$ work and $O(\log |Z|)$ depth to compute the
+    set difference $Z \backslash X$ by a filter. Hence the total work is
+    $O(|Z|)$ and the total depth is $O(\log |Z|)$. Hence the left maximal
+    conflict-free set algorithm runs in $O(|Z|)$ work and $O(\log |Z|)$ depth.
+\end{proof}
+
+
+\begin{proposition}[Acyclic Directed Graph Presevation]\label{prop:acyclic-directed-graph-preservation}
+    Let $G = (V, E)$ be a directed acyclic graph and let $F = (V, X)$ be a
+    forest where $X \subseteq E$. Then the directed graph $G' = (V, E')$ where
+    $E' = \{(\rho_F(v), \rho_F(u)) : (v, u) \in E \backslash X \land \rho_F(v)
+    \neq \rho_F(u)\}$ is also acyclic.
+\end{proposition}
+\begin{proof}
+    Let $G = (V, E)$ be a directed acyclic graph and let $F = (V, X)$ be a
+    forest where $X \subseteq E$. Let $q$ be a path $e_1, e_2, \ldots, e_m \in
+    E$ where $m \geq 1$ and $e_i = (v_{i-1}, v_i)$ for $1 \leq i \leq m$ be some
+    path in $G$.
+    \begin{itemize}
+        \item If all edges $e_i \notin X$ then the path $q$ exists in $G'$ and
+        does not form a cycle since $G$ is acyclic.
+        \item If $q$ has some subpath $e_j, e_{j+1}, \ldots, e_k \in X$ for $1
+        \leq j < k \leq m$ where $(v_{j - 1}, v_j) \in X$ then $\rho_F(v_{j-1})
+        = \rho_F(v_{j})$ so it will not be in $E \backslash X$. Let $(v, u) \in
+        E$ where $u  = v_{j - 1}$ or $u = v_j$ then $\rho_F(u) = v_k$ so the
+        edge in $G'$ will be $(\rho_F(v), v_k)$.
+        \begin{itemize}
+            \item If $v \in \{w : (w, u) \in X\}$ then $\rho_F(v) = v_k$ so the
+            edge is $(v_k, v_k)$ which is a trivial cycle and since $\rho_F(v)
+            \neq \rho_F(u)$ it will not be in $E'$.
+            \item If $v \notin \{w : (w, u) \in X\}$ then $(\rho_F(v), v_k)$
+            will be an edge in $G'$. And since the path $v \leadsto v_k$ in $G$
+            does not form a cycle it follows that single edge from $(\rho_F(v),
+            v_k) \in E'$ does not form a cycle either.
+        \end{itemize}
+    \end{itemize}
+\end{proof}
+
 \begin{algorithm}[Parallel Tree Union]
     Let forest $F = (V, E)$ be a tree and let $A \subseteq V \times V$ be a set of pairs
     of elements in $V$ that will be unioned in parallel. The parallel tree union
     algorithm is defined as:
     \begin{align*}
-        1. & \quad Z' \leftarrow \{(\rho_F(v), \rho_F(u)) : (v, u) \in A \land \rho_F(v) \neq \rho_F(u)\} \\
-        2. & \quad Z'' \leftarrow \{(\min \{v, u\}, \max \{v, u\}) : (v, u) \in Z'\} \\
-        3. & \quad (F_1, Z_1) \leftarrow \id{LeftMaximalUnion}(F, Z'') \\
-        4. & \quad Z_1' \leftarrow \{(\rho_{F_1}(u), \rho_{F_1}(v)) : (v, u) \in Z_1 \land \rho_{F_1}(v) \neq \rho_{F_1}(u)\} \\
-        5. & \quad (F_2, Z_2) \leftarrow \id{LeftMaximalUnion}(F_1, Z_1') \\
-        6. & \quad \kw{return} \: F_2
+        & \id{ParallelTreeUnion}(F, A) \\
+        1. & \qquad Z_p \leftarrow \{(\rho_F(v), \rho_F(u)) : (v, u) \in A \land \rho_F(v) \neq \rho_F(u)\} \\
+        2. & \qquad Z_o \leftarrow \{(\min \{v, u\}, \max \{v, u\}) : (v, u) \in Z'\} \\
+        3. & \qquad (F_1, Z_1) \leftarrow \id{LeftMaximalUnion}(F, Z_o) \\
+        4. & \qquad Z_q \leftarrow \{(\rho_{F_1}(v), \rho_{F_1}(u)) : (v, u) \in Z_1 \land \rho_{F_1}(v) \neq \rho_{F_1}(u)\} \\
+        5. & \qquad Z_s \leftarrow \{(u, v) : (v, u) \in Z_q\} \\
+        6. & \qquad (F_2, Z_2) \leftarrow \id{LeftMaximalUnion}(F_1, Z_s) \\
+        7. & \qquad \kw{return} \: F_2
     \end{align*}
 \end{algorithm}
+
 \begin{proposition}[Parallel Tree Union Correctness]
     Let forest $F = (V, E)$ be a tree and let $A \subseteq V \times V$ be a set of pairs
     of elements in $V$ that will be unioned in parallel. Then the parallel tree union
     algorithm returns a forest $F' = (V, E')$ where for all $(v, u) \in A$ it holds that
     $v \sim_{F'} u$.
 \end{proposition}
+
+\begin{proof}
+    Let forest $F = (V, E)$ be a tree and let $A \subseteq V \times V$ be a set
+    of pairs. At step 1. by definition of $Z_p$ it holds that for all $(v, u)
+    \in A$ then $(\rho_F(v), \rho_F(u)) \in Z_p$ where $\rho_F(v) \neq
+    \rho_F(u)$. In step 2. by proposition
+    \ref{prop:ordered-edges-implies-acyclicity} it follows that $(V, Z_o)$ is an
+    acyclic directed graph since for all $(v, u) \in Z_o$ it holds that $v < u$.
+    So in step 3. left maximal union can be performed and by proposition
+    \ref{prop:left-maximal-union-correctness} it follows that $F_1$ is a forest
+    and $Z_1$ is the remaining elements in $Z_o$ that was not added to $F_1$. In
+    step 4. by proposition \ref{prop:acyclic-directed-graph-preservation} it
+    follows that $(V, Z_q)$ is an acyclic directed graph. In step 5. by
+    proposition \ref{prop:inverted-acyclic-graph} it follows that $(V, Z_s)$ is
+    also an acyclic directed graph. So in step 6. left maximal union can be
+    performed again. Hence $F_2$ is a forest being returned in step 7. and it
+    fulfills that it has unioned some of the pairs in $A$.
+
+    It now remains to show that for all $(v, u) \in A$ where $\rho_F(v) \neq
+    \rho_F(u)$ that every pair is unioned in $F_2$.
+    \begin{itemize}
+        \item If $(\rho_F(v), \rho_F(u))$ was added to $F_1$ in step 3. then by
+         definition of left maximal union all $\rho_F(v) \in \{w : (w, y) \in
+         A\}$ will be given some parent $w \in V$ and since $F_2$ is formed by
+         adding more edges to $F_1$ it follows that $v$ has the same parent in
+         $F_2$ as in $F_1$.
+        \item If $(\rho_F(v), \rho_F(u))$ was not added to $F_1$ in step 3. then
+        it is in $Z_1$. In step 6. we have the edge has become
+        $(\rho_{F_1}(\rho_{F}(u)), \rho_{F_1}(\rho_{F}(v))) \in Z_s$ where
+        $\rho_{F_1}(\rho_F(u)) \neq \rho_{F_1}(\rho_{F}(v))$. If $u \notin \{w :
+        (w, y) \in A\}$ then $\rho_{F_1}(\rho_{F}(u)) = \rho_{F}(u)$ since it
+        has not been given a parent in step 3. So remaining $u \in \{y : (w, y)
+        \in A\}$ will be given a parent in step 6.
+    \end{itemize}
+    Hence $\{w : (w, y) \in A\} \cup \{y : (w, y) \in A\}$ covers all elements
+    to be unioned in $A$ and since all these elements are given some parent in
+    either step 3. or step 6. if they do not introduce cycles, it follows that
+    for all $(v, u) \in A$ it holds that $v \sim_{F'} u$ in $F' = F_2$.
+\end{proof}
 
 \begin{definition}[Union-Find Structure]
     The union-find structure $U$ is a forest $U = (V, E)$ where the vertices $V
