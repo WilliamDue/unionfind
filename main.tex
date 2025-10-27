@@ -591,10 +591,10 @@
             \item If $v \in \{w : (w, u) \in X\}$ then $\rho_F(v) = v_k$ so the
             edge is $(v_k, v_k)$ which is a trivial cycle and since $\rho_F(v)
             \neq \rho_F(u)$ it will not be in $E'$.
-            \item If $v \notin \{w : (w, u) \in X\}$ then $(\rho_F(v), v_k)$
-            will be an edge in $G'$. And since the path $v \leadsto v_k$ in $G$
-            does not form a cycle it follows that single edge from $(\rho_F(v),
-            v_k) \in E'$ does not form a cycle either.
+            \item If $v \notin \{w : (w, u) \in X\}$ then $\rho_F(v) \neq v_k$
+            and $(\rho_F(v), v_k)$ will be an edge in $G'$. And since the path
+            $v \leadsto v_k$ in $G$ does not form a cycle it follows that single
+            edge from $(\rho_F(v), v_k) \in E'$ does not form a cycle either.
         \end{itemize}
     \end{itemize}
 \end{proof}
@@ -660,6 +660,12 @@
     either step 3. or step 6. if they do not introduce cycles, it follows that
     for all $(v, u) \in A$ it holds that $v \sim_{F'} u$ in $F' = F_2$.
 \end{proof}
+
+\begin{proposition}[Parallel Tree Union Time Complexity]
+    Let forest $F = (V, E)$ be a tree and let $A \subseteq V \times V$ be a set of pairs
+    of elements in $V$ that will be unioned in parallel. Then the parallel tree union
+    algorithm runs in $O(|A|)$ work and $O(\log |A|)$ depth.
+\end{proposition}
 
 \begin{definition}[Union-Find Structure]
     The union-find structure $U$ is a forest $U = (V, E)$ where the vertices $V
