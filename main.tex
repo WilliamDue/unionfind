@@ -49,28 +49,28 @@
 {
   % list of keywords
   morekeywords={
-    do,
-    else,
-    for,
-    if,
-    in,
-    include,
-    let,
-    loop,
-    then,
-    type,
-    val,
-    while,
-    with,
-    module,
-    def,
-    entry,
-    local,
-    open,
-    import,
-    assert,
-    match,
-    case,
+  do,
+  else,
+  for,
+  if,
+  in,
+  include,
+  let,
+  loop,
+  then,
+  type,
+  val,
+  while,
+  with,
+  module,
+  def,
+  entry,
+  local,
+  open,
+  import,
+  assert,
+  match,
+  case,
   },
   sensitive=true, % Keywords are case sensitive.
   morecomment=[l]{--}, % l is for line comment.
@@ -79,18 +79,18 @@
 
 
 \lstset{
-    language=futhark,
-    showspaces=false,
-    showstringspaces=false,
-    mathescape=true,
-    aboveskip=0pt,
-    belowskip=6pt,
-    numberstyle=\tiny,
-    numbers=left, 
-    firstnumber=1,
-    numberfirstline=true,
-    tabsize=4,
-    breaklines=true,
+  language=futhark,
+  showspaces=false,
+  showstringspaces=false,
+  mathescape=true,
+  aboveskip=0pt,
+  belowskip=6pt,
+  numberstyle=\tiny,
+  numbers=left, 
+  firstnumber=1,
+  numberfirstline=true,
+  tabsize=4,
+  breaklines=true,
 }
 
 \newcommand\LAST{\text{LAST}}
@@ -154,14 +154,14 @@
 \fancyfoot[R]{Page \thepage \hspace{1pt} of \pageref{LastPage}}
 \pagestyle{fancy}
 \fancypagestyle{firstpage}{%
-    \fancyhf{}
-    \renewcommand{\headrulewidth}{0pt}
-    \fancyfoot[R]{Page \thepage \hspace{1pt} of \pageref{LastPage}}
+  \fancyhf{}
+  \renewcommand{\headrulewidth}{0pt}
+  \fancyfoot[R]{Page \thepage \hspace{1pt} of \pageref{LastPage}}
 }
 \title{
-    {\Large \textsc{University of Copenhagen}} \\[5pt]
-    {\large Union-Find} \\[10pt]
-    Author: William Henrich Due \\[0pt]
+  {\Large \textsc{University of Copenhagen}} \\[5pt]
+  {\large Union-Find} \\[10pt]
+  Author: William Henrich Due \\[0pt]
 }
 \author{}
 \date{}
@@ -171,507 +171,580 @@
 \thispagestyle{firstpage}
 
 \section{Theory}
+
+\subsection{Forests}
 \begin{definition}[Reachability]
-    A node $v$ is \emph{reachable} from a node $u$ in a directed graph $G = (V,
-    E)$ if there exists a sequence of directed edges $e_1, e_2, \ldots, e_m \in
-    E$ where $m \geq 1$ and $e_i = (v_{i-1}, v_i)$ for $1 \leq i \leq m$,
-    such that $v_0 = u$ and $v_m = v$. We denote this by $u \leadsto v$.
+  A node $v$ is \emph{reachable} from a node $u$ in a directed graph $G = (V,
+  E)$ if there exists a sequence of directed edges $e_1, e_2, \ldots, e_m \in
+  E$ where $m \geq 1$ and $e_i = (v_{i-1}, v_i)$ for $1 \leq i \leq m$,
+  such that $v_0 = u$ and $v_m = v$. We denote this by $u \leadsto v$.
 \end{definition}
 
 \begin{definition}[Cycle]
-    A cycle in a directed graph $G = (V, E)$ has a cycle if there exists
-    $v \in V$ such that $v \leadsto v$.
+  A cycle in a directed graph $G = (V, E)$ has a cycle if there exists
+  $v \in V$ such that $v \leadsto v$.
 \end{definition}
 
 \begin{definition}[Forest]
-    A forest is a directed graph $F = (V, E)$ where $V$ is a set of vertices and $E
-    \subseteq V \times V$ is a set of directed edges such that:
-    \begin{enumerate}
-        \item There are no cycles $v \centernot\leadsto v$ for all $v \in V$, and
-        \item each node has at most one parent i.e. for all $(u, v_1), (u, v_2)
-        \in E$ it holds that $v_1 = v_2$.
-    \end{enumerate}
+  A forest is a directed graph $F = (V, E)$ where $V$ is a set of vertices and $E
+  \subseteq V \times V$ is a set of directed edges such that:
+  \begin{enumerate}
+    \item There are no cycles $v \centernot\leadsto v$ for all $v \in V$, and
+    \item each node has at most one parent i.e. for all $(u, v_1), (u, v_2)
+    \in E$ it holds that $v_1 = v_2$.
+  \end{enumerate}
 \end{definition}
 
 \begin{definition}[Root]
-    A node $v \in V$ in a forest $F = (V, E)$ is a root if it has no parent.
-    This is defined as the predicate:
-    \begin{align*}
-        \mathcal{R}_F(v) : v \centernot\leadsto u \text{ for all } u \in V
-    \end{align*}
+  A node $v \in V$ in a forest $F = (V, E)$ is a root if it has no parent.
+  This is defined as the predicate:
+  \begin{align*}
+    \mathcal{R}_F(v) : v \centernot\leadsto u \text{ for all } u \in V
+  \end{align*}
 \end{definition}
 
 \begin{definition}[Tree]
-    A tree is a forest $T = (V, E)$ where there exists a unique root $r \in V$
-    such that $v \leadsto r$ for all $v \in V\backslash
-    \{r\}$.
+  A tree is a forest $T = (V, E)$ where there exists a unique root $r \in V$
+  such that $v \leadsto r$ for all $v \in V\backslash
+  \{r\}$.
 \end{definition}
 
 \begin{proposition}[Forest Root Count]\label{prop:forest-root-count}
-    A forest $F = (V, E)$ where $|V| = n$ and $|E| = n - k$ has $k$ roots.
+  A forest $F = (V, E)$ where $|V| = n$ and $|E| = n - k$ has $k$ roots.
 \end{proposition}
 
 \begin{proof}
-    Let $F = (V, E)$ be a forest where $|V| = n$ and $|E| = n - k$. By the
-    second property of a forest then $n - k$ vertices must have a parent. Since
-    there are $n$ vertices in total it follows that there are exactly $k$
-    vertices $r_1, r_2, \ldots, r_k \in V$ that has no parent. Hence there are
-    exactly $k$ roots in $F$.
+  Let $F = (V, E)$ be a forest where $|V| = n$ and $|E| = n - k$. By the
+  second property of a forest then $n - k$ vertices must have a parent. Since
+  there are $n$ vertices in total it follows that there are exactly $k$
+  vertices $r_1, r_2, \ldots, r_k \in V$ that has no parent. Hence there are
+  exactly $k$ roots in $F$.
 \end{proof}
 
 \begin{proposition}[Roots Path Exist]\label{prop:roots-path-exist}
-    In a forest $F = (V, E)$ for each element $v \in V$ there exists at least
-    one root $r \in V$ such that $\mathcal{R}_F(r)$ and either $v \leadsto r$ or
-    $v = r$.
+  In a forest $F = (V, E)$ for each element $v \in V$ there exists at least
+  one root $r \in V$ such that $\mathcal{R}_F(r)$ and either $v \leadsto r$ or
+  $v = r$.
 \end{proposition}
 
 \begin{proof}
-    Let $F = (V, E)$ be a forest and let $v \in V$ be an arbitrary element in
-    $V$. By proposition \ref{prop:forest-root-count} there exists at least one
-    root $r \in V$ such that $\mathcal{R}_F(r)$. This can be shown by structural
-    induction on a vertex $v \in V$ that any $(v, p) \in E$ then either $p = r$
-    or $p$ has a path to some root $r \in V$.
-    \begin{itemize}
-        \item If $p = r$ then $p$ is a root and $v$ has a path to a root $r$ by
-        $(v, r) \in E$.
-        \item By induction hypothesis $p$ has a path to a root $r \in V$ such
-        that $\mathcal{R}_F(r)$. Since $(v, p) \in E$ it follows that $v
-        \leadsto p \leadsto r$ so .
-    \end{itemize}
+  Let $F = (V, E)$ be a forest and let $v \in V$ be an arbitrary element in
+  $V$. By proposition \ref{prop:forest-root-count} there exists at least one
+  root $r \in V$ such that $\mathcal{R}_F(r)$. This can be shown by structural
+  induction on a vertex $v \in V$ that any $(v, p) \in E$ then either $p = r$
+  or $p$ has a path to some root $r \in V$.
+  \begin{itemize}
+    \item If $p = r$ then $p$ is a root and $v$ has a path to a root $r$ by
+    $(v, r) \in E$.
+    \item By induction hypothesis $p$ has a path to a root $r \in V$ such
+    that $\mathcal{R}_F(r)$. Since $(v, p) \in E$ it follows that $v
+    \leadsto p \leadsto r$ so .
+  \end{itemize}
 \end{proof}
 
 \begin{proposition}[Forest Edge Limit]\label{prop:forest-edge-limit}
-    A forest $F = (V, E)$ where $|V| = n$ and $|E| > n - 1$ is not a forest.
+  A forest $F = (V, E)$ where $|V| = n$ and $|E| > n - 1$ is not a forest.
 \end{proposition}
 
 \begin{proof}
-    Let $F = (V, E)$ be a forest where $|V| = n$ and $|E| > n - 1$. By
-    proposition \ref{prop:forest-root-count} a forest with $n - 1$ has exactly
-    one root, so it is a tree. By adding one more edge to the tree it must make
-    one vertex have two parents. Or since every vertex $v \in V$ has a path to
-    the root $r \in V$ it must create a cycle $v \leadsto v$ for some $v \in V$.
-    In both cases it contradicts the properties of a forest.
+  Let $F = (V, E)$ be a forest where $|V| = n$ and $|E| > n - 1$. By
+  proposition \ref{prop:forest-root-count} a forest with $n - 1$ has exactly
+  one root, so it is a tree. By adding one more edge to the tree it must make
+  one vertex have two parents. Or since every vertex $v \in V$ has a path to
+  the root $r \in V$ it must create a cycle $v \leadsto v$ for some $v \in V$.
+  In both cases it contradicts the properties of a forest.
 \end{proof}
 
+\subsection{Union-Find Structure}
+
+\begin{definition}[Union-Find Structure]
+  The union-find structure $U$ is a forest $U = (V, E)$ where the vertices $V
+  = S$ for some set of elements $S$. The edges $E \subseteq V \times V$
+  represent parent relations between elements in $S$ such that $(u, v) \in E$
+  means that $u$ has parent $v$.
+\end{definition}
+
 \begin{definition}[Representative]
-    The representative of an element $v \in V$ in a forest $F = (V, E)$ is the
-    root $r \in V$ such that there is a path from $v$ to $r$. This is defined as
-    the function:
-    \begin{align*}
-        \rho_F(v) := r \text{ where } r \in V \text{ such that } \mathcal{R}_F(r) \land (v \leadsto r \lor v = r)
-    \end{align*}
+  The representative of an element $v \in V$ in a forest $F = (V, E)$ is the
+  root $r \in V$ such that there is a path from $v$ to $r$. This is defined as
+  the function:
+  \begin{align*}
+    \rho_F(v) := r \text{ where } r \in V \text{ such that } \mathcal{R}_F(r) \land (v \leadsto r \lor v = r)
+  \end{align*}
 \end{definition}
 
 \begin{proposition}[Unique Representative]
-    In a forest $F = (V, E)$ each element $v \in V$ has a unique
-    representative $\rho_F(v)$.
+  In a forest $F = (V, E)$ each element $v \in V$ has a unique
+  representative $\rho_F(v)$.
 \end{proposition}
 
 \begin{proof}
-    Let $F = (V, E)$ be a union-find structure and let $v \in V$ be an arbitrary
-    element in $V$. By proposition \ref{prop:roots-path-exist} there exists at
-    least one root $r \in V$ such that $\mathcal{R}_F(r)$ and $v \leadsto r$.
-    Now assume that there exists another root $r' \in V$ such that $\mathcal{R}_F(r')$
-    and $v \leadsto r'$. Since $F$ is a forest it follows by the second property
-    of a forest that $r = r'$ hence the representative is unique.
+  Let $F = (V, E)$ be a union-find structure and let $v \in V$ be an arbitrary
+  element in $V$. By proposition \ref{prop:roots-path-exist} there exists at
+  least one root $r \in V$ such that $\mathcal{R}_F(r)$ and $v \leadsto r$.
+  Now assume that there exists another root $r' \in V$ such that $\mathcal{R}_F(r')$
+  and $v \leadsto r'$. Since $F$ is a forest it follows by the second property
+  of a forest that $r = r'$ hence the representative is unique.
 \end{proof}
 
 \begin{definition}[Tree Set]
-    The set of vertices of the same tree $\mathcal{E}_F(v)$ in a
-    forest $F = (V, E)$ is defined as:
-    \begin{align*}
-        \mathcal{E}_F(v) := \{u : u \in V \text{ where } \rho_F(u) = \rho_F(v))\}
-    \end{align*}
+  The set of vertices of the same tree $\mathcal{E}_F(v)$ in a
+  forest $F = (V, E)$ is defined as:
+  \begin{align*}
+    \mathcal{E}_F(v) := \{u : u \in V \text{ where } \rho_F(u) = \rho_F(v))\}
+  \end{align*}
 \end{definition}
 
 \begin{definition}[Partition]\label{def:partition}
-    The set $P \subseteq \mathbb{P}(S)$ is a partition of a set $S$ if:
-    \begin{enumerate}
-        \item $a \neq \emptyset$ for all $a \in P$
-        \item $a \cap b = \emptyset$ for all $a, b \in P$ where $a
-        \neq b$
-        \item $\bigcup_{a \in P} a = S$
-    \end{enumerate}
+  The set $P \subseteq \mathbb{P}(S)$ is a partition of a set $S$ if:
+  \begin{enumerate}
+    \item $a \neq \emptyset$ for all $a \in P$
+    \item $a \cap b = \emptyset$ for all $a, b \in P$ where $a
+    \neq b$
+    \item $\bigcup_{a \in P} a = S$
+  \end{enumerate}
 \end{definition}
 
 \begin{proposition}[Forest Partition]\label{prop:forest-partition}
-    A forest $F = (V, E)$ is a partition of $V$ for the following set:
-    \begin{align*}
-        \{\mathcal{E}_F(v) : v \in V\}
-    \end{align*}
+  A forest $F = (V, E)$ is a partition of $V$ for the following set:
+  \begin{align*}
+    \{\mathcal{E}_F(v) : v \in V\}
+  \end{align*}
 \end{proposition}
 
 \begin{proof}
-    Let $F = (V, E)$ be a forest. We will show that the set in the proposition
-    is a partition of $V$ by showing that it satisfies the three properties in
-    definition \ref{def:partition}.
-    \begin{enumerate}
-        \item By definition of $\mathcal{E}_F(v)$ it can not be empty since for
-        $\mathcal{E}_F(v)$ then $\rho_F(v) = \rho_F(v)$. Hence $\mathcal{E}_F(v)
-        \neq \emptyset$ for all $v \in V$.
-        \item Let $a$ and $b$ be two arbitrary elements in the set such that $a
-        \neq b$. By definition of $a$ and $b$ there exists $v_1, v_2 \in V$ such
-        that $a = \{u : u \in V \land \rho_F(u) = \rho_F(v_1)\}$ and $b = \{u :
-        u \in V \land \rho_F(u) = \rho_F(v_2)\}$. Since $a \neq b$ it follows
-        that $\rho_F(v_1) \neq \rho_F(v_2)$ since otherwise $a = b$, hence $a
-        \cap b = \emptyset$.
-        \item Let $v$ be an arbitrary element in $V$. By proposition
-        \ref{prop:roots-path-exist} there exists a root $r \in V$ such that
-        $\mathcal{R}_F(r)$ and $v \leadsto r$ or $v = r$. By definition of the
-        representative it follows that $\rho_F(v) = r$. Now let $a = \{u : u \in
-        V \land \rho_F(u) = \rho_F(v)\}$. By definition of $a$ it follows that
-        $v \in a$. Since $v$ was arbitrary it follows that $\bigcup_{a \in P} a
-        = V$.
-    \end{enumerate}
+  Let $F = (V, E)$ be a forest. We will show that the set in the proposition
+  is a partition of $V$ by showing that it satisfies the three properties in
+  definition \ref{def:partition}.
+  \begin{enumerate}
+    \item By definition of $\mathcal{E}_F(v)$ it can not be empty since for
+    $\mathcal{E}_F(v)$ then $\rho_F(v) = \rho_F(v)$. Hence $\mathcal{E}_F(v)
+    \neq \emptyset$ for all $v \in V$.
+    \item Let $a$ and $b$ be two arbitrary elements in the set such that $a
+    \neq b$. By definition of $a$ and $b$ there exists $v_1, v_2 \in V$ such
+    that $a = \{u : u \in V \land \rho_F(u) = \rho_F(v_1)\}$ and $b = \{u :
+    u \in V \land \rho_F(u) = \rho_F(v_2)\}$. Since $a \neq b$ it follows
+    that $\rho_F(v_1) \neq \rho_F(v_2)$ since otherwise $a = b$, hence $a
+    \cap b = \emptyset$.
+    \item Let $v$ be an arbitrary element in $V$. By proposition
+    \ref{prop:roots-path-exist} there exists a root $r \in V$ such that
+    $\mathcal{R}_F(r)$ and $v \leadsto r$ or $v = r$. By definition of the
+    representative it follows that $\rho_F(v) = r$. Now let $a = \{u : u \in
+    V \land \rho_F(u) = \rho_F(v)\}$. By definition of $a$ it follows that
+    $v \in a$. Since $v$ was arbitrary it follows that $\bigcup_{a \in P} a
+    = V$.
+  \end{enumerate}
 \end{proof}
 
 \begin{definition}[Same Tree Relation]
-    The relation $\sim_F$ on a forest $F$ is defined as:
-    \begin{align*}
-        u \sim_F v :\iff u \in \mathcal{E}_F(v)
-    \end{align*}
+  The relation $\sim_F$ on a forest $F$ is defined as:
+  \begin{align*}
+    u \sim_F v :\iff u \in \mathcal{E}_F(v)
+  \end{align*}
 \end{definition}
 
 \begin{corollary}[Same Tree Relation is an Equivalence Relation]
-    The relation $\sim_F$ on a forest $F$ is an equivalence relation due to
-    $\{\mathcal{E}_F(v) : v \in V\}$ being a partition of $V$. by proposition
-    \ref{prop:forest-partition}.
+  The relation $\sim_F$ on a forest $F$ is an equivalence relation due to
+  $\{\mathcal{E}_F(v) : v \in V\}$ being a partition of $V$. by proposition
+  \ref{prop:forest-partition}.
 \end{corollary}
 
 \begin{definition}[Forests with Equivalent Tree Sets]
-    Two forests $F = (V, E)$ and $F' = (V', E')$ have equivalent tree sets $F
-    \cong F'$ if:
-    \begin{itemize}
-        \item Vertices are the same $V = V'$.
-        \item The tree sets are equivalent $\mathcal{E}_{F}(v) =
-        \mathcal{E'}_F(v)$ for all $v \in V$.
-    \end{itemize}
+  Two forests $F = (V, E)$ and $F' = (V', E')$ have equivalent tree sets $F
+  \cong F'$ if:
+  \begin{itemize}
+    \item Vertices are the same $V = V'$.
+    \item The tree sets are equivalent $\mathcal{E}_{F}(v) =
+    \mathcal{E'}_F(v)$ for all $v \in V$.
+  \end{itemize}
 \end{definition}
 
 \begin{definition}[Tree Union]
-    The tree union of two elements $v$ and $u$ for a forest $F = (V, E)$ is such
-    that $v \sim_{F'} u$ in a new forest $F' = (V', E')$ and $F'$ satify the
-    following properties:
-    \begin{enumerate}
-        \item $\mathcal{E}_{F'}(v) = \mathcal{E}_{F'}(u) = \mathcal{E}_F(v) \cup \mathcal{E}_F(u)$ and
-        \item $\mathcal{E}_{F'}(w) = \mathcal{E}_F(w) \text{ for all } w \in V
-        \backslash (\mathcal{E}_F(v) \cup \mathcal{E}_F(u))$.
-    \end{enumerate}
+  The tree union of two elements $v$ and $u$ for a forest $F = (V, E)$ is such
+  that $v \sim_{F'} u$ in a new forest $F' = (V', E')$ and $F'$ satify the
+  following properties:
+  \begin{enumerate}
+    \item $\mathcal{E}_{F'}(v) = \mathcal{E}_{F'}(u) = \mathcal{E}_F(v) \cup \mathcal{E}_F(u)$ and
+    \item $\mathcal{E}_{F'}(w) = \mathcal{E}_F(w) \text{ for all } w \in V
+    \backslash (\mathcal{E}_F(v) \cup \mathcal{E}_F(u))$.
+  \end{enumerate}
 \end{definition}
 
 \begin{proposition}[Tree Union]\label{def:tree-union}
-    Let forest $F = (V, E)$, $p = \rho_F(u)$ be the representative of $u$ and
-    let $q = \rho_F(v)$ be the representative of $v$ where $q \neq p$. Then
-    defined $F'$ as:
-    \begin{align*}
-        F' &:= (V, E \cup \{(q, p)\})
-    \end{align*}
-    Then $u \sim_{F'} v$ in $F'$ and $F'$ will satisfy the properties of a tree
-    union.
+  Let forest $F = (V, E)$, $p = \rho_F(u)$ be the representative of $u$ and
+  let $q = \rho_F(v)$ be the representative of $v$ where $q \neq p$. Then
+  defined $F'$ as:
+  \begin{align*}
+    F' &:= (V, E \cup \{(q, p)\})
+  \end{align*}
+  Then $u \sim_{F'} v$ in $F'$ and $F'$ will satisfy the properties of a tree
+  union.
 \end{proposition}
 
 \begin{proof}
-    Let $F = (V, E)$, $p = \rho_F(u)$ be the representative of $u$ and let $q =
-    \rho_F(v)$ be the representative of $v$. By definition $q$ will have parent
-    $p$ in $F'$ and since $q$ is a root it has no parent then $F'$ is a forest.
-    Now for all $w \in \mathcal{E}_F(q)$ it holds that $w \leadsto q$ or $q = w$
-    and since $q \leadsto p$ it follows that $w \leadsto p$. Hence $w \in
-    \mathcal{E}_{F'}(p)$ for all $w \in \mathcal{E}_F(q)$ and trivially $w \in
-    \mathcal{E}_{F'}(p)$ for all $w \in \mathcal{E}_F(p)$ so it follows that
-    $\mathcal{E}_{F'}(v) = \mathcal{E}_{F'}(u) = \mathcal{E}_F(v) \cup
-    \mathcal{E}_F(u)$. Now let $w \in V \backslash (\mathcal{E}_F(v) \cup
-    \mathcal{E}_F(u))$ be an arbitrary element. Since $w \centernot\leadsto p$,
-    $w \neq p$, $w \centernot\leadsto q$, and $w \neq q$ it follows that $w$ has
-    the same representative in $F'$ as in $F$ hence $\mathcal{E}_{F'}(w) =
-    \mathcal{E}_F(w)$.
+  Let $F = (V, E)$, $p = \rho_F(u)$ be the representative of $u$ and let $q =
+  \rho_F(v)$ be the representative of $v$. By definition $q$ will have parent
+  $p$ in $F'$ and since $q$ is a root it has no parent then $F'$ is a forest.
+  Now for all $w \in \mathcal{E}_F(q)$ it holds that $w \leadsto q$ or $q = w$
+  and since $q \leadsto p$ it follows that $w \leadsto p$. Hence $w \in
+  \mathcal{E}_{F'}(p)$ for all $w \in \mathcal{E}_F(q)$ and trivially $w \in
+  \mathcal{E}_{F'}(p)$ for all $w \in \mathcal{E}_F(p)$ so it follows that
+  $\mathcal{E}_{F'}(v) = \mathcal{E}_{F'}(u) = \mathcal{E}_F(v) \cup
+  \mathcal{E}_F(u)$. Now let $w \in V \backslash (\mathcal{E}_F(v) \cup
+  \mathcal{E}_F(u))$ be an arbitrary element. Since $w \centernot\leadsto p$,
+  $w \neq p$, $w \centernot\leadsto q$, and $w \neq q$ it follows that $w$ has
+  the same representative in $F'$ as in $F$ hence $\mathcal{E}_{F'}(w) =
+  \mathcal{E}_F(w)$.
 \end{proof}
 
+\subsection{Parallel Union-Find}
+
 \begin{definition}[Conflict-free Set]
-    Let $F$ be a forest, $X \subseteq \{(\rho_F(v), \rho_F(u)) : (v, u) \in V
-    \times V\}$ be a set of root pairs. Then $X$ is a conflict-free set in $F$
-    if $(V, Y)$ is a forest.
+  Let $F$ be a forest, $X \subseteq \{(\rho_F(v), \rho_F(u)) : (v, u) \in V
+  \times V\}$ be a set of root pairs. Then $X$ is a conflict-free set in $F$
+  if $(V, Y)$ is a forest.
 \end{definition}
 
 \begin{proposition}[Conflict-free Forest Union]\label{prop:conflict-free-forest-union}
-    Let forest $F = (V, E)$ be a forest and let $X \subseteq V \times V$ be a
-    conflict-free set in $F$ where $|X| = n$. Then defining the following forests:
-    \begin{align*}
-        F_0 &:= F \\
-        F_{i} &:= (V, E_{i - 1} \cup \{(v_i, u_i)\}) \text{ for } (v_i, u_i) \in X \text{ and } 1 \leq i \leq n
-    \end{align*}
-    Then $F_n$ is a forest.
+  Let forest $F = (V, E)$ be a forest and let $X \subseteq V \times V$ be a
+  conflict-free set in $F$ where $|X| = n$. Then defining the following forests:
+  \begin{align*}
+    F_0 &:= F \\
+    F_{i} &:= (V, E_{i - 1} \cup \{(v_i, u_i)\}) \text{ for } (v_i, u_i) \in X \text{ and } 1 \leq i \leq n
+  \end{align*}
+  Then $F_n$ is a forest.
 \end{proposition}
 
 \begin{proof}
-    Let forest $F = (V, E)$ be a forest, $X \subseteq V \times V$ be a
-    conflict-free set in $F$. We will show that $F_n$ is a forest by induction
-    on $i$.
-    \begin{itemize}
-        \item Base case: If $i = 0$ then $F_i = F_0 = F$ which is a forest.
-        \item Induction hypothesis: Assume that $F_{i - 1}$ is a forest for all
-        $1 \leq i < n$.  Let $(v_i, u_i) \in X$, we know that $v_i \neq v_j$ for
-        all $(v_j, u_j) \in Y \backslash \{(v_i, u_i)\}$ since otherwise $(V,
-        X)$ would not be a forest and $X$ would not be a conflict-free set in
-        $F$. So $v_i$ will only have one parent in $F_i$ since it only appears
-        once as a child in $(V, X)$. By definition all of the edges in $X$
-        consists of roots in $F$, and since $(V, X)$ is a forest there are no
-        cycles $y \centernot\leadsto y$ for all $y \in V$ in $F_i$. Hence $F_i$
-        is a forest.
-    \end{itemize}
-    Thus by induction $F_n$ is a forest.
+  Let forest $F = (V, E)$ be a forest, $X \subseteq V \times V$ be a
+  conflict-free set in $F$. We will show that $F_n$ is a forest by induction
+  on $i$.
+  \begin{itemize}
+    \item Base case: If $i = 0$ then $F_i = F_0 = F$ which is a forest.
+    \item Induction hypothesis: Assume that $F_{i - 1}$ is a forest for all
+    $1 \leq i < n$.  Let $(v_i, u_i) \in X$, we know that $v_i \neq v_j$ for
+    all $(v_j, u_j) \in Y \backslash \{(v_i, u_i)\}$ since otherwise $(V,
+    X)$ would not be a forest and $X$ would not be a conflict-free set in
+    $F$. So $v_i$ will only have one parent in $F_i$ since it only appears
+    once as a child in $(V, X)$. By definition all of the edges in $X$
+    consists of roots in $F$, and since $(V, X)$ is a forest there are no
+    cycles $y \centernot\leadsto y$ for all $y \in V$ in $F_i$. Hence $F_i$
+    is a forest.
+  \end{itemize}
+  Thus by induction $F_n$ is a forest.
 \end{proof}
 
 \begin{proposition}[Conflict-free Set Equivalence]\label{prop:conflict-free-set-equivalence}
-    Let forest $F$ be a forest and let $X \subseteq V \times V$ be a
-    conflict-free set in $F$ where $|X| = n$. Then defining the following forests:
-    \begin{align*}
-        F_0 &:= F \\
-        F_{i} &:= (V, E_{i - 1} \cup \{(v_i, u_i)\}) \text{ for } (v_i, u_i) \in X \text{ and } 1 \leq i \leq n \\
-        G_0 &:= F \\
-        G_{j} &:= (V, E_{i - 1} \cup \{(\rho_{G_{j - 1}}(v_j), \rho_{G_{j - 1}}(u_j))\}) \text{ for } (v_j, u_j) \in X \text{ and } 1 \leq j \leq n
-    \end{align*}
-    Then $F_{n} \cong G_{n}$.
+  Let forest $F$ be a forest and let $X \subseteq V \times V$ be a
+  conflict-free set in $F$ where $|X| = n$. Then defining the following forests:
+  \begin{align*}
+    F_0 &:= F \\
+    F_{i} &:= (V, E_{i - 1} \cup \{(v_i, u_i)\}) \text{ for } (v_i, u_i) \in X \text{ and } 1 \leq i \leq n \\
+    G_0 &:= F \\
+    G_{j} &:= (V, E_{i - 1} \cup \{(\rho_{G_{j - 1}}(v_j), \rho_{G_{j - 1}}(u_j))\}) \text{ for } (v_j, u_j) \in X \text{ and } 1 \leq j \leq n
+  \end{align*}
+  Then $F_{n} \cong G_{n}$.
 \end{proposition}
 \begin{proof}
-    Let forest $F$ be a forest, $X \subseteq V \times V$ be a conflict-free set
-    in $F$. We will show that $F_n \cong G_n$. We know that for some $(v_i, u_i)
-    \in X$ then $v_i \neq y$ for all  $(y, w) \in X \backslash \{(v_i, u_i)\}$
-    since otherwise $(V, X)$ would not be a forest and $X$ would not be a
-    conflict-free set in $F$. So all edge set unions will only give a root $v_i$
-    a new parent $u_i$ once. So $\rho_{F_n}(v_i) = \rho_{F_n}(u_i)$ and
-    $\rho_{G_n}(u_i) = \rho_{G_n}(v_i)$ hence $v_i$ remains in the same tree in
-    both $F_n$ and $G_n$. Since this holds for all $(v_i, u_i) \in X$ it follows
-    that all elements in $V$ remains in the same tree in both $F_n$ and $G_n$.
-    Hence $F_n \cong G_n$.
-\end{proof}
-
-\begin{algorithm}[Conflict-free Tree Union]
-    Let forest $F$ be a tree and let $Z \subseteq V \times V$ be a set of pairs
-    of elements in $V$ that will be unioned in parallel. The conflict-free tree
-    union algorithm is defined as:
-    \begin{align*}
-        & \kw{while} \: Z \neq \emptyset \: \kw{do} \\
-        & \quad E \leftarrow \pi_2(F) \\
-        & \quad \text{split } Z \text{ into } X, Z' \\
-        & \quad \kw{parfor} \: (u, v) \in X \: \kw{do} \\
-        & \quad \quad E \leftarrow E \cup \{(u, v)\} \\
-        & \quad F \leftarrow (V, E) \\
-        & \quad Z \leftarrow Z'
-    \end{align*}
-\end{algorithm}
-
-
-\begin{definition}[Isolated Vertex]
-    An \emph{isolated vertex} in a directed graph $G = (V, E)$ is a $v \in V$
-    such that $(u, v) \notin E$ and $(u, v) \notin E$ for some $u \in V$.
-\end{definition}
-\begin{proposition}[Edge Vertex Cover]
-    Let $G = (V, E)$ be a directed graph without isolated vertices then:
-    \begin{align*}
-        \{v : (v, u) \in E\} \cup \{u : (v, u) \in E\} = V
-    \end{align*}
-\end{proposition}
-\begin{proof}
-    Let $G = (V, E)$ without any isolated vertices. Let $v \in V$ be an
-    arbitrary element in $V$. Since $v$ is not an isolated vertex it follows
-    that there exists some $u \in V$ such that either $(v, u) \in E$ or $(u, v)
-    \in E$. In the first case it follows that $v \in \{v : (v, u) \in E\}$ and
-    in the second case it follows that $v \in \{u : (v, u) \in E\}$. Since $v$
-    was arbitrary it follows that $\{v : (v, u) \in E\} \cup \{u : (v, u) \in
-    E\} = V$.
+  Let forest $F$ be a forest, $X \subseteq V \times V$ be a conflict-free set
+  in $F$. We will show that $F_n \cong G_n$. We know that for some $(v_i, u_i)
+  \in X$ then $v_i \neq y$ for all  $(y, w) \in X \backslash \{(v_i, u_i)\}$
+  since otherwise $(V, X)$ would not be a forest and $X$ would not be a
+  conflict-free set in $F$. So all edge set unions will only give a root $v_i$
+  a new parent $u_i$ once. So $\rho_{F_n}(v_i) = \rho_{F_n}(u_i)$ and
+  $\rho_{G_n}(u_i) = \rho_{G_n}(v_i)$ hence $v_i$ remains in the same tree in
+  both $F_n$ and $G_n$. Since this holds for all $(v_i, u_i) \in X$ it follows
+  that all elements in $V$ remains in the same tree in both $F_n$ and $G_n$.
+  Hence $F_n \cong G_n$.
 \end{proof}
 
 \begin{proposition}[Ordered Edges Implies Acyclicity]\label{prop:ordered-edges-implies-acyclicity}
-    Let $G = (V, E)$ be a directed graph where for all $(v, u) \in E$ it holds
-    that $v < u$ for some total order $(V, <)$. Then $G$ has no cycles.
+  Let $G = (V, E)$ be a directed graph where for all $(v, u) \in E$ it holds
+  that $v < u$ for some strict total order $(V, <)$. Then $G$ has no cycles.
 \end{proposition}
 
 \begin{proof}
-    Let $G = (V, E)$ be a directed graph where for all $(u, v) \in E$ it holds
-    that $u < v$ for some total order $(V, <)$. Let edges $e_1, e_2, \ldots, e_m
-    \in E$ where $m \geq 1$ and $e_i = (v_{i-1}, v_i)$ for $1 \leq i \leq m$ be
-    some path in $G$. Since the edges are ordered it follows that:
-    \begin{align*}
-        v_0 < v_1 < v_2 < \cdots < v_{m - 1} < v_m
-    \end{align*}
-    Hence by transitivity of the total order it follows that $v_0 < v_m$. So
-    $v_0 \neq v_m$ hence there are no cycles in $G$.
+  Let $G = (V, E)$ be a directed graph where for all $(u, v) \in E$ it holds
+  that $u < v$ for some total order $(V, <)$. Let edges $e_1, e_2, \ldots, e_m
+  \in E$ where $m \geq 1$ and $e_i = (v_{i-1}, v_i)$ for $1 \leq i \leq m$ be
+  some path in $G$. Since the edges are ordered it follows that:
+  \begin{align*}
+    v_0 < v_1 < v_2 < \cdots < v_{m - 1} < v_m
+  \end{align*}
+  Hence by transitivity of the total order it follows that $v_0 < v_m$. So
+  $v_0 \neq v_m$ hence there are no cycles in $G$.
 \end{proof}
 
 \begin{proposition}[Inverted Acyclic Graph is Acyclic]\label{prop:inverted-acyclic-graph}
-    Let $G = (V, E)$ be a directed acyclic graph. Then the inverted graph $G' =
-    (V, E')$ where $E' = \{(u, v) : (v, u) \in E\}$ is also acyclic.
+  Let $G = (V, E)$ be a directed acyclic graph. Then the inverted graph $G' =
+  (V, E')$ where $E' = \{(u, v) : (v, u) \in E\}$ is also acyclic.
 \end{proposition}
 \begin{proof}
-    Let $G = (V, E)$ be a directed acyclic graph and $G' = (V, E')$ where $E' =
-    \{(u, v) : (v, u) \in E\}$ is the inverted graph. Let edges $e_1, e_2,
-    \ldots, e_m \in E'$ where $m \geq 1$ and $e_i = (v_{i-1}, v_i)$ for $1 \leq
-    i \leq m$ be some path in $G'$. By definition of $E'$ it follows that there
-    exists edges $e'_1, e'_2, \ldots, e'_m \in E$ where $e'_i = (v_i, v_{i-1})$
-    for $1 \leq i \leq m$. If there was a cycle in $G'$ then it would hold that
-    $v_0 = v_m$. But since $G$ is acyclic it follows that $v_0 \neq v_m$. Hence
-    there are no cycles in $G'$.  
+  Let $G = (V, E)$ be a directed acyclic graph and $G' = (V, E')$ where $E' =
+  \{(u, v) : (v, u) \in E\}$ is the inverted graph. Let edges $e_1, e_2,
+  \ldots, e_m \in E'$ where $m \geq 1$ and $e_i = (v_{i-1}, v_i)$ for $1 \leq
+  i \leq m$ be some path in $G'$. By definition of $E'$ it follows that there
+  exists edges $e'_1, e'_2, \ldots, e'_m \in E$ where $e'_i = (v_i, v_{i-1})$
+  for $1 \leq i \leq m$. If there was a cycle in $G'$ then it would hold that
+  $v_0 = v_m$. But since $G$ is acyclic it follows that $v_0 \neq v_m$. Hence
+  there are no cycles in $G'$.  
 \end{proof}
 
 \begin{algorithm}[Left Maximal Union]\label{alg:left-maximal-union}
-    Let forest $F = (V, E)$ be a forest and let $Z \subseteq \{(\rho_F(v),
-    \rho_F(u)) : (v, u) \in V \times V\}$ be a set of root pairs $F$ and $(V,
-    Z)$ is an acyclic directed graph. The left maximal conflict-free set
-    algorithm is defined as:
-    \begin{align*}
-        & \id{LeftMaximalUnion}(F, Z) \\ 
-        1. & \qquad (V, E) \leftarrow F \\
-        2. & \qquad \text{Let } X \subseteq Z \text{ where } \{v : (v, u) \in X\} = \{v : (v, u) \in Z\} \\
-        & \qquad \qquad \qquad \quad \: \: \: 
-        \: \text{ and } |X| = |\{v : (v, u) \in Z\}| \\
-        3. & \qquad E \leftarrow E \cup X \\
-        4. & \qquad \kw{return} \: ((V, E), Z \backslash X)
-    \end{align*}
+  Let forest $F = (V, E)$ be a forest and let $Z \subseteq \{(\rho_F(v),
+  \rho_F(u)) : (v, u) \in V \times V\}$ be a set of root pairs $F$ and $(V,
+  Z)$ is an acyclic directed graph. The left maximal conflict-free set
+  algorithm is defined as:
+  \begin{align*}
+    & \id{LeftMaximalUnion}(F, Z) \\ 
+    1. & \qquad (V, E) \leftarrow F \\
+    2. & \qquad \text{Let } X \subseteq Z \text{ where } \{v : (v, u) \in X\} = \{v : (v, u) \in Z\} \\
+    & \qquad \qquad \qquad \quad \: \: \: 
+    \: \text{ and } |X| = |\{v : (v, u) \in Z\}| \\
+    3. & \qquad E \leftarrow E \cup X \\
+    4. & \qquad \kw{return} \: ((V, E), Z \backslash X)
+  \end{align*}
 \end{algorithm}
 \begin{proposition}[Left Maximal Union Correctness]\label{prop:left-maximal-union-correctness}
-    Let forest $F = (V, E)$ be a forest and let $Z \subseteq \{(\rho_F(v),
-    \rho_F(u)) : (v, u) \in V \times V\}$ be a set of root pairs $F$ and $(V,
-    Z)$ is an acyclic directed graph. Then the left maximal conflict-free set
-    algorithm returns a forest $F' = (V, E')$ and a conflict-free set $X
-    \subseteq Z$ in $F$.
+  Let forest $F = (V, E)$ be a forest and let $Z \subseteq \{(\rho_F(v),
+  \rho_F(u)) : (v, u) \in V \times V\}$ be a set of root pairs $F$ and $(V,
+  Z)$ is an acyclic directed graph. Then the left maximal conflict-free set
+  algorithm returns a forest $F' = (V, E')$ and a conflict-free set $X
+  \subseteq Z$ in $F$.
 \end{proposition}
 \begin{proof}
-    Let forest $F = (V, E)$ be a forest and let $Z \subseteq \{(\rho_F(v),
-    \rho_F(u)) : (v, u) \in V \times V\}$ be a set of root pairs $F$ and $(V,
-    Z)$ is an acyclic directed graph. Since $X$ is defined such that $\{v : (v,
-    u) \in X\} = \{v : (v, u) \in Z\}$ and $|X| = |\{v : (v, u) \in Z\}|$ it
-    follows that $X$ is a conflict-free set in $F$ since no vertex $v$ appears
-    more than once as a child in $X$ i.e. $(V, X)$ is a forest. By adding the
-    edges in $X$ to $E$ it follows by proposition
-    \ref{prop:conflict-free-forest-union} that $F' = (V, E')$ is a forest where
-    $E' = E \cup X$.
+  Let forest $F = (V, E)$ be a forest and let $Z \subseteq \{(\rho_F(v),
+  \rho_F(u)) : (v, u) \in V \times V\}$ be a set of root pairs $F$ and $(V,
+  Z)$ is an acyclic directed graph. Since $X$ is defined such that $\{v : (v,
+  u) \in X\} = \{v : (v, u) \in Z\}$ and $|X| = |\{v : (v, u) \in Z\}|$ it
+  follows that $X$ is a conflict-free set in $F$ since no vertex $v$ appears
+  more than once as a child in $X$ i.e. $(V, X)$ is a forest. By adding the
+  edges in $X$ to $E$ it follows by proposition
+  \ref{prop:conflict-free-forest-union} that $F' = (V, E')$ is a forest where
+  $E' = E \cup X$.
 \end{proof}
 
-\begin{proposition}[Left Maximal Union Time Complexity]
-    Let forest $F = (V, E)$ be a forest and let $Z \subseteq \{(\rho_F(v),
-    \rho_F(u)) : (v, u) \in V \times V\}$ be a set of root pairs $F$ and $(V,
-    Z)$ is an acyclic directed graph. Then the left maximal conflict-free set
-    algorithm runs in $O(|Z|)$ work and $O(\log |Z|)$ depth.
+\begin{proposition}[Left Maximal Union Time Complexity]\label{prop:left-maximal-union-time-complexity}
+  Let forest $F = (V, E)$ be a forest and let $Z \subseteq \{(\rho_F(v),
+  \rho_F(u)) : (v, u) \in V \times V\}$ be a set of root pairs $F$ and $(V,
+  Z)$ is an acyclic directed graph. Then the left maximal conflict-free set
+  algorithm runs in $O(|Z|)$ work and $O(\log |Z|)$ depth.
 \end{proposition}
 
 \begin{proof}
-    For step 1. it takes $O(1)$ work and $O(1)$ if we assume that $E$ is only
-    used once in this function. Step 2. can be implemented by a parallel sort on
-    the first element of each pair in $Z$ followed by a parallel filter that
-    selects the first occurrence of each unique first element. This takes
-    $O(|Z|)$ work using radix sort with a fixed key length and $O(\log |Z|)$
-    depth. Step 3. takes $O(|X|)$ work and $O(1)$ depth to add the edges in $X$
-    to $E$. Step 4. takes $O(|Z|)$ work and $O(\log |Z|)$ depth to compute the
-    set difference $Z \backslash X$ by a filter. Hence the total work is
-    $O(|Z|)$ and the total depth is $O(\log |Z|)$. Hence the left maximal
-    conflict-free set algorithm runs in $O(|Z|)$ work and $O(\log |Z|)$ depth.
+  For step 1. it takes $O(1)$ work and $O(1)$ if we assume that $E$ is only
+  used once in this function. Step 2. can be implemented by a parallel sort on
+  the first element of each pair in $Z$ followed by a parallel filter that
+  selects the first occurrence of each unique first element. This takes
+  $O(|Z|)$ work using radix sort with a fixed key length and $O(\log |Z|)$
+  depth. Step 3. takes $O(|X|)$ work and $O(1)$ depth to add the edges in $X$
+  to $E$. Step 4. takes $O(|Z|)$ work and $O(\log |Z|)$ depth to compute the
+  set difference $Z \backslash X$ by a filter. Hence the total work is
+  $O(|Z|)$ and the total depth is $O(\log |Z|)$. Hence the left maximal
+  conflict-free set algorithm runs in $O(|Z|)$ work and $O(\log |Z|)$ depth.
 \end{proof}
 
 
 \begin{proposition}[Acyclic Directed Graph Presevation]\label{prop:acyclic-directed-graph-preservation}
-    Let $G = (V, E)$ be a directed acyclic graph and let $F = (V, X)$ be a
-    forest where $X \subseteq E$. Then the directed graph $G' = (V, E')$ where
-    $E' = \{(\rho_F(v), \rho_F(u)) : (v, u) \in E \backslash X \land \rho_F(v)
-    \neq \rho_F(u)\}$ is also acyclic.
+  Let $G = (V, E)$ be a directed acyclic graph and let $F = (V, X)$ be a
+  forest where $X \subseteq E$. Then the directed graph $G' = (V, E')$ where
+  $E' = \{(\rho_F(v), \rho_F(u)) : (v, u) \in E \backslash X \land \rho_F(v)
+  \neq \rho_F(u)\}$ is also acyclic.
 \end{proposition}
 \begin{proof}
-    Let $G = (V, E)$ be a directed acyclic graph and let $F = (V, X)$ be a
-    forest where $X \subseteq E$. Let $q$ be a path $e_1, e_2, \ldots, e_m \in
-    E$ where $m \geq 1$ and $e_i = (v_{i-1}, v_i)$ for $1 \leq i \leq m$ be some
-    path in $G$.
+  Let $G = (V, E)$ be a directed acyclic graph and let $F = (V, X)$ be a
+  forest where $X \subseteq E$. Let $q$ be a path $e_1, e_2, \ldots, e_m \in
+  E$ where $m \geq 1$ and $e_i = (v_{i-1}, v_i)$ for $1 \leq i \leq m$ be some
+  path in $G$.
+  \begin{itemize}
+    \item If all edges $e_i \notin X$ then the path $q$ exists in $G'$ and
+    does not form a cycle since $G$ is acyclic.
+    \item If $q$ has some subpath $e_j, e_{j+1}, \ldots, e_k \in X$ for $1
+    \leq j < k \leq m$ where $(v_{j - 1}, v_j) \in X$ then $\rho_F(v_{j-1})
+    = \rho_F(v_{j})$ so it will not be in $E \backslash X$. Let $(v, u) \in
+    E$ where $u  = v_{j - 1}$ or $u = v_j$ then $\rho_F(u) = v_k$ so the
+    edge in $G'$ will be $(\rho_F(v), v_k)$.
     \begin{itemize}
-        \item If all edges $e_i \notin X$ then the path $q$ exists in $G'$ and
-        does not form a cycle since $G$ is acyclic.
-        \item If $q$ has some subpath $e_j, e_{j+1}, \ldots, e_k \in X$ for $1
-        \leq j < k \leq m$ where $(v_{j - 1}, v_j) \in X$ then $\rho_F(v_{j-1})
-        = \rho_F(v_{j})$ so it will not be in $E \backslash X$. Let $(v, u) \in
-        E$ where $u  = v_{j - 1}$ or $u = v_j$ then $\rho_F(u) = v_k$ so the
-        edge in $G'$ will be $(\rho_F(v), v_k)$.
-        \begin{itemize}
-            \item If $v \in \{w : (w, u) \in X\}$ then $\rho_F(v) = v_k$ so the
-            edge is $(v_k, v_k)$ which is a trivial cycle and since $\rho_F(v)
-            \neq \rho_F(u)$ it will not be in $E'$.
-            \item If $v \notin \{w : (w, u) \in X\}$ then $\rho_F(v) \neq v_k$
-            and $(\rho_F(v), v_k)$ will be an edge in $G'$. And since the path
-            $v \leadsto v_k$ in $G$ does not form a cycle it follows that single
-            edge from $(\rho_F(v), v_k) \in E'$ does not form a cycle either.
-        \end{itemize}
+      \item If $v \in \{w : (w, u) \in X\}$ then $\rho_F(v) = v_k$ so the
+      edge is $(v_k, v_k)$ which is a trivial cycle and since $\rho_F(v)
+      \neq \rho_F(u)$ it will not be in $E'$.
+      \item If $v \notin \{w : (w, u) \in X\}$ then $\rho_F(v) \neq v_k$
+      and $(\rho_F(v), v_k)$ will be an edge in $G'$. And since the path
+      $v \leadsto v_k$ in $G$ does not form a cycle it follows that single
+      edge from $(\rho_F(v), v_k) \in E'$ does not form a cycle either.
     \end{itemize}
+  \end{itemize}
 \end{proof}
 
-\begin{algorithm}[Parallel Tree Union]
-    Let forest $F = (V, E)$ be a tree and let $A \subseteq V \times V$ be a set of pairs
-    of elements in $V$ that will be unioned in parallel. The parallel tree union
-    algorithm is defined as:
-    \begin{align*}
-        & \id{ParallelTreeUnion}(F, A) \\
-        1. & \qquad Z_p \leftarrow \{(\rho_F(v), \rho_F(u)) : (v, u) \in A \land \rho_F(v) \neq \rho_F(u)\} \\
-        2. & \qquad Z_o \leftarrow \{(\min \{v, u\}, \max \{v, u\}) : (v, u) \in Z'\} \\
-        3. & \qquad (F_1, Z_1) \leftarrow \id{LeftMaximalUnion}(F, Z_o) \\
-        4. & \qquad Z_q \leftarrow \{(\rho_{F_1}(v), \rho_{F_1}(u)) : (v, u) \in Z_1 \land \rho_{F_1}(v) \neq \rho_{F_1}(u)\} \\
-        5. & \qquad Z_s \leftarrow \{(u, v) : (v, u) \in Z_q\} \\
-        6. & \qquad (F_2, Z_2) \leftarrow \id{LeftMaximalUnion}(F_1, Z_s) \\
-        7. & \qquad \kw{return} \: F_2
-    \end{align*}
+\begin{algorithm}[Parallel Tree Union]\label{alg:parallel-tree-union}
+  Let forest $F = (V, E)$ be a tree and let $A \subseteq V \times V$ be a set of pairs
+  of elements in $V$ that will be unioned in parallel. The parallel tree union
+  algorithm is defined as:
+  \begin{align*}
+    & \id{ParallelTreeUnion}(F, A) \\
+    1. & \qquad Z_p \leftarrow \{(\rho_F(v), \rho_F(u)) : (v, u) \in A \land \rho_F(v) \neq \rho_F(u)\} \\
+    2. & \qquad Z_o \leftarrow \{(\min \{v, u\}, \max \{v, u\}) : (v, u) \in Z_p\} \\
+    3. & \qquad (F_1, Z_1) \leftarrow \id{LeftMaximalUnion}(F, Z_o) \\
+    4. & \qquad Z_q \leftarrow \{(\rho_{F_1}(v), \rho_{F_1}(u)) : (v, u) \in Z_1 \land \rho_{F_1}(v) \neq \rho_{F_1}(u)\} \\
+    5. & \qquad Z_s \leftarrow \{(u, v) : (v, u) \in Z_q\} \\
+    6. & \qquad (F_2, Z_2) \leftarrow \id{LeftMaximalUnion}(F_1, Z_s) \\
+    7. & \qquad \kw{return} \: F_2
+  \end{align*}
 \end{algorithm}
 
 \begin{proposition}[Parallel Tree Union Correctness]
-    Let forest $F = (V, E)$ be a tree and let $A \subseteq V \times V$ be a set of pairs
-    of elements in $V$ that will be unioned in parallel. Then the parallel tree union
-    algorithm returns a forest $F' = (V, E')$ where for all $(v, u) \in A$ it holds that
-    $v \sim_{F'} u$.
+  Let forest $F = (V, E)$ be a tree and let $A \subseteq V \times V$ be a set of pairs
+  of elements in $V$ that will be unioned in parallel. Then the parallel tree union
+  algorithm returns a forest $F' = (V, E')$ where for all $(v, u) \in A$ it holds that
+  $v \sim_{F'} u$.
 \end{proposition}
 
 \begin{proof}
-    Let forest $F = (V, E)$ be a tree and let $A \subseteq V \times V$ be a set
-    of pairs. At step 1. by definition of $Z_p$ it holds that for all $(v, u)
-    \in A$ then $(\rho_F(v), \rho_F(u)) \in Z_p$ where $\rho_F(v) \neq
-    \rho_F(u)$. In step 2. by proposition
-    \ref{prop:ordered-edges-implies-acyclicity} it follows that $(V, Z_o)$ is an
-    acyclic directed graph since for all $(v, u) \in Z_o$ it holds that $v < u$.
-    So in step 3. left maximal union can be performed and by proposition
-    \ref{prop:left-maximal-union-correctness} it follows that $F_1$ is a forest
-    and $Z_1$ is the remaining elements in $Z_o$ that was not added to $F_1$. In
-    step 4. by proposition \ref{prop:acyclic-directed-graph-preservation} it
-    follows that $(V, Z_q)$ is an acyclic directed graph. In step 5. by
-    proposition \ref{prop:inverted-acyclic-graph} it follows that $(V, Z_s)$ is
-    also an acyclic directed graph. So in step 6. left maximal union can be
-    performed again. Hence $F_2$ is a forest being returned in step 7. and it
-    fulfills that it has unioned some of the pairs in $A$.
+  Let forest $F = (V, E)$ be a tree and let $A \subseteq V \times V$ be a set
+  of pairs. At step 1. by definition of $Z_p$ it holds that for all $(v, u)
+  \in A$ then $(\rho_F(v), \rho_F(u)) \in Z_p$ where $\rho_F(v) \neq
+  \rho_F(u)$. In step 2. by proposition
+  \ref{prop:ordered-edges-implies-acyclicity} it follows that $(V, Z_o)$ is an
+  acyclic directed graph since for all $(v, u) \in Z_o$ it holds that $v < u$.
+  So in step 3. left maximal union can be performed and by proposition
+  \ref{prop:left-maximal-union-correctness} it follows that $F_1$ is a forest
+  and $Z_1$ is the remaining elements in $Z_o$ that was not added to $F_1$. In
+  step 4. by proposition \ref{prop:acyclic-directed-graph-preservation} it
+  follows that $(V, Z_q)$ is an acyclic directed graph. In step 5. by
+  proposition \ref{prop:inverted-acyclic-graph} it follows that $(V, Z_s)$ is
+  also an acyclic directed graph. So in step 6. left maximal union can be
+  performed again. Hence $F_2$ is a forest being returned in step 7. and it
+  fulfills that it has unioned some of the pairs in $A$.
 
-    It now remains to show that for all $(v, u) \in A$ where $\rho_F(v) \neq
-    \rho_F(u)$ that every pair is unioned in $F_2$.
-    \begin{itemize}
-        \item If $(\rho_F(v), \rho_F(u))$ was added to $F_1$ in step 3. then by
-         definition of left maximal union all $\rho_F(v) \in \{w : (w, y) \in
-         A\}$ will be given some parent $w \in V$ and since $F_2$ is formed by
-         adding more edges to $F_1$ it follows that $v$ has the same parent in
-         $F_2$ as in $F_1$.
-        \item If $(\rho_F(v), \rho_F(u))$ was not added to $F_1$ in step 3. then
-        it is in $Z_1$. In step 6. we have the edge has become
-        $(\rho_{F_1}(\rho_{F}(u)), \rho_{F_1}(\rho_{F}(v))) \in Z_s$ where
-        $\rho_{F_1}(\rho_F(u)) \neq \rho_{F_1}(\rho_{F}(v))$. If $u \notin \{w :
-        (w, y) \in A\}$ then $\rho_{F_1}(\rho_{F}(u)) = \rho_{F}(u)$ since it
-        has not been given a parent in step 3. So remaining $u \in \{y : (w, y)
-        \in A\}$ will be given a parent in step 6.
-    \end{itemize}
-    Hence $\{w : (w, y) \in A\} \cup \{y : (w, y) \in A\}$ covers all elements
-    to be unioned in $A$ and since all these elements are given some parent in
-    either step 3. or step 6. if they do not introduce cycles, it follows that
-    for all $(v, u) \in A$ it holds that $v \sim_{F'} u$ in $F' = F_2$.
+  It now remains to show that for all $(v, u) \in A$ where $\rho_F(v) \neq
+  \rho_F(u)$ that every pair is unioned in $F_2$.
+  \begin{itemize}
+    \item If $(\rho_F(v), \rho_F(u))$ was added to $F_1$ in step 3. then by
+     definition of left maximal union all $\rho_F(v) \in \{w : (w, y) \in
+     A\}$ will be given some parent $w \in V$ and since $F_2$ is formed by
+     adding more edges to $F_1$ it follows that $v$ has the same parent in
+     $F_2$ as in $F_1$.
+    \item If $(\rho_F(v), \rho_F(u))$ was not added to $F_1$ in step 3. then
+    it is in $Z_1$. In step 6. we have the edge has become
+    $(\rho_{F_1}(\rho_{F}(u)), \rho_{F_1}(\rho_{F}(v))) \in Z_s$ where
+    $\rho_{F_1}(\rho_F(u)) \neq \rho_{F_1}(\rho_{F}(v))$. If $u \notin \{w :
+    (w, y) \in A\}$ then $\rho_{F_1}(\rho_{F}(u)) = \rho_{F}(u)$ since it
+    has not been given a parent in step 3. So remaining $u \in \{y : (w, y)
+    \in A\}$ will be given a parent in step 6.
+  \end{itemize}
+  Hence $\{w : (w, y) \in A\} \cup \{y : (w, y) \in A\}$ covers all elements
+  to be unioned in $A$ and since all these elements are given some parent in
+  either step 3. or step 6. if they do not introduce cycles, it follows that
+  for all $(v, u) \in A$ it holds that $v \sim_{F'} u$ in $F' = F_2$.
 \end{proof}
 
 \begin{proposition}[Parallel Tree Union Time Complexity]
-    Let forest $F = (V, E)$ be a tree and let $A \subseteq V \times V$ be a set of pairs
-    of elements in $V$ that will be unioned in parallel. Then the parallel tree union
-    algorithm runs in $O(|A|)$ work and $O(\log |A|)$ depth.
+  Let forest $F = (V, E)$ be a tree and let $A \subseteq V \times V$ be a set
+  of pairs of elements in $V$ that will be unioned in parallel. Then the
+  parallel tree union algorithm runs in $O(|A|^2)$ work and $O(|V|)$ span.
 \end{proposition}
 
-\begin{definition}[Union-Find Structure]
-    The union-find structure $U$ is a forest $U = (V, E)$ where the vertices $V
-    = S$ for some set of elements $S$. The edges $E \subseteq V \times V$
-    represent parent relations between elements in $S$ such that $(u, v) \in E$
-    means that $u$ has parent $v$.
-\end{definition}
+\begin{proof}
+  Step 2 and 4 are upperbouneded by $O(|A|)$ work and $O(\log |A|)$ depth
+  by proposition \ref{prop:left-maximal-union-time-complexity}. Futhermore,
+  step 1 and 5 can be implemented in $O(|A|)$ work and $O(1)$ depth by a
+  parallel map. The limiting factor is step 3 and 6 where if we imagine we
+  have a forest $(V, E)$ where $V = \{v_1, ... v_n, u\}$ and $E = \{(v_1,
+  v_2), (v_2, v_3), ... (v_{n-1}, v_n)\}$ and $A = \{(u, v_1), (u, v_2), ...
+  (u, v_n)\}$. Then the total find operation will be $2\sum_{k = 1}^{|A|} k =
+  O(|A|^2)$ work since the tree is a linear chain and there are $n$ union
+  operations to be performed. Hence the total work is $O(|A|^2)$ and the total
+  depth is $O(|V|)$ since the longest find operation takes $O(|V|)$ depth in
+  the worst case.
+\end{proof}
+
+\subsection{Union by Size and Rank}
+
+\subsection{Parallel Union-Find Imrovements}
+
+\section{Implementation}
+
+\subsection{Interface}
+
+\subsection{Union-find}
+\begin{lstlisting}
+type unionfind [n] = {parents: [n]handle}
+\end{lstlisting}
+
+\begin{lstlisting}
+def create (n: i64) : (*unionfind [n], [n]handle) =
+  let hs = iota n
+  in ({parents = rep none}, hs)
+\end{lstlisting}
+
+\begin{lstlisting}
+def find_by_vector [n] [u] (parents: *[n]handle) (hs: [u]handle) : (*[n]handle, [u]handle) =
+  let ps =
+    map (\h ->
+            loop h
+            while parents[h] != none do
+              parents[h])
+        hs
+  in (parents, ps)
+
+def find [n] [u] ({parents}: *unionfind [n]) (hs: [u]handle) : (*unionfind [n], [u]handle) =
+  let (new_parents, ps) = find_by_vector parents hs
+  in ({parents = new_parents}, ps)
+\end{lstlisting}
+
+\begin{lstlisting}
+def normalize_step [m] [n] (is: [m]handle) (parents: *[n]handle) (ps: [m]handle) : (*[n]handle, [m]handle) =
+  let f h =
+    if parents[h] == none
+    then h
+    else if parents[parents[h]] == none
+    then parents[h]
+    else parents[parents[h]]
+  let ps' = map f ps
+  let new_parents = scatter parents is ps'
+  in (new_parents, ps')
+
+def normalize [m] [n] (parents: *[n]handle) (is: [m]handle) : *[n]handle =
+  let ps = is
+  let (parents, _) =
+    loop (parents, ps)
+    for _i < 64 - i64.clz m do
+      normalize_step is parents ps
+  in parents
+\end{lstlisting}
+
+\begin{lstlisting}
+def find_eqs_root [n] [u] (parents: *[n]handle) (eqs: [u](handle, handle)) : ( *[n]handle, [u](handle, handle)) =
+  let eqs_elems = unzip eqs |> uncurry (++)
+  let (new_parents, new_eqs_elems) = find_by_vector parents eqs_elems
+  let eqs = split new_eqs_elems |> uncurry zip
+  in (new_parents, eqs)
+\end{lstlisting}
+
+\begin{lstlisting}
+def left_maximal_union [n] [u] (parents: *[n]handle) (eqs: [u](handle, handle)) : ?[m].(*[n]handle, [m](handle, handle)) =
+  let (l, r) = unzip eqs
+  let parents = reduce_by_index parents i64.min none l r
+  let (eqs, done) =
+    copy (partition (\(i, p) -> parents[i] != p) eqs)
+  let parents = normalize parents (map (.0) done)
+  in (parents, eqs)
+\end{lstlisting}
+
+\begin{lstlisting}
+def union [n] [u] ({parents}: *unionfind [n]) (eqs: [u](handle, handle)) : *unionfind [n] =
+  let (parents, eqs) = find_eqs_root parents eqs
+  let eqs = map (\(a, b) -> if a < b then (a, b) else (b, a)) eqs
+  let eqs = filter (\(a, b) -> a != b) eqs
+  let (parents, eqs) = left_maximal_union parents eqs
+  let (parents, eqs) = find_eqs_root parents eqs
+  let eqs = map swap eqs |> filter (\(a, b) -> a != b)
+  let (parents, _) = left_maximal_union parents eqs
+  in {parents}
+\end{lstlisting}
+
+\subsection{Union by Rank}
+
+\subsection{Union by Size}
 
 \end{document}
