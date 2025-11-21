@@ -665,83 +665,50 @@
 \section{Implementation}
 
 \subsection{Interface}
+The interface of the union-find structure consists of a data-type which is the
+union-find structure itself. The elements in the union-find structure are
+abstract types but internally represented as integers. Then the user of the
+union-find structure can map between their own values and these abstract types
+called handles.
+
+The union-find structure supports two operations, find and union. The find
+operation takes a handle and returns the representative which is also a handle.
+This can be used to check if two elements are in the same set or is
+``equivalent'' by checking if their representatives are the same. The union
+operation takes two handles such that they have the same representative and are
+therefore in the same set or to be considered ``equivalent''. These operations
+are done in bulk meaning that the find operation takes an array of handles and
+union can union multiple pairs of handles in parallel.
 
 \subsection{Union-find}
-\begin{lstlisting}
-type unionfind [n] = {parents: [n]handle}
-\end{lstlisting}
+The first and simplest implementation of the union-find structure is based on
+the basic parallel tree union algorithm \ref{alg:parallel-tree-union}. It will
+be extremely inefficient if we do not apply normalization of a left maximal
+union since you may produce long chains of elements pointing to each other which
+will make the find operation very expensive. This can be solves by compressing
+the paths during the find operation such that all elements point directly to
+their representative after a left maximal union. This will not optimize a
+sequence of union or find operations but assuming you only have to do one
+singular bulk union followed by multiple bulk find operations it will be
+efficient.
 
-\begin{lstlisting}
-def create (n: i64) : (*unionfind [n], [n]handle) =
-  let hs = iota n
-  in ({parents = rep none}, hs)
-\end{lstlisting}
+\subsubsection{Data type}
+A simple union-find structure can be implemented using an array indices which
+where the index represents the element/handle and the value at that index is
+the parent of that element. If the value at that index is a special value which
+is the highest possible integer value then that element is a root and therefore
+its own representative.
 
-\begin{lstlisting}
-def find_by_vector [n] [u] (parents: *[n]handle) (hs: [u]handle) : (*[n]handle, [u]handle) =
-  let ps =
-    map (\h ->
-            loop h
-            while parents[h] != none do
-              parents[h])
-        hs
-  in (parents, ps)
+\subsubsection{Find}
+To implement the find operation we can simple do a parallel map over all
+elements to find their representative by a simgple loop that follows the
+parent pointers until a root is found.
 
-def find [n] [u] ({parents}: *unionfind [n]) (hs: [u]handle) : (*unionfind [n], [u]handle) =
-  let (new_parents, ps) = find_by_vector parents hs
-  in ({parents = new_parents}, ps)
-\end{lstlisting}
+\subsubsection{Union}
+The union operation can be implemented using the parallel tree union algorithm
+\ref{alg:parallel-tree-union} but due to its abstract nature one must figure out
+how to make it work in the concrete implementation.
 
-\begin{lstlisting}
-def normalize_step [m] [n] (is: [m]handle) (parents: *[n]handle) (ps: [m]handle) : (*[n]handle, [m]handle) =
-  let f h =
-    if parents[h] == none
-    then h
-    else if parents[parents[h]] == none
-    then parents[h]
-    else parents[parents[h]]
-  let ps' = map f ps
-  let new_parents = scatter parents is ps'
-  in (new_parents, ps')
-
-def normalize [m] [n] (parents: *[n]handle) (is: [m]handle) : *[n]handle =
-  let ps = is
-  let (parents, _) =
-    loop (parents, ps)
-    for _i < 64 - i64.clz m do
-      normalize_step is parents ps
-  in parents
-\end{lstlisting}
-
-\begin{lstlisting}
-def find_eqs_root [n] [u] (parents: *[n]handle) (eqs: [u](handle, handle)) : ( *[n]handle, [u](handle, handle)) =
-  let eqs_elems = unzip eqs |> uncurry (++)
-  let (new_parents, new_eqs_elems) = find_by_vector parents eqs_elems
-  let eqs = split new_eqs_elems |> uncurry zip
-  in (new_parents, eqs)
-\end{lstlisting}
-
-\begin{lstlisting}
-def left_maximal_union [n] [u] (parents: *[n]handle) (eqs: [u](handle, handle)) : ?[m].(*[n]handle, [m](handle, handle)) =
-  let (l, r) = unzip eqs
-  let parents = reduce_by_index parents i64.min none l r
-  let (eqs, done) =
-    copy (partition (\(i, p) -> parents[i] != p) eqs)
-  let parents = normalize parents (map (.0) done)
-  in (parents, eqs)
-\end{lstlisting}
-
-\begin{lstlisting}
-def union [n] [u] ({parents}: *unionfind [n]) (eqs: [u](handle, handle)) : *unionfind [n] =
-  let (parents, eqs) = find_eqs_root parents eqs
-  let eqs = map (\(a, b) -> if a < b then (a, b) else (b, a)) eqs
-  let eqs = filter (\(a, b) -> a != b) eqs
-  let (parents, eqs) = left_maximal_union parents eqs
-  let (parents, eqs) = find_eqs_root parents eqs
-  let eqs = map swap eqs |> filter (\(a, b) -> a != b)
-  let (parents, _) = left_maximal_union parents eqs
-  in {parents}
-\end{lstlisting}
 
 \subsection{Union by Rank}
 
