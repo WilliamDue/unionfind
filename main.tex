@@ -667,18 +667,22 @@
 \subsection{Interface}
 The interface of the union-find structure consists of a data-type which is the
 union-find structure itself. The elements in the union-find structure are
-abstract types but internally represented as integers. Then the user of the
-union-find structure can map between their own values and these abstract types
-called handles.
+represented as integers. These integers are called \textit{handles} and are used
+to refer to the elements in the union-find structure. The union-find structure
+is initialized with a fixed number of elements $n$ where the handles are in the
+range $[0, n - 1]$ so they can be used as indices in an array of size $n$. When
+exposing these elements to a user then they are abstract datatypes such that the
+the user cannot do uninteneded operations on the handles or give invalid handles
+to the union-find structures operations.
 
-The union-find structure supports two operations, find and union. The find
-operation takes a handle and returns the representative which is also a handle.
-This can be used to check if two elements are in the same set or is
-``equivalent'' by checking if their representatives are the same. The union
-operation takes two handles such that they have the same representative and are
-therefore in the same set or to be considered ``equivalent''. These operations
-are done in bulk meaning that the find operation takes an array of handles and
-union can union multiple pairs of handles in parallel.
+The operations supported are \id{find} and \id{union}. The find operation takes
+a handle and returns the representative which is also a handle. This can be used
+to check if two elements are in the same set or is ``equivalent'' by checking if
+their representatives are the same. The union operation takes two handles such
+that they have the same representative and are therefore in the same set or to
+be considered ``equivalent''. These operations are done in bulk meaning that the
+find operation takes an array of handles and union can union multiple pairs of
+handles in parallel.
 
 \subsection{Union-find}
 The first and simplest implementation of the union-find structure is based on
@@ -697,19 +701,133 @@ A simple union-find structure can be implemented using an array indices which
 where the index represents the element/handle and the value at that index is
 the parent of that element. If the value at that index is a special value which
 is the highest possible integer value then that element is a root and therefore
-its own representative.
+its own representative. In pseudo code we denote this as an array of integers:
+\begin{flalign*}
+  & \id{parents} : [n]\Int &
+\end{flalign*}
+Initially all of these values are set to \id{none} which indicates that all
+elements are their own representative. Here \id{none} is defined as an integer
+$n \geq \id{none}$.
 
 \subsubsection{Find}
 To implement the find operation we can simple do a parallel map over all
-elements to find their representative by a simgple loop that follows the
-parent pointers until a root is found.
+elements to find their representative by a simple loop that follows the
+parent pointers until a root is found. Since this operation does not modify the
+structure we can simplify implement it as so:
+\begin{flalign*}
+  & \kw{def}~\id{find\_one}~(\id{parents} : [n]\Int)~(\id{handle} : \Int) = & \\
+  & \qquad \If~\id{parents}[\id{handle}] = \id{none} & \\
+  & \qquad \kw{then}~\id{handle} & \\
+  & \qquad \Else~\id{find}~\id{parents}~(\id{parents}[\id{handle}]) &
+\end{flalign*}
+Then the bulk find operation can be implemented as:
+\begin{flalign*}
+  & \kw{def}~\id{find}~(\id{parents} : [n]\Int)~(\id{handles} : [m]\Int) = & \\
+  & \qquad \kw{map}~(\id{find\_one}~\id{parents})~\id{handles} &
+\end{flalign*}
 
 \subsubsection{Union}
 The union operation can be implemented using the parallel tree union algorithm
 \ref{alg:parallel-tree-union} but due to its abstract nature one must figure out
 how to make it work in the concrete implementation.
+%  def union [n] [u]
+%            ({parents}: *unionfind [n])
+%            (eqs: [u](handle, handle)) : *unionfind [n] =
+%    let (parents, eqs) = find_eqs_root parents eqs
+%    let eqs = map (\(a, b) -> if a < b then (a, b) else (b, a)) eqs
+%    let eqs = filter (\(a, b) -> a != b) eqs
+%    let (parents, eqs) = left_maximal_union parents eqs
+%    let (parents, eqs) = find_eqs_root parents eqs
+%    let eqs = map swap eqs |> filter (\(a, b) -> a != b)
+%    let (parents, _) = left_maximal_union parents eqs
+%    in {parents}
 
+\begin{flalign*}
+& \kw{def}~\id{find\_pairs}~(\id{parents} : [n]\Int)~(\id{pairs}: [m](\Int, \Int)) = & \\
+& \qquad \Let~\id{find\_one\_pair}~(v, u) = & \\
+& \qquad \quad (\id{find\_one}~parents~v,~\id{find\_one}~parents~u) & \\
+& \qquad \In ~(\kw{filter}~(\lambda (v, u) \to v \neq u) \circ \kw{map}~\id{find\_one\_pair})~pairs &
+\end{flalign*}
 
+\begin{flalign*}
+& \kw{def}~\id{order}~(\id{pairs} : [m](\Int, \Int)) = & \\
+& \qquad \kw{map}~(\lambda (v, u) \to \If~v < u~\kw{then}~(v, u)~\Else~(u, v))~\id{pairs} &
+\end{flalign*}
+
+\begin{flalign*}
+  & \kw{def}~\id{swap} ~(\id{pairs} : [n](\Int, \Int)) = & \\
+  & \qquad \Map ~(\lambda (v, u) \to (u, v))~\id{pairs} &
+\end{flalign*} 
+
+%  def left_maximal_union [n] [u]
+%                         (parents: *[n]handle)
+%                         (eqs: [u](handle, handle)) : ?[m].(*[n]handle, [m](handle, handle)) =
+%    let (l, r) = unzip eqs
+%    let parents = reduce_by_index parents i64.min none l r
+%    let (eqs, done) =
+%      copy (partition (\(i, p) -> parents[i] != p) eqs)
+%    let parents = normalize parents (map (.0) done)
+%    in (parents, eqs)
+
+% def normalize_step [m] [n]
+%                    (is: [m]handle)
+%                    (parents: *[n]handle)
+%                    (ps: [m]handle) : (*[n]handle, [m]handle) =
+%   let f h =
+%     if parents[h] == none
+%     then h
+%     else if parents[parents[h]] == none
+%     then parents[h]
+%     else parents[parents[h]]
+%   let ps' = map f ps
+%   let new_parents = scatter parents is ps'
+%   in (new_parents, ps')
+%
+% def normalize [m] [n]
+%               (parents: *[n]handle)
+%               (is: [m]handle) : *[n]handle =
+%   let ps = is
+%   let (parents, _) =
+%     loop (parents, ps)
+%     for _i < 64 - i64.clz m do
+%       normalize_step is parents ps
+%   in parents
+
+\begin{flalign*}
+& \kw{def}~\id{normalize\_step}~(\id{is} : [m]\Int)~(\id{parents} : [n]\Int) = & \\
+& \qquad \Let~\id{next}~(\id{handle} : \Int) = & \\
+& \qquad \quad \If~\id{parents}[\id{handle}] = \id{none} & \\
+& \qquad \quad \kw{then}~\id{handle} & \\
+& \qquad \quad \Else~\If~\id{parents}[\id{parents}[\id{handle}]] = \id{none} & \\
+& \qquad \quad \kw{then}~\id{parents}[\id{handle}] & \\
+& \qquad \quad \Else~\id{parents}[\id{parents}[\id{handle}]] & \\
+& \qquad \In~\id{scatter}~\id{parents}~\id{is}~(\kw{map}~\id{next}~\id{is}) &
+\end{flalign*}
+
+% Rewrite to use recursion instead of loop
+\begin{flalign*}
+& \kw{def}~\id{normalize}~(\id{parents} : [n]\Int)~(\id{is} : [m]\Int) = & \\
+& \qquad \Let~\id{loop}~(\id{parents'} : [n]\Int)~(\id{is'} : [m]\Int)~(\id{count} : \Int) = & \\
+& \qquad \quad \If~\id{count} = 0 & \\
+& \qquad \quad \kw{then}~\id{parents'} & \\
+& \qquad \quad \Else~\id{normalize\_step}~\id{is'}~\id{parents'} & \\
+& \qquad \quad \In ~\id{loop}~\id{parents'}~\id{ps'}~(\id{count} - 1) & \\
+& \qquad \In ~\id{loop}~\id{parents}~\id{is}~\lceil\log_2 m\rceil &
+\end{flalign*}
+
+\begin{flalign*}
+& \kw{def}~\id{left\_maximal\_union}~(\id{parents} : [n]\Int)~(\id{pairs} : [m](\Int, \Int)) = & \\
+& \qquad \Let~(l, r) = \id{unzip}~\id{pairs} & \\
+& \qquad \Let~\id{parents'} = \id{reduce\_by\_index}~\id{parents}~\id{min}~\id{none}~l~r & \\
+& \qquad \Let~(\id{remaining}, \id{done}) = \id{partition}~(\lambda (i, p) \to \id{parents'}[i] \neq p)~\id{pairs} & \\
+& \qquad \Let~\id{parents''} = \id{normalize}~\id{parents'}~(\kw{map}~(\lambda (x, y) \to x)~\id{done}) & \\
+& \qquad \In ~(\id{parents''}, \id{remaining}) &
+\end{flalign*}
+
+\begin{flalign*}
+& \kw{def}~\id{union}~(\id{parents} : [n]\Int)~(\id{pairs} : [m](\Int, \Int)): [n]\Int = & \\
+& \qquad \text{let } pairs =
+\end{flalign*}
 \subsection{Union by Rank}
 
 \subsection{Union by Size}
