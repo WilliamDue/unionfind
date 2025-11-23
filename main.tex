@@ -730,69 +730,46 @@ Then the bulk find operation can be implemented as:
 The union operation can be implemented using the parallel tree union algorithm
 \ref{alg:parallel-tree-union} but due to its abstract nature one must figure out
 how to make it work in the concrete implementation.
-%  def union [n] [u]
-%            ({parents}: *unionfind [n])
-%            (eqs: [u](handle, handle)) : *unionfind [n] =
-%    let (parents, eqs) = find_eqs_root parents eqs
-%    let eqs = map (\(a, b) -> if a < b then (a, b) else (b, a)) eqs
-%    let eqs = filter (\(a, b) -> a != b) eqs
-%    let (parents, eqs) = left_maximal_union parents eqs
-%    let (parents, eqs) = find_eqs_root parents eqs
-%    let eqs = map swap eqs |> filter (\(a, b) -> a != b)
-%    let (parents, _) = left_maximal_union parents eqs
-%    in {parents}
 
+The initial step is to find the representatives of all handle pairs that will
+be unioned. This can be done by a map followed by a filter to remove pairs
+where both elements already have the same representative:
 \begin{flalign*}
 & \kw{def}~\id{find\_pairs}~(\id{parents} : [n]\Int)~(\id{pairs}: [m](\Int, \Int)) = & \\
 & \qquad \Let~\id{find\_one\_pair}~(v, u) = & \\
 & \qquad \quad (\id{find\_one}~parents~v,~\id{find\_one}~parents~u) & \\
 & \qquad \In ~(\kw{filter}~(\lambda (v, u) \to v \neq u) \circ \kw{map}~\id{find\_one\_pair})~pairs &
 \end{flalign*}
-
+The next step is we want to order all pairs such that it forms an acyclic directed graph. This can be done by simply ordering each pair such that the
+first element is always less than the second element:
 \begin{flalign*}
 & \kw{def}~\id{order}~(\id{pairs} : [m](\Int, \Int)) = & \\
 & \qquad \kw{map}~(\lambda (v, u) \to \If~v < u~\kw{then}~(v, u)~\Else~(u, v))~\id{pairs} &
 \end{flalign*}
+Now left maximal union can be performed on the ordered pairs, we do this simply
+by selecting one parent for each unique first element in the pairs. This can be
+done by a reduce by index operation using \id{min} as the reduction operator.
+Now we just have to partition the pairs into those that were successfully
+unioned and those that were not. The ones that were not unioned are those where
+the parent did not change.
 
+There is just one problem with this approach and it is that this may construct
+one long chain of elements pointing to each other which will make future find
+operations expensive. This can be solved by normalizing the structure after the
+left maximal union such that all elements that were given a new parent now point
+directly to their representative. This results in the following left maximal
+union implementation:
 \begin{flalign*}
-  & \kw{def}~\id{swap} ~(\id{pairs} : [n](\Int, \Int)) = & \\
-  & \qquad \Map ~(\lambda (v, u) \to (u, v))~\id{pairs} &
-\end{flalign*} 
-
-%  def left_maximal_union [n] [u]
-%                         (parents: *[n]handle)
-%                         (eqs: [u](handle, handle)) : ?[m].(*[n]handle, [m](handle, handle)) =
-%    let (l, r) = unzip eqs
-%    let parents = reduce_by_index parents i64.min none l r
-%    let (eqs, done) =
-%      copy (partition (\(i, p) -> parents[i] != p) eqs)
-%    let parents = normalize parents (map (.0) done)
-%    in (parents, eqs)
-
-% def normalize_step [m] [n]
-%                    (is: [m]handle)
-%                    (parents: *[n]handle)
-%                    (ps: [m]handle) : (*[n]handle, [m]handle) =
-%   let f h =
-%     if parents[h] == none
-%     then h
-%     else if parents[parents[h]] == none
-%     then parents[h]
-%     else parents[parents[h]]
-%   let ps' = map f ps
-%   let new_parents = scatter parents is ps'
-%   in (new_parents, ps')
-%
-% def normalize [m] [n]
-%               (parents: *[n]handle)
-%               (is: [m]handle) : *[n]handle =
-%   let ps = is
-%   let (parents, _) =
-%     loop (parents, ps)
-%     for _i < 64 - i64.clz m do
-%       normalize_step is parents ps
-%   in parents
-
+& \kw{def}~\id{left\_maximal\_union}~(\id{parents} : [n]\Int)~(\id{pairs} : [m](\Int, \Int)) = & \\
+& \qquad \Let~(l, r) = \id{unzip}~\id{pairs} & \\
+& \qquad \Let~\id{parents'} = \id{reduce\_by\_index}~\id{parents}~\id{min}~\id{none}~l~r & \\
+& \qquad \Let~(\id{remaining}, \id{done}) = \id{partition}~(\lambda (i, p) \to \id{parents'}[i] \neq p)~\id{pairs} & \\
+& \qquad \Let~\id{parents''} = \id{normalize}~\id{parents'}~(\kw{map}~(\lambda (x, y) \to x)~\id{done}) & \\
+& \qquad \In ~(\id{parents''}, \id{remaining}) &
+\end{flalign*}
+The normalization step can be implemented by using the wyllie list ranking
+algorithm \cite[59]{wyllie1979complexity} to compress the paths in the
+union-find structure.
 \begin{flalign*}
 & \kw{def}~\id{normalize\_step}~(\id{is} : [m]\Int)~(\id{parents} : [n]\Int) = & \\
 & \qquad \Let~\id{next}~(\id{handle} : \Int) = & \\
@@ -816,13 +793,9 @@ how to make it work in the concrete implementation.
 \end{flalign*}
 
 \begin{flalign*}
-& \kw{def}~\id{left\_maximal\_union}~(\id{parents} : [n]\Int)~(\id{pairs} : [m](\Int, \Int)) = & \\
-& \qquad \Let~(l, r) = \id{unzip}~\id{pairs} & \\
-& \qquad \Let~\id{parents'} = \id{reduce\_by\_index}~\id{parents}~\id{min}~\id{none}~l~r & \\
-& \qquad \Let~(\id{remaining}, \id{done}) = \id{partition}~(\lambda (i, p) \to \id{parents'}[i] \neq p)~\id{pairs} & \\
-& \qquad \Let~\id{parents''} = \id{normalize}~\id{parents'}~(\kw{map}~(\lambda (x, y) \to x)~\id{done}) & \\
-& \qquad \In ~(\id{parents''}, \id{remaining}) &
-\end{flalign*}
+  & \kw{def}~\id{swap} ~(\id{pairs} : [n](\Int, \Int)) = & \\
+  & \qquad \Map ~(\lambda (v, u) \to (u, v))~\id{pairs} &
+\end{flalign*} 
 
 \begin{flalign*}
 & \kw{def}~\id{union}~(\id{parents} : [n]\Int)~(\id{pairs} : [m](\Int, \Int)): [n]\Int = & \\
