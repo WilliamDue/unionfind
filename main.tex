@@ -583,12 +583,11 @@
   \begin{align*}
     & \id{ParallelTreeUnion}(F, A) \\
     1. & \qquad Z_p \leftarrow \{(\rho_F(v), \rho_F(u)) : (v, u) \in A \land \rho_F(v) \neq \rho_F(u)\} \\
-    2. & \qquad Z_o \leftarrow \{(\min \{v, u\}, \max \{v, u\}) : (v, u) \in Z_p\} \\
-    3. & \qquad (F_1, Z_1) \leftarrow \id{LeftMaximalUnion}(F, Z_o) \\
-    4. & \qquad Z_q \leftarrow \{(\rho_{F_1}(v), \rho_{F_1}(u)) : (v, u) \in Z_1 \land \rho_{F_1}(v) \neq \rho_{F_1}(u)\} \\
-    5. & \qquad Z_s \leftarrow \{(u, v) : (v, u) \in Z_q\} \\
-    6. & \qquad (F_2, Z_2) \leftarrow \id{LeftMaximalUnion}(F_1, Z_s) \\
-    7. & \qquad \kw{return} \: F_2
+    2. & \qquad Z \leftarrow \{(\min \{v, u\}, \max \{v, u\}) : (v, u) \in Z_p\} \\
+    3. & \qquad \kw{while }~|Z| > 0~\kw{do} \\
+    4. & \quad \qquad (F, Z_q) \leftarrow \id{LeftMaximalUnion}(F, Z) \\
+    5. & \qquad \quad Z \leftarrow \{(\rho_{F}(u), \rho_{F}(v)) : (v, u) \in Z_q \land \rho_{F}(v) \neq \rho_{F}(u)\} \\
+    6. & \qquad \kw{return} \: F
   \end{align*}
 \end{algorithm}
 
@@ -599,64 +598,11 @@
   $v \sim_{F'} u$.
 \end{proposition}
 
-\begin{proof}
-  Let forest $F = (V, E)$ be a tree and let $A \subseteq V \times V$ be a set
-  of pairs. At step 1. by definition of $Z_p$ it holds that for all $(v, u)
-  \in A$ then $(\rho_F(v), \rho_F(u)) \in Z_p$ where $\rho_F(v) \neq
-  \rho_F(u)$. In step 2. by proposition
-  \ref{prop:ordered-edges-implies-acyclicity} it follows that $(V, Z_o)$ is an
-  acyclic directed graph since for all $(v, u) \in Z_o$ it holds that $v < u$.
-  So in step 3. left maximal union can be performed and by proposition
-  \ref{prop:left-maximal-union-correctness} it follows that $F_1$ is a forest
-  and $Z_1$ is the remaining elements in $Z_o$ that was not added to $F_1$. In
-  step 4. by proposition \ref{prop:acyclic-directed-graph-preservation} it
-  follows that $(V, Z_q)$ is an acyclic directed graph. In step 5. by
-  proposition \ref{prop:inverted-acyclic-graph} it follows that $(V, Z_s)$ is
-  also an acyclic directed graph. So in step 6. left maximal union can be
-  performed again. Hence $F_2$ is a forest being returned in step 7. and it
-  fulfills that it has unioned some of the pairs in $A$.
-
-  It now remains to show that for all $(v, u) \in A$ where $\rho_F(v) \neq
-  \rho_F(u)$ that every pair is unioned in $F_2$.
-  \begin{itemize}
-    \item If $(\rho_F(v), \rho_F(u))$ was added to $F_1$ in step 3. then by
-     definition of left maximal union all $\rho_F(v) \in \{w : (w, y) \in
-     A\}$ will be given some parent $w \in V$ and since $F_2$ is formed by
-     adding more edges to $F_1$ it follows that $v$ has the same parent in
-     $F_2$ as in $F_1$.
-    \item If $(\rho_F(v), \rho_F(u))$ was not added to $F_1$ in step 3. then
-    it is in $Z_1$. In step 6. we have the edge has become
-    $(\rho_{F_1}(\rho_{F}(u)), \rho_{F_1}(\rho_{F}(v))) \in Z_s$ where
-    $\rho_{F_1}(\rho_F(u)) \neq \rho_{F_1}(\rho_{F}(v))$. If $u \notin \{w :
-    (w, y) \in A\}$ then $\rho_{F_1}(\rho_{F}(u)) = \rho_{F}(u)$ since it
-    has not been given a parent in step 3. So remaining $u \in \{y : (w, y)
-    \in A\}$ will be given a parent in step 6.
-  \end{itemize}
-  Hence $\{w : (w, y) \in A\} \cup \{y : (w, y) \in A\}$ covers all elements
-  to be unioned in $A$ and since all these elements are given some parent in
-  either step 3. or step 6. if they do not introduce cycles, it follows that
-  for all $(v, u) \in A$ it holds that $v \sim_{F'} u$ in $F' = F_2$.
-\end{proof}
-
 \begin{proposition}[Parallel Tree Union Time Complexity]
   Let forest $F = (V, E)$ be a tree and let $A \subseteq V \times V$ be a set
   of pairs of elements in $V$ that will be unioned in parallel. Then the
   parallel tree union algorithm runs in $O(|A|^2)$ work and $O(|V|)$ span.
 \end{proposition}
-
-\begin{proof}
-  Step 2 and 4 are upperbouneded by $O(|A|)$ work and $O(\log |A|)$ depth
-  by proposition \ref{prop:left-maximal-union-time-complexity}. Futhermore,
-  step 1 and 5 can be implemented in $O(|A|)$ work and $O(1)$ depth by a
-  parallel map. The limiting factor is step 3 and 6 where if we imagine we
-  have a forest $(V, E)$ where $V = \{v_1, ... v_n, u\}$ and $E = \{(v_1,
-  v_2), (v_2, v_3), ... (v_{n-1}, v_n)\}$ and $A = \{(u, v_1), (u, v_2), ...
-  (u, v_n)\}$. Then the total find operation will be $2\sum_{k = 1}^{|A|} k =
-  O(|A|^2)$ work since the tree is a linear chain and there are $n$ union
-  operations to be performed. Hence the total work is $O(|A|^2)$ and the total
-  depth is $O(|V|)$ since the longest find operation takes $O(|V|)$ depth in
-  the worst case.
-\end{proof}
 
 \subsection{Union by Size and Rank}
 
@@ -769,7 +715,9 @@ union implementation:
 \end{flalign*}
 The normalization step can be implemented by using the wyllie list ranking
 algorithm \cite[59]{wyllie1979complexity} to compress the paths in the
-union-find structure.
+union-find structure. The modification is instead of checking if the parent does
+not exists we have to check if it is a root or the grandparent is a root then we
+are done.
 \begin{flalign*}
 & \kw{def}~\id{normalize\_step}~(\id{is} : [m]\Int)~(\id{parents} : [n]\Int) = & \\
 & \qquad \Let~\id{next}~(\id{handle} : \Int) = & \\
@@ -780,8 +728,8 @@ union-find structure.
 & \qquad \quad \Else~\id{parents}[\id{parents}[\id{handle}]] & \\
 & \qquad \In~\id{scatter}~\id{parents}~\id{is}~(\kw{map}~\id{next}~\id{is}) &
 \end{flalign*}
-
-% Rewrite to use recursion instead of loop
+Then we just have to repeat this process $\lceil \log_2 m \rceil$ times to
+ensure that all paths are compressed:
 \begin{flalign*}
 & \kw{def}~\id{normalize}~(\id{parents} : [n]\Int)~(\id{is} : [m]\Int) = & \\
 & \qquad \Let~\id{loop}~(\id{parents'} : [n]\Int)~(\id{is'} : [m]\Int)~(\id{count} : \Int) = & \\
@@ -791,16 +739,20 @@ union-find structure.
 & \qquad \quad \In ~\id{loop}~\id{parents'}~\id{ps'}~(\id{count} - 1) & \\
 & \qquad \In ~\id{loop}~\id{parents}~\id{is}~\lceil\log_2 m\rceil &
 \end{flalign*}
-
+The last step in the parallel tree union algorithm is to swap the pairs such
+that we can perform left maximal union again on the inverted pairs. This takes
+the acyclic directed graph formed by the remaining pairs and inverts all edges:
 \begin{flalign*}
   & \kw{def}~\id{swap} ~(\id{pairs} : [n](\Int, \Int)) = & \\
   & \qquad \Map ~(\lambda (v, u) \to (u, v))~\id{pairs} &
 \end{flalign*} 
-
+Now we have all the functions needed to implement the union operation:
 \begin{flalign*}
 & \kw{def}~\id{union}~(\id{parents} : [n]\Int)~(\id{pairs} : [m](\Int, \Int)): [n]\Int = & \\
 & \qquad \text{let } pairs =
 \end{flalign*}
+
+
 \subsection{Union by Rank}
 
 \subsection{Union by Size}
