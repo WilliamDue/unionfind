@@ -29,6 +29,7 @@
 \usepackage{csquotes}
 \usepackage{titlesec}
 \usepackage{tikz}
+\usetikzlibrary{trees}
 
 \addbibresource{bibliography.bib}
 
@@ -160,7 +161,7 @@
 }
 \title{
   {\Large \textsc{University of Copenhagen}} \\[5pt]
-  {\large Union-Find} \\[10pt]
+  {\large Data-Parallel Union-Find} \\[10pt]
   Author: William Henrich Due \\[0pt]
 }
 \author{}
@@ -171,20 +172,32 @@
 \thispagestyle{firstpage}
 
 \section{Theory}
-
+This section will derive the theoretical foundation for the data-parallel
+union-find. The theory is based on set theory, graph theory and properties of
+forests.
 \subsection{Forests}
+To be able to define a union-find structure we first need to define some basic
+graph theory and specifically in relation to forests. The graphs used are
+directed graphs $G = (V, E)$ where $V$ is a set of vertices and $E \subseteq V
+\times V$ is a set of directed edges. Initially we need a definition of what it
+means for node $u \in V$ to be reachable from node $v \in V$ meaning there is a
+path from $u$ to $v$.
+
 \begin{definition}[Reachability]
   A node $v$ is \emph{reachable} from a node $u$ in a directed graph $G = (V,
   E)$ if there exists a sequence of directed edges $e_1, e_2, \ldots, e_m \in
   E$ where $m \geq 1$ and $e_i = (v_{i-1}, v_i)$ for $1 \leq i \leq m$,
   such that $v_0 = u$ and $v_m = v$. We denote this by $u \leadsto v$.
 \end{definition}
-
+\noindent One of the first properties of reachability is it is neither
+\text{reflexive} nor \textit{irreflexive}. The reason for chosing such a
+definition is that the definition of an cycle in a directed graph becomes
+simply.
 \begin{definition}[Cycle]
   A cycle in a directed graph $G = (V, E)$ has a cycle if there exists
   $v \in V$ such that $v \leadsto v$.
 \end{definition}
-
+\noindent With this definition of cycles a forest can be defined as follows:
 \begin{definition}[Forest]
   A forest is a directed graph $F = (V, E)$ where $V$ is a set of vertices and $E
   \subseteq V \times V$ is a set of directed edges such that:
@@ -194,7 +207,7 @@
     \in E$ it holds that $v_1 = v_2$.
   \end{enumerate}
 \end{definition}
-
+\noindent With the definition of a forest we can now define roots in a forest.
 \begin{definition}[Root]
   A node $v \in V$ in a forest $F = (V, E)$ is a root if it has no parent.
   This is defined as the predicate:
@@ -202,68 +215,86 @@
     \mathcal{R}_F(v) : v \centernot\leadsto u \text{ for all } u \in V
   \end{align*}
 \end{definition}
-
+\noindent Using the definition of a root we can now define a tree as a special
+case of a forest.
 \begin{definition}[Tree]
   A tree is a forest $T = (V, E)$ where there exists a unique root $r \in V$
   such that $v \leadsto r$ for all $v \in V\backslash
   \{r\}$.
 \end{definition}
-
+\noindent Futhermore we will now work towards seeing a forest as a collection of
+trees. To do this we first need to establish how many roots a forest has.
 \begin{proposition}[Forest Root Count]\label{prop:forest-root-count}
-  A forest $F = (V, E)$ where $|V| = n$ and $|E| = n - k$ has $k$ roots.
+    A forest $F = (V, E)$ where $|V| = n$ and $|E| = n - k$ has $k$ roots.
 \end{proposition}
 
 \begin{proof}
-  Let $F = (V, E)$ be a forest where $|V| = n$ and $|E| = n - k$. By the
-  second property of a forest then $n - k$ vertices must have a parent. Since
-  there are $n$ vertices in total it follows that there are exactly $k$
-  vertices $r_1, r_2, \ldots, r_k \in V$ that has no parent. Hence there are
-  exactly $k$ roots in $F$.
+    Let $F = (V, E)$ be a forest where $|V| = n$ and $|E| = n - k$. By the
+    second property of a forest then $n - k$ vertices must have a parent. Since
+    there are $n$ vertices in total it follows that there are exactly $k$
+    vertices $r_1, r_2, \ldots, r_k \in V$ that has no parent. Hence there are
+    exactly $k$ roots in $F$.
 \end{proof}
-
-\begin{proposition}[Roots Path Exist]\label{prop:roots-path-exist}
-  In a forest $F = (V, E)$ for each element $v \in V$ there exists at least
-  one root $r \in V$ such that $\mathcal{R}_F(r)$ and either $v \leadsto r$ or
-  $v = r$.
+\noindent Knowing how many roots a forest does not finish the picture of how
+a forest is a collection of trees. We also need to show that each vertex also
+has a path to a root.
+\begin{proposition}[Root Path Exist]\label{prop:roots-path-exist}
+  In a forest $F = (V, E)$ for each element $v \in V$ there exists a root $r \in
+  V$ such that $\mathcal{R}_F(r)$ and either $v \leadsto r$ or $v = r$.
 \end{proposition}
 
 \begin{proof}
-  Let $F = (V, E)$ be a forest and let $v \in V$ be an arbitrary element in
-  $V$. By proposition \ref{prop:forest-root-count} there exists at least one
-  root $r \in V$ such that $\mathcal{R}_F(r)$. This can be shown by structural
-  induction on a vertex $v \in V$ that any $(v, p) \in E$ then either $p = r$
-  or $p$ has a path to some root $r \in V$.
+  Let $F = (V, E)$ be a forest and $v \in V$ be an arbitrary element in $V$. By
+  proposition \ref{prop:forest-root-count} there exists at least one root $r \in
+  V$ such that $\mathcal{R}_F(r)$. This can be shown by structural induction on
+  a vertex $v \in V$ that either $v = r$ or $(v, p) \in E$ such that $p \leadsto
+  r$.
   \begin{itemize}
-    \item If $p = r$ then $p$ is a root and $v$ has a path to a root $r$ by
-    $(v, r) \in E$.
-    \item By induction hypothesis $p$ has a path to a root $r \in V$ such
-    that $\mathcal{R}_F(r)$. Since $(v, p) \in E$ it follows that $v
-    \leadsto p \leadsto r$ so .
+    \item If $(v, p) \notin E$ then $v \centernot\leadsto u \text{ for all } u \in V$ so $v = r$.
+    \item If $(v, p) \in E$ then by induction hypothesis $p \leadsto r$ such
+    that $r \in V$ and $\mathcal{R}_F(r)$. It follows that since $v \leadsto p
+    \leadsto r$ so $v \leadsto r$.
   \end{itemize}
 \end{proof}
-
-\begin{proposition}[Forest Edge Limit]\label{prop:forest-edge-limit}
-  A forest $F = (V, E)$ where $|V| = n$ and $|E| > n - 1$ is not a forest.
+\noindent Lastly we can finish the picture of a forest being a collection of
+trees by showing that the path from a vertex to a root is unique. So that there
+is only one tree for each vertex in the forest.
+\begin{proposition}[Unique Path]\label{prop:unique-path}
+  Let $F = (V, E)$ be a forest and $v, u \in V$. If $v \leadsto u$ then the path
+  from $v$ to $u$ is unique.
 \end{proposition}
-
 \begin{proof}
-  Let $F = (V, E)$ be a forest where $|V| = n$ and $|E| > n - 1$. By
-  proposition \ref{prop:forest-root-count} a forest with $n - 1$ has exactly
-  one root, so it is a tree. By adding one more edge to the tree it must make
-  one vertex have two parents. Or since every vertex $v \in V$ has a path to
-  the root $r \in V$ it must create a cycle $v \leadsto v$ for some $v \in V$.
-  In both cases it contradicts the properties of a forest.
+  Let $F = (V, E)$ be a forest, $v, u \in V$ and $v \leadsto u$. Since every
+  vertex has at most one parent by the second property of a forest it follows
+  that there is only one out going edge from each vertex in the path from $v$ to
+  $u$. Hence the path from $v$ to $u$ is unique.
 \end{proof}
 
+% \begin{proposition}[Forest Edge Limit]\label{prop:forest-edge-limit}
+%   A forest $F = (V, E)$ where $|V| = n$ and $|E| > n - 1$ is not a forest.
+% \end{proposition}
+% 
+% \begin{proof}
+%   Let $F = (V, E)$ be a forest where $|V| = n$ and $|E| > n - 1$. By
+%   proposition \ref{prop:forest-root-count} a forest with $n - 1$ has exactly
+%   one root, so it is a tree. By adding one more edge to the tree it must make
+%   one vertex have two parents. Or since every vertex $v \in V$ has a path to
+%   the root $r \in V$ it must create a cycle $v \leadsto v$ for some $v \in V$.
+%   In both cases it contradicts the properties of a forest.
+% \end{proof}
+
 \subsection{Union-Find Structure}
-
+Using the definition of a forest we can now define a union-find structure, the
+way it will represented is as a forest. Here the forest represents an
+equivalence on $V$ where each tree in the forest represents an equivalence
+class.
 \begin{definition}[Union-Find Structure]
-  The union-find structure $U$ is a forest $U = (V, E)$ where the vertices $V
-  = S$ for some set of elements $S$. The edges $E \subseteq V \times V$
-  represent parent relations between elements in $S$ such that $(u, v) \in E$
-  means that $u$ has parent $v$.
+  A union-find structure is a forest $F = (V, E)$.
 \end{definition}
-
+\noindent The way this equivalence relation is defined is by the representative
+of each element in the forest. The representative of a node is found by
+traversing the edges in the forest until a root is found. Using the notion of a
+root we can now define the representative of an element in a forest.
 \begin{definition}[Representative]
   The representative of an element $v \in V$ in a forest $F = (V, E)$ is the
   root $r \in V$ such that there is a path from $v$ to $r$. This is defined as
@@ -272,29 +303,18 @@
     \rho_F(v) := r \text{ where } r \in V \text{ such that } \mathcal{R}_F(r) \land (v \leadsto r \lor v = r)
   \end{align*}
 \end{definition}
-
-\begin{proposition}[Unique Representative]
-  In a forest $F = (V, E)$ each element $v \in V$ has a unique
-  representative $\rho_F(v)$.
-\end{proposition}
-
-\begin{proof}
-  Let $F = (V, E)$ be a union-find structure and let $v \in V$ be an arbitrary
-  element in $V$. By proposition \ref{prop:roots-path-exist} there exists at
-  least one root $r \in V$ such that $\mathcal{R}_F(r)$ and $v \leadsto r$.
-  Now assume that there exists another root $r' \in V$ such that $\mathcal{R}_F(r')$
-  and $v \leadsto r'$. Since $F$ is a forest it follows by the second property
-  of a forest that $r = r'$ hence the representative is unique.
-\end{proof}
-
+\noindent With the notion of a representative it is possible to define the set
+of vertices in the same tree in a forest.
 \begin{definition}[Tree Set]
   The set of vertices of the same tree $\mathcal{E}_F(v)$ in a
   forest $F = (V, E)$ is defined as:
   \begin{align*}
-    \mathcal{E}_F(v) := \{u : u \in V \text{ where } \rho_F(u) = \rho_F(v))\}
+    \mathcal{E}_F(v) := \{u : u \in V \text{ where } \rho_F(u) = \rho_F(v)\}
   \end{align*}
 \end{definition}
-
+\noindent The notion of equivalence classes can now be formalized using the the
+definition of a partition. We need this to show properties of the union-find
+structure.
 \begin{definition}[Partition]\label{def:partition}
   The set $P \subseteq \mathbb{P}(S)$ is a partition of a set $S$ if:
   \begin{enumerate}
@@ -303,8 +323,11 @@
     \neq b$
     \item $\bigcup_{a \in P} a = S$
   \end{enumerate}
+  We say that $P$ is a partition of $S$ and $P$ forms an equivalence relation on
+  $S$ where each $a \in P$ is an equivalence class.
 \end{definition}
-
+\noindent Using the definition of a partition we can now show that a forest is a
+partition of its vertices based on the tree sets.
 \begin{proposition}[Forest Partition]\label{prop:forest-partition}
   A forest $F = (V, E)$ is a partition of $V$ for the following set:
   \begin{align*}
@@ -335,19 +358,28 @@
     = V$.
   \end{enumerate}
 \end{proof}
-
+\noindent With the notion of a partition of a forest we can now define the equivalence relation on the forest.
 \begin{definition}[Same Tree Relation]
   The relation $\sim_F$ on a forest $F$ is defined as:
   \begin{align*}
     u \sim_F v :\iff u \in \mathcal{E}_F(v)
   \end{align*}
 \end{definition}
-
+\noindent Trivially we can now show that the same tree relation is an
+equivalence relation.
 \begin{corollary}[Same Tree Relation is an Equivalence Relation]
   The relation $\sim_F$ on a forest $F$ is an equivalence relation due to
-  $\{\mathcal{E}_F(v) : v \in V\}$ being a partition of $V$. by proposition
-  \ref{prop:forest-partition}.
+  $\{\mathcal{E}_F(v) : v \in V\}$ being a partition of $V$.
 \end{corollary}
+
+\begin{proof}
+   From proposition \ref{prop:forest-partition} we directly get that $(V,
+    \sim_F)$ is an equivalence relation since the set $\{\mathcal{E}_F(v) : v
+    \in V\}$ is a partition of $V$.
+\end{proof}
+\noindent Now using the notion of partitions we can determine if two forests
+are equivalent in the sense that they have the same tree sets. This is useful
+when showing that two union-find structures are equivalent.
 
 \begin{definition}[Forests with Equivalent Tree Sets]
   Two forests $F = (V, E)$ and $F' = (V', E')$ have equivalent tree sets $F
@@ -358,8 +390,11 @@
     \mathcal{E'}_F(v)$ for all $v \in V$.
   \end{itemize}
 \end{definition}
-
-\begin{definition}[Tree Union]
+\noindent It is also possible to define the property of uniting two trees in a
+forest should satisfy. We would want the resulting forest to have that the two
+trees are now one tree containing all the elements from both trees. And all
+other trees in the forest should remain unchanged.
+\begin{definition}[Tree Union Property]\label{def:tree-union-property}
   The tree union of two elements $v$ and $u$ for a forest $F = (V, E)$ is such
   that $v \sim_{F'} u$ in a new forest $F' = (V', E')$ and $F'$ satify the
   following properties:
@@ -369,11 +404,17 @@
     \backslash (\mathcal{E}_F(v) \cup \mathcal{E}_F(u))$.
   \end{enumerate}
 \end{definition}
-
-\begin{proposition}[Tree Union]\label{def:tree-union}
+\noindent It is now possible to define a tree union operation that satisfies the
+tree union property. It uses the fact that if we make the representative of one
+tree the parent of the representative of the other tree then all elements in the
+two trees will have the same representative in the new forest. But we actually
+only care about the trees still being trees and not the structure of the trees
+themselves. Hence it does not matter which representative becomes the parent of
+the other.
+\begin{proposition}[Root Union]\label{prop:root-union}
   Let forest $F = (V, E)$, $p = \rho_F(u)$ be the representative of $u$ and
   let $q = \rho_F(v)$ be the representative of $v$ where $q \neq p$. Then
-  defined $F'$ as:
+  define $F'$ as:
   \begin{align*}
     F' &:= (V, E \cup \{(q, p)\})
   \end{align*}
@@ -396,15 +437,157 @@
   the same representative in $F'$ as in $F$ hence $\mathcal{E}_{F'}(w) =
   \mathcal{E}_F(w)$.
 \end{proof}
+This operation can now be used to define the union operation on a union-find
+structure. This operation corresponds to the union operation in a trivial
+sequential union-find data structure. The efficient implementations of
+union-find will do things like path compression or path halving to optimize the
+distance from a node to its representative. And these operations would also
+fulfill the tree union property since they do not change the equivalence classes
+of the forest. 
 
-\subsection{Parallel Union-Find}
+\subsection{Conflict-Free Sets}
+The problem now is how to define a parallel union operation on a union-find
+structure. The challenge is that multiple union operations might try to change
+the same part of the forest at the same time. And do to the nature of working in
+a data-parallel model we can not have atomic operations that would solve these
+problems in an concurrent manner. The way this problem will be solve is we
+consider a set of pairs of vertices that must be unified in the forest. We can
+find the representative of all of these vertex pairs, these representative pairs
+forms an graph of roots in the forest. We can simply pick out a subset of edges
+from this graph of roots that forms a forest and glue these edges onto the
+original forest. This will ensure that there are no conflicts when adding the
+edges to the original forest. We will call such a set of edges a conflict-free
+set. An example of a conflict-set is Root Union \ref{prop:root-union} since it
+only adds one edge between two roots to the forest and hence there can not be
+any conflicts.
 
+An example of this process can be seen in figures \ref{fig:forest} here we have
+a forest with three trees. In figure \ref{fig:conflict-free-set} we see the
+graph of roots on the left and on the right a conflict-free set highlighted in
+red. Finally in figure \ref{fig:forest-after-conflict-free} we see the resulting
+forest after adding the conflict-free set to the original forest.
+\begin{figure}[H]
+    \centering  
+    \begin{tikzpicture}[
+        level distance=1.5cm,
+        level 1/.style={sibling distance=2cm},
+        every node/.style={circle, draw, minimum size=0.8cm}
+    ]
+    
+    % First tree (A with child B)
+    \node (A) at (0,0) {A}
+        child {node (B) {B}};
+    
+    % Second tree (C with children D and E)
+    \node (C) at (3,0) {C}
+        child {node (D) {D}}
+        child {node (E) {E}};
+    
+    % Third tree (just F)
+    \node (F) at (7,0) {F};
+    
+    % Arrows from children to parent roots
+    \draw[->, thick] (B) -- (A);
+    \draw[->, thick] (D) -- (C);
+    \draw[->, thick] (E) -- (C);
+    
+    \end{tikzpicture}
+    \caption{A forest where there are three trees with representatives A, C and
+    F.}
+    \label{fig:forest}
+\end{figure}
+
+\begin{figure}[H]
+    \centering  
+    \begin{tikzpicture}[
+        every node/.style={circle, draw, minimum size=0.8cm},
+        every edge/.style={draw, ->, thick}
+    ]
+    
+    % First graph
+    \begin{scope}
+        % Position the three nodes in a triangle
+        \node (A) at (0,0) {A};
+        \node (C) at (3,0) {C};
+        \node (F) at (1.5,2.5) {F};
+        
+        % Create cycles with arrows
+        \draw[->, thick] (A) to[bend left=20] (C);
+        \draw[->, thick] (C) to[bend left=20] (A);
+        
+        \draw[->, thick] (C) to[bend left=20] (F);
+        \draw[->, thick] (F) to[bend left=20] (C);
+        
+        \draw[->, thick] (F) to[bend left=20] (A);
+        \draw[->, thick] (A) to[bend left=20] (F);
+    \end{scope}
+    
+    % Second graph (shifted to the right with highlighted arrows)
+    \begin{scope}[xshift=6cm]
+        % Position the three nodes in a triangle
+        \node (A2) at (0,0) {A};
+        \node (C2) at (3,0) {C};
+        \node (F2) at (1.5,2.5) {F};
+        
+        % Create cycles with arrows (normal)
+        \draw[->, thick, gray] (A2) to[bend left=20] (C2);
+        \draw[->, thick, red, very thick] (C2) to[bend left=20] (A2);  % Highlighted C -> A
+        
+        \draw[->, thick, gray] (C2) to[bend left=20] (F2);
+        \draw[->, thick, gray] (F2) to[bend left=20] (C2);
+        
+        \draw[->, thick, gray] (F2) to[bend left=20] (A2);
+        \draw[->, thick, red, very thick] (A2) to[bend left=20] (F2);  % Highlighted A -> F
+    \end{scope}
+    
+    \end{tikzpicture}
+    \caption{On the left a graph of roots from Figure \ref{fig:forest}. On the right a conflict-free set highlighted in red.}
+    \label{fig:conflict-free-set}
+\end{figure}
+
+\begin{figure}[H]
+    \centering  
+    \begin{tikzpicture}[
+        level distance=1.5cm,
+        level 1/.style={sibling distance=2cm},
+        every node/.style={circle, draw, minimum size=0.8cm}
+    ]
+    
+    % First tree (A with child B)
+    \node (A) at (0,0) {A}
+        child {node (B) {B}};
+    
+    % Second tree (C with children D and E)
+    \node (C) at (3,0) {C}
+        child {node (D) {D}}
+        child {node (E) {E}};
+    
+    % Third tree (just F)
+    \node (F) at (7,0) {F};
+    
+    % Original arrows from children to parent roots
+    \draw[->, thick] (B) -- (A);
+    \draw[->, thick] (D) -- (C);
+    \draw[->, thick] (E) -- (C);
+    
+    % New highlighted edges
+    \draw[->, very thick, red] (A) to[bend left=15] (F);
+    \draw[->, very thick, red] (C) to[bend left=15] (A);
+    
+    \end{tikzpicture}
+    \caption{The forest from Figure \ref{fig:forest} after adding the
+    conflict-free set from Figure \ref{fig:conflict-free-set}.}
+    \label{fig:forest-after-conflict-free}
+\end{figure}
+\noindent The formal definition of a conflict-free set is as previous described
+a set of root pairs that forms a forest.
 \begin{definition}[Conflict-free Set]
   Let $F$ be a forest, $X \subseteq \{(\rho_F(v), \rho_F(u)) : (v, u) \in V
   \times V\}$ be a set of root pairs. Then $X$ is a conflict-free set in $F$
   if $(V, Y)$ is a forest.
 \end{definition}
-
+\noindent With this definition of a conflict-free set we now wish to show that
+we can add all edges in a conflict-free set to a forest and still have a forest.
 \begin{proposition}[Conflict-free Forest Union]\label{prop:conflict-free-forest-union}
   Let forest $F = (V, E)$ be a forest and let $X \subseteq V \times V$ be a
   conflict-free set in $F$ where $|X| = n$. Then defining the following forests:
@@ -433,7 +616,11 @@
   \end{itemize}
   Thus by induction $F_n$ is a forest.
 \end{proof}
-
+\noindent We also need to show that Conflict-free Forest Union
+\ref{prop:conflict-free-forest-union} satisfies Tree Union Property
+\ref{def:tree-union-property}. This is done by showing that adding edges from
+the conflict-free set to a forest in any order is equivalent to adding each edge
+in the same order using Root Union \ref{prop:root-union}.
 \begin{proposition}[Conflict-free Set Equivalence]\label{prop:conflict-free-set-equivalence}
   Let forest $F$ be a forest and let $X \subseteq V \times V$ be a
   conflict-free set in $F$ where $|X| = n$. Then defining the following forests:
@@ -458,6 +645,8 @@
   Hence $F_n \cong G_n$.
 \end{proof}
 
+\subsection{Parallel Union-Find}
+
 \begin{proposition}[Ordered Edges Implies Acyclicity]\label{prop:ordered-edges-implies-acyclicity}
   Let $G = (V, E)$ be a directed graph where for all $(v, u) \in E$ it holds
   that $v < u$ for some strict total order $(V, <)$. Then $G$ has no cycles.
@@ -475,20 +664,20 @@
   $v_0 \neq v_m$ hence there are no cycles in $G$.
 \end{proof}
 
-\begin{proposition}[Inverted Acyclic Graph is Acyclic]\label{prop:inverted-acyclic-graph}
-  Let $G = (V, E)$ be a directed acyclic graph. Then the inverted graph $G' =
-  (V, E')$ where $E' = \{(u, v) : (v, u) \in E\}$ is also acyclic.
-\end{proposition}
-\begin{proof}
-  Let $G = (V, E)$ be a directed acyclic graph and $G' = (V, E')$ where $E' =
-  \{(u, v) : (v, u) \in E\}$ is the inverted graph. Let edges $e_1, e_2,
-  \ldots, e_m \in E'$ where $m \geq 1$ and $e_i = (v_{i-1}, v_i)$ for $1 \leq
-  i \leq m$ be some path in $G'$. By definition of $E'$ it follows that there
-  exists edges $e'_1, e'_2, \ldots, e'_m \in E$ where $e'_i = (v_i, v_{i-1})$
-  for $1 \leq i \leq m$. If there was a cycle in $G'$ then it would hold that
-  $v_0 = v_m$. But since $G$ is acyclic it follows that $v_0 \neq v_m$. Hence
-  there are no cycles in $G'$.  
-\end{proof}
+% \begin{proposition}[Inverted Acyclic Graph is Acyclic]\label{prop:inverted-acyclic-graph}
+%   Let $G = (V, E)$ be a directed acyclic graph. Then the inverted graph $G' =
+%   (V, E')$ where $E' = \{(u, v) : (v, u) \in E\}$ is also acyclic.
+% \end{proposition}
+% \begin{proof}
+%   Let $G = (V, E)$ be a directed acyclic graph and $G' = (V, E')$ where $E' =
+%   \{(u, v) : (v, u) \in E\}$ is the inverted graph. Let edges $e_1, e_2,
+%   \ldots, e_m \in E'$ where $m \geq 1$ and $e_i = (v_{i-1}, v_i)$ for $1 \leq
+%   i \leq m$ be some path in $G'$. By definition of $E'$ it follows that there
+%   exists edges $e'_1, e'_2, \ldots, e'_m \in E$ where $e'_i = (v_i, v_{i-1})$
+%   for $1 \leq i \leq m$. If there was a cycle in $G'$ then it would hold that
+%   $v_0 = v_m$. But since $G$ is acyclic it follows that $v_0 \neq v_m$. Hence
+%   there are no cycles in $G'$.  
+% \end{proof}
 
 \begin{algorithm}[Left Maximal Union]\label{alg:left-maximal-union}
   Let forest $F = (V, E)$ be a forest and let $Z \subseteq \{(\rho_F(v),
@@ -545,37 +734,6 @@
 \end{proof}
 
 
-\begin{proposition}[Acyclic Directed Graph Presevation]\label{prop:acyclic-directed-graph-preservation}
-  Let $G = (V, E)$ be a directed acyclic graph and let $F = (V, X)$ be a
-  forest where $X \subseteq E$. Then the directed graph $G' = (V, E')$ where
-  $E' = \{(\rho_F(v), \rho_F(u)) : (v, u) \in E \backslash X \land \rho_F(v)
-  \neq \rho_F(u)\}$ is also acyclic.
-\end{proposition}
-\begin{proof}
-  Let $G = (V, E)$ be a directed acyclic graph and let $F = (V, X)$ be a
-  forest where $X \subseteq E$. Let $q$ be a path $e_1, e_2, \ldots, e_m \in
-  E$ where $m \geq 1$ and $e_i = (v_{i-1}, v_i)$ for $1 \leq i \leq m$ be some
-  path in $G$.
-  \begin{itemize}
-    \item If all edges $e_i \notin X$ then the path $q$ exists in $G'$ and
-    does not form a cycle since $G$ is acyclic.
-    \item If $q$ has some subpath $e_j, e_{j+1}, \ldots, e_k \in X$ for $1
-    \leq j < k \leq m$ where $(v_{j - 1}, v_j) \in X$ then $\rho_F(v_{j-1})
-    = \rho_F(v_{j})$ so it will not be in $E \backslash X$. Let $(v, u) \in
-    E$ where $u  = v_{j - 1}$ or $u = v_j$ then $\rho_F(u) = v_k$ so the
-    edge in $G'$ will be $(\rho_F(v), v_k)$.
-    \begin{itemize}
-      \item If $v \in \{w : (w, u) \in X\}$ then $\rho_F(v) = v_k$ so the
-      edge is $(v_k, v_k)$ which is a trivial cycle and since $\rho_F(v)
-      \neq \rho_F(u)$ it will not be in $E'$.
-      \item If $v \notin \{w : (w, u) \in X\}$ then $\rho_F(v) \neq v_k$
-      and $(\rho_F(v), v_k)$ will be an edge in $G'$. And since the path
-      $v \leadsto v_k$ in $G$ does not form a cycle it follows that single
-      edge from $(\rho_F(v), v_k) \in E'$ does not form a cycle either.
-    \end{itemize}
-  \end{itemize}
-\end{proof}
-
 \begin{algorithm}[Parallel Tree Union]\label{alg:parallel-tree-union}
   Let forest $F = (V, E)$ be a tree and let $A \subseteq V \times V$ be a set of pairs
   of elements in $V$ that will be unioned in parallel. The parallel tree union
@@ -586,8 +744,9 @@
     2. & \qquad Z \leftarrow \{(\min \{v, u\}, \max \{v, u\}) : (v, u) \in Z_p\} \\
     3. & \qquad \kw{while }~|Z| > 0~\kw{do} \\
     4. & \quad \qquad (F, Z_q) \leftarrow \id{LeftMaximalUnion}(F, Z) \\
-    5. & \qquad \quad Z \leftarrow \{(\rho_{F}(u), \rho_{F}(v)) : (v, u) \in Z_q \land \rho_{F}(v) \neq \rho_{F}(u)\} \\
-    6. & \qquad \kw{return} \: F
+    5. & \qquad \quad Z_r \leftarrow \{(\rho_{F}(v), \rho_{F}(u)) : (v, u) \in Z_q \land \rho_{F}(v) \neq \rho_{F}(u)\} \\
+    6. & \qquad \quad Z \leftarrow \{(\min \{v, u\}, \max \{v, u\}) : (v, u) \in Z_r\} \\
+    7. & \qquad \kw{return} \: F
   \end{align*}
 \end{algorithm}
 
