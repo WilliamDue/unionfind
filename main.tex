@@ -644,9 +644,15 @@ in the same order using Root Union \ref{prop:root-union}.
   that all elements in $V$ remains in the same tree in both $F_n$ and $G_n$.
   Hence $F_n \cong G_n$.
 \end{proof}
-
-\subsection{Parallel Union-Find}
-
+\noindent Now that we have established the properties of conflict-free sets we
+can now define a method to find a conflict-free set from a set of root pairs.
+The method chosen to find a conflict-free set is to consider an directed acyclic
+graph. Such a graph fulfills one property of a forest, namely that there are no
+cycles. This is ensured by ordering the edges in the graph such that for all
+edges $(v, u)$ it holds that $v < u$ for some strict total order $(V, <)$. We
+may do this since the equivalence classes in a forest can be represented by any
+representative in the tree. Hence we can alwauys pick a total order on the
+vertices in the forest.
 \begin{proposition}[Ordered Edges Implies Acyclicity]\label{prop:ordered-edges-implies-acyclicity}
   Let $G = (V, E)$ be a directed graph where for all $(v, u) \in E$ it holds
   that $v < u$ for some strict total order $(V, <)$. Then $G$ has no cycles.
@@ -663,7 +669,10 @@ in the same order using Root Union \ref{prop:root-union}.
   Hence by transitivity of the total order it follows that $v_0 < v_m$. So
   $v_0 \neq v_m$ hence there are no cycles in $G$.
 \end{proof}
-
+\noindent The nice property of using a directed acyclic graph is we can now pick out any
+vertices from the graph such that no two vertices have the same child. This will
+ensure that the picked out edges forms a forest.
+\subsection{Parallel Union-Find}
 % \begin{proposition}[Inverted Acyclic Graph is Acyclic]\label{prop:inverted-acyclic-graph}
 %   Let $G = (V, E)$ be a directed acyclic graph. Then the inverted graph $G' =
 %   (V, E')$ where $E' = \{(u, v) : (v, u) \in E\}$ is also acyclic.
