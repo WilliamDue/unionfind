@@ -644,6 +644,30 @@ in the same order using Root Union \ref{prop:root-union}.
   that all elements in $V$ remains in the same tree in both $F_n$ and $G_n$.
   Hence $F_n \cong G_n$.
 \end{proof}
+\noindent From this equivalence it will be shown that Conflict-free Forest Union
+\ref{prop:conflict-free-forest-union} satisfies Tree Union Property
+\ref{def:tree-union-property}.
+\begin{corollary}[Conflict-free Union Satisfies Tree Union Property]
+  Let forest $F$ be a forest and let $X \subseteq V \times V$ be a
+  conflict-free set in $F$ where $|X| = n$. Then defining the following forests:
+  \begin{align*}
+    F_0 &:= F \\
+    F_{i} &:= (V, E_{i - 1} \cup \{(v_i, u_i)\}) \text{ for } (v_i, u_i) \in X \text{ and } 1 \leq i \leq n
+  \end{align*}
+  Then for all $(v_i, u_i) \in X$ it holds that $v_i \sim_{F_n} u_i$ and $F_n$
+  satisfies the properties of a tree union.
+\end{corollary}
+\begin{proof}
+  Let forest $F$ be a forest, $X \subseteq V \times V$ be a conflict-free set
+  in $F$. By proposition \ref{prop:conflict-free-set-equivalence} it holds
+  that $F_n \cong G_n$ where $G_n$ is defined as in proposition
+  \ref{prop:conflict-free-set-equivalence}. By proposition \ref{prop:root-union}
+  it holds that for all $(v_i, u_i) \in X$ then $v_i \sim_{G_n} u_i$ and $G_n$
+  satisfies the properties of a tree union. Since $F_n \cong G_n$ it follows
+  that for all $(v_i, u_i) \in X$ then $v_i \sim_{F_n} u_i$ and $F_n$ satisfies
+  the properties of a tree union.
+\end{proof}
+
 \noindent Now that we have established the properties of conflict-free sets we
 can now define a method to find a conflict-free set from a set of root pairs.
 The method chosen to find a conflict-free set is to consider an directed acyclic
@@ -669,10 +693,34 @@ vertices in the forest.
   Hence by transitivity of the total order it follows that $v_0 < v_m$. So
   $v_0 \neq v_m$ hence there are no cycles in $G$.
 \end{proof}
-\noindent The nice property of using a directed acyclic graph is we can now pick out any
-vertices from the graph such that no two vertices have the same child. This will
-ensure that the picked out edges forms a forest.
+\noindent The nice property of using a directed acyclic graph is we can now pick
+out any vertices from the graph such that no two vertices have the same child.
+This will ensure that the picked out edges forms a forest.
 \subsection{Parallel Union-Find}
+
+\begin{definition}[Edge Cover]
+    Let $V$ be a set and $E \subseteq V \times V$ such that $\{v : (v, u) \in
+    E\} \cup \{u : (v, u) \in E\} = V$ then $E$ is an edge cover of $V$.
+\end{definition}
+
+\begin{proposition}[Edge Cover Inequality]\label{prop:set-2-tuple-inequality}
+    Let $V$ be a set and $E \subseteq V \times V$ be a edge cover of V then: 
+    \begin{align*}
+        |\{v : (v, u) \in E\}| < \frac{|V|}{2} \implies |\{u : (v, u) \in E\}| > \frac{|V|}{2} 
+    \end{align*}
+\end{proposition}
+\begin{proof}
+    Let $V$ be a set and $E \subseteq V \times V$ be a edge cover of V, and
+    $|\{v : (v, u) \in E\}| < \frac{|V|}{2}$. Let $A = \{v : (v, u) \in E\}$, $B
+    = \{u : (v, u) \in E\}$ and $C = B \backslash A$. By definition of $C$ we
+    have $A \cap C = \emptyset$ so $|A| + |C| = |V|$ and since $|B| \geq |C|$ we
+    can conclude that:
+    \begin{align*}
+        |B| \geq |C| = |V| - |A| > |V| - \frac{|V|}{2} = \frac{|V|}{2}
+    \end{align*}
+    Hence $|\{u : (v, u) \in E\}| > \frac{|V|}{2}$.
+\end{proof}
+
 % \begin{proposition}[Inverted Acyclic Graph is Acyclic]\label{prop:inverted-acyclic-graph}
 %   Let $G = (V, E)$ be a directed acyclic graph. Then the inverted graph $G' =
 %   (V, E')$ where $E' = \{(u, v) : (v, u) \in E\}$ is also acyclic.
