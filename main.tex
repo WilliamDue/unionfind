@@ -696,13 +696,28 @@ vertices in the forest.
 \noindent The nice property of using a directed acyclic graph is we can now pick
 out any vertices from the graph such that no two vertices have the same child.
 This will ensure that the picked out edges forms a forest.
-\subsection{Parallel Union-Find}
 
+\subsection{Parallel Union-Find}
+Using the aforementioned conflict-free sets it is now possible to define how
+unification in the union-find strucutre works. If we consider that we have some
+forest $F = (V, E)$ and then are given a set of variables pairs $A \subseteq V
+\times V$ we wish to unify these pairs such that they are equivalent in some
+forest $F$. We can then turn $A$ into an acyclic graph $(V, Z)$ where $Z$ only
+consists of root pairs from $F$. The first part of this section is we will now
+define an algorithm which picks out a conflict-free set that resolve the most
+vertices in the edge cover of $Z$. The definition of a edge cover will be as
+following:
 \begin{definition}[Edge Cover]
     Let $V$ be a set and $E \subseteq V \times V$ such that $\{v : (v, u) \in
     E\} \cup \{u : (v, u) \in E\} = V$ then $E$ is an edge cover of $V$.
 \end{definition}
-
+\noindent Using this definition we know that $V' = \{v : (v, u) \in Z\} \cup \{u
+: (v, u) \in Z\}$ is an edge cover of the set of root pairs we want to unify
+$Z$. The algorithm for picking out a conflict-free set from $(V, Z)$ should be
+able to resolve atleast $\frac{|V'|}{2}$ vertices. The reasonal behind this is
+that every time a vertex is given a parent then it can not be given a parent
+later. We can show that when we have such an edge cover then the following
+inequality holds:
 \begin{proposition}[Edge Cover Inequality]\label{prop:set-2-tuple-inequality}
     Let $V$ be a set and $E \subseteq V \times V$ be a edge cover of V then: 
     \begin{align*}
@@ -720,43 +735,49 @@ This will ensure that the picked out edges forms a forest.
     \end{align*}
     Hence $|\{u : (v, u) \in E\}| > \frac{|V|}{2}$.
 \end{proof}
+\noindent This inequality tells us that if $Z$ does not resolve enough vertices,
+if we invert the edges in $Z$ then it would be possible to resolve enough
+vertices. It just remains to show that inverting these edges direction will
+still give an acyclic graph.  
+\begin{proposition}[Inverted Acyclic Graph is Acyclic]\label{prop:inverted-acyclic-graph}
+  Let $G = (V, E)$ be a directed acyclic graph. Then the inverted graph $G' =
+  (V, E')$ where $E' = \{(u, v) : (v, u) \in E\}$ is also acyclic.
+\end{proposition}
+\begin{proof}
+  Let $G = (V, E)$ be a directed acyclic graph and $G' = (V, E')$ where $E' =
+  \{(u, v) : (v, u) \in E\}$ is the inverted graph. Let edges $e_1, e_2,
+  \ldots, e_m \in E'$ where $m \geq 1$ and $e_i = (v_{i-1}, v_i)$ for $1 \leq
+  i \leq m$ be some path in $G'$. By definition of $E'$ it follows that there
+  exists edges $e'_1, e'_2, \ldots, e'_m \in E$ where $e'_i = (v_i, v_{i-1})$
+  for $1 \leq i \leq m$. If there was a cycle in $G'$ then it would hold that
+  $v_0 = v_m$. But since $G$ is acyclic it follows that $v_0 \neq v_m$. Hence
+  there are no cycles in $G'$.  
+\end{proof}
 
-% \begin{proposition}[Inverted Acyclic Graph is Acyclic]\label{prop:inverted-acyclic-graph}
-%   Let $G = (V, E)$ be a directed acyclic graph. Then the inverted graph $G' =
-%   (V, E')$ where $E' = \{(u, v) : (v, u) \in E\}$ is also acyclic.
-% \end{proposition}
-% \begin{proof}
-%   Let $G = (V, E)$ be a directed acyclic graph and $G' = (V, E')$ where $E' =
-%   \{(u, v) : (v, u) \in E\}$ is the inverted graph. Let edges $e_1, e_2,
-%   \ldots, e_m \in E'$ where $m \geq 1$ and $e_i = (v_{i-1}, v_i)$ for $1 \leq
-%   i \leq m$ be some path in $G'$. By definition of $E'$ it follows that there
-%   exists edges $e'_1, e'_2, \ldots, e'_m \in E$ where $e'_i = (v_i, v_{i-1})$
-%   for $1 \leq i \leq m$. If there was a cycle in $G'$ then it would hold that
-%   $v_0 = v_m$. But since $G$ is acyclic it follows that $v_0 \neq v_m$. Hence
-%   there are no cycles in $G'$.  
-% \end{proof}
-
-\begin{algorithm}[Left Maximal Union]\label{alg:left-maximal-union}
-  Let forest $F = (V, E)$ be a forest and let $Z \subseteq \{(\rho_F(v),
-  \rho_F(u)) : (v, u) \in V \times V\}$ be a set of root pairs $F$ and $(V,
-  Z)$ is an acyclic directed graph. The left maximal conflict-free set
-  algorithm is defined as:
+\begin{algorithm}[Maximal Union]\label{alg:maximal-union} Let forest $F = (V,
+  E)$ be a forest and let $Z \subseteq \{(\rho_F(v), \rho_F(u)) : (v, u) \in V
+  \times V\}$ be a set of root pairs $F$ and $(V, Z)$ is an acyclic directed
+  graph. The maximal union algorithm is defined as:
   \begin{align*}
-    & \id{LeftMaximalUnion}(F, Z) \\ 
+    & \id{MaximalUnion}(F, Z) \\ 
     1. & \qquad (V, E) \leftarrow F \\
-    2. & \qquad \text{Let } X \subseteq Z \text{ where } \{v : (v, u) \in X\} = \{v : (v, u) \in Z\} \\
+    2. & \qquad V' \leftarrow \{v : (v, u) \in Z\} \cup \{u : (v, u) \in Z\} \\
+    3. & \qquad Z \leftarrow \begin{cases}
+      \{(u, v) : (v, u) \in Z\} & \{v : (v, u) \in Z\} < \frac{|V'|}{2} \\
+      Z & \{v : (v, u) \in Z\} \geq \frac{|V'|}{2}
+    \end{cases} \\
+    4. & \qquad \text{Let } X \subseteq Z \text{ where } \{v : (v, u) \in X\} = \{v : (v, u) \in Z\} \\
     & \qquad \qquad \qquad \quad \: \: \: 
     \: \text{ and } |X| = |\{v : (v, u) \in Z\}| \\
-    3. & \qquad E \leftarrow E \cup X \\
-    4. & \qquad \kw{return} \: ((V, E), Z \backslash X)
+    5. & \qquad E \leftarrow E \cup X \\
+    6. & \qquad \kw{return} \: ((V, E), Z \backslash X)
   \end{align*}
 \end{algorithm}
-\begin{proposition}[Left Maximal Union Correctness]\label{prop:left-maximal-union-correctness}
+\begin{proposition}[Maximal Union Correctness]\label{prop:maximal-union-correctness}
   Let forest $F = (V, E)$ be a forest and let $Z \subseteq \{(\rho_F(v),
-  \rho_F(u)) : (v, u) \in V \times V\}$ be a set of root pairs $F$ and $(V,
-  Z)$ is an acyclic directed graph. Then the left maximal conflict-free set
-  algorithm returns a forest $F' = (V, E')$ and a conflict-free set $X
-  \subseteq Z$ in $F$.
+  \rho_F(u)) : (v, u) \in V \times V\}$ be a set of root pairs $F$ and $(V, Z)$
+  is an acyclic directed graph. Then the maximal union algorithm returns a
+  forest $F' = (V, E')$ and a conflict-free set $X \subseteq Z$ in $F$.
 \end{proposition}
 \begin{proof}
   Let forest $F = (V, E)$ be a forest and let $Z \subseteq \{(\rho_F(v),
@@ -770,11 +791,14 @@ This will ensure that the picked out edges forms a forest.
   $E' = E \cup X$.
 \end{proof}
 
-\begin{proposition}[Left Maximal Union Time Complexity]\label{prop:left-maximal-union-time-complexity}
-  Let forest $F = (V, E)$ be a forest and let $Z \subseteq \{(\rho_F(v),
-  \rho_F(u)) : (v, u) \in V \times V\}$ be a set of root pairs $F$ and $(V,
-  Z)$ is an acyclic directed graph. Then the left maximal conflict-free set
-  algorithm runs in $O(|Z|)$ work and $O(\log |Z|)$ depth.
+
+
+\begin{proposition}[Left Maximal Union Time
+  Complexity]\label{prop:left-maximal-union-time-complexity} Let forest $F = (V,
+  E)$ be a forest and let $Z \subseteq \{(\rho_F(v), \rho_F(u)) : (v, u) \in V
+  \times V\}$ be a set of root pairs $F$ and $(V, Z)$ is an acyclic directed
+  graph. Then the maximal union algorithm runs in $O(|Z|)$ work and $O(\log
+  |Z|)$ depth.
 \end{proposition}
 
 \begin{proof}
