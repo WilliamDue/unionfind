@@ -698,26 +698,30 @@ out any vertices from the graph such that no two vertices have the same child.
 This will ensure that the picked out edges forms a forest.
 
 \subsection{Parallel Union-Find}
-Using the aforementioned conflict-free sets it is now possible to define how
-unification in the union-find strucutre works. If we consider that we have some
-forest $F = (V, E)$ and then are given a set of variables pairs $A \subseteq V
-\times V$ we wish to unify these pairs such that they are equivalent in some
-forest $F$. We can then turn $A$ into an acyclic graph $(V, Z)$ where $Z$ only
-consists of root pairs from $F$. The first part of this section is we will now
-define an algorithm which picks out a conflict-free set that resolve the most
-vertices in the edge cover of $Z$. The definition of a edge cover will be as
-following:
+The conflict-free sets makes it is possible to define how unification in the
+union-find strucutre works. If we consider that we have some forest $F = (V, E)$
+and then are given a set of variables pairs $A \subseteq V \times V$ we wish to
+unify these pairs such that they are equivalent in some forest $F$. We can turn
+$A$ into an acyclic graph $(V, Z)$ where $Z$ only consists of root pairs from
+$F$. We want to pick out a subset of $Z$ such that we unify as many of the
+vertex pairs of $Z$ in $F$ as possible leading to a good time complexity of the
+algorithm. All of these pairs can not be unified immediately so an algorithm
+will be first derived which picks out a subset of the directed acyclic graph
+$(V, Z)$ and then unifies them in $F$. To determine what a large set is we is
+first need to define a notion of an edge cover that can be serve as a measure of
+how many vertex pairs in $Z$ can be unified:
 \begin{definition}[Edge Cover]
     Let $V$ be a set and $E \subseteq V \times V$ such that $\{v : (v, u) \in
     E\} \cup \{u : (v, u) \in E\} = V$ then $E$ is an edge cover of $V$.
 \end{definition}
 \noindent Using this definition we know that $V' = \{v : (v, u) \in Z\} \cup \{u
-: (v, u) \in Z\}$ is an edge cover of the set of root pairs we want to unify
-$Z$. The algorithm for picking out a conflict-free set from $(V, Z)$ should be
-able to resolve atleast $\frac{|V'|}{2}$ vertices. The reasonal behind this is
-that every time a vertex is given a parent then it can not be given a parent
-later. We can show that when we have such an edge cover then the following
-inequality holds:
+: (v, u) \in Z\}$ is an edge cover of the subgraph $(V', Z)$ of $(V, Z)$. Why
+this is relevant is that vertices in $V\backslash V'$ will not be unified so
+they are not relevant during unification. Futhermore, the bound that will be
+establish is for every iteration then atleast $\frac{|V'|}{2}$ vertices must be
+unified. The intuition behind this is that every time a vertex is given a parent
+then it can not be given a parent later so it has been dealt with. We can show
+that when we have such an edge cover then the following inequality holds:
 \begin{proposition}[Edge Cover Inequality]\label{prop:set-2-tuple-inequality}
     Let $V$ be a set and $E \subseteq V \times V$ be a edge cover of V then: 
     \begin{align*}
@@ -736,7 +740,7 @@ inequality holds:
     Hence $|\{u : (v, u) \in E\}| > \frac{|V|}{2}$.
 \end{proof}
 \noindent This inequality tells us that if $Z$ does not resolve enough vertices,
-if we invert the edges in $Z$ then it would be possible to resolve enough
+then if we invert the edges in $Z$ then it would be possible to resolve enough
 vertices. It just remains to show that inverting these edges direction will
 still give an acyclic graph.  
 \begin{proposition}[Inverted Acyclic Graph is Acyclic]\label{prop:inverted-acyclic-graph}
@@ -753,7 +757,8 @@ still give an acyclic graph.
   $v_0 = v_m$. But since $G$ is acyclic it follows that $v_0 \neq v_m$. Hence
   there are no cycles in $G'$.  
 \end{proof}
-
+\noindent The algorithm which tries to unifies atleast $\frac{|V'|}{2}$ can now
+be defined as following:
 \begin{algorithm}[Maximal Union]\label{alg:maximal-union} Let forest $F = (V,
   E)$ be a forest and let $Z \subseteq \{(\rho_F(v), \rho_F(u)) : (v, u) \in V
   \times V\}$ be a set of root pairs $F$ and $(V, Z)$ is an acyclic directed
