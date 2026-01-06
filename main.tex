@@ -109,6 +109,7 @@
 \newtheorem{theorem}{Theorem}
 \newtheorem{algorithm}{Algorithm}[section]
 \newtheorem{example}{Example}[section]
+\newtheorem{conjecture}{Conjecture}[section]
 \DeclareMathOperator{\sign}{sign}
 \newcommand\doubleplus{+\kern-1.3ex+\kern0.8ex}
 \newcommand\mdoubleplus{\ensuremath{\mathbin{+\mkern-10mu+}}}
@@ -711,33 +712,33 @@ $(V, Z)$ and then unifies them in $F$. To determine what a large set is we is
 first need to define a notion of an edge cover that can be serve as a measure of
 how many vertex pairs in $Z$ can be unified:
 \begin{definition}[Edge Cover]
-    Let $V$ be a set and $E \subseteq V \times V$ such that $\{v : (v, u) \in
-    E\} \cup \{u : (v, u) \in E\} = V$ then $E$ is an edge cover of $V$.
+    Let $V$ be a set and $E \subseteq V \times V$ such that $\pi_1(E) \cup
+    \pi_2(E) = V$ then $E$ is an edge cover of $V$.
 \end{definition}
-\noindent Using this definition we know that $V' = \{v : (v, u) \in Z\} \cup \{u
-: (v, u) \in Z\}$ is an edge cover of the subgraph $(V', Z)$ of $(V, Z)$. Why
-this is relevant is that vertices in $V\backslash V'$ will not be unified so
-they are not relevant during unification. Futhermore, the bound that will be
-establish is for every iteration then atleast $\frac{|V'|}{2}$ vertices must be
-unified. The intuition behind this is that every time a vertex is given a parent
-then it can not be given a parent later so it has been dealt with. We can show
-that when we have such an edge cover then the following inequality holds:
+\noindent Using this definition we know that $V' = \pi_1(Z) \cup \pi_2(E)$ is an
+edge cover of the subgraph $(V', Z)$ of $(V, Z)$. Why this is relevant is that
+vertices in $V\backslash V'$ will not be unified so they are not relevant during
+unification. Futhermore, the bound that will be establish is for every iteration
+then atleast $\frac{|V'|}{2}$ vertices must be unified. The intuition behind
+this is that every time a vertex is given a parent then it can not be given a
+parent later so it has been dealt with. We can show that when we have such an
+edge cover then the following inequality holds:
 \begin{proposition}[Edge Cover Inequality]\label{prop:set-2-tuple-inequality}
     Let $V$ be a set and $E \subseteq V \times V$ be a edge cover of V then: 
     \begin{align*}
-        |\{v : (v, u) \in E\}| < \frac{|V|}{2} \implies |\{u : (v, u) \in E\}| > \frac{|V|}{2} 
+        |\pi_1(E)| < \frac{|V|}{2} \implies |\pi_2(E)| > \frac{|V|}{2} 
     \end{align*}
 \end{proposition}
 \begin{proof}
     Let $V$ be a set and $E \subseteq V \times V$ be a edge cover of V, and
-    $|\{v : (v, u) \in E\}| < \frac{|V|}{2}$. Let $A = \{v : (v, u) \in E\}$, $B
-    = \{u : (v, u) \in E\}$ and $C = B \backslash A$. By definition of $C$ we
+    $|\pi_1(E)| < \frac{|V|}{2}$. Let $A = \pi_1(E) = \{v : (v, u) \in E\}$, $B
+    = \pi_2(E) = \{u : (v, u) \in E\}$ and $C = B \backslash A$. By definition of $C$ we
     have $A \cap C = \emptyset$ so $|A| + |C| = |V|$ and since $|B| \geq |C|$ we
     can conclude that:
     \begin{align*}
         |B| \geq |C| = |V| - |A| > |V| - \frac{|V|}{2} = \frac{|V|}{2}
     \end{align*}
-    Hence $|\{u : (v, u) \in E\}| > \frac{|V|}{2}$.
+    Hence $|\pi_1(E)| > \frac{|V|}{2}$.
 \end{proof}
 \noindent This inequality tells us that if $Z$ does not resolve enough vertices,
 then if we invert the edges in $Z$ then it would be possible to resolve enough
@@ -758,7 +759,9 @@ still give an acyclic graph.
   there are no cycles in $G'$.  
 \end{proof}
 \noindent The algorithm which tries to unifies atleast $\frac{|V'|}{2}$ can now
-be defined as following:
+be defined. It starts by determining if the directed acyclic subgraph $(V', Z)$
+should be inverted as to give $\frac{|V'|}{2}$ vertices a parent. Afterwards 
+just pick out as many pairs with a unique child.
 \begin{algorithm}[Maximal Union]\label{alg:maximal-union} Let forest $F = (V,
   E)$ be a forest and let $Z \subseteq \{(\rho_F(v), \rho_F(u)) : (v, u) \in V
   \times V\}$ be a set of root pairs $F$ and $(V, Z)$ is an acyclic directed
@@ -766,18 +769,20 @@ be defined as following:
   \begin{align*}
     & \id{MaximalUnion}(F, Z) \\ 
     1. & \qquad (V, E) \leftarrow F \\
-    2. & \qquad V' \leftarrow \{v : (v, u) \in Z\} \cup \{u : (v, u) \in Z\} \\
+    2. & \qquad V' \leftarrow \pi_1(Z) \cup \pi_2(Z) \\
     3. & \qquad Z \leftarrow \begin{cases}
-      \{(u, v) : (v, u) \in Z\} & \{v : (v, u) \in Z\} < \frac{|V'|}{2} \\
-      Z & \{v : (v, u) \in Z\} \geq \frac{|V'|}{2}
+      \{(u, v) : (v, u) \in Z\} & \pi_1(Z) < \frac{|V'|}{2} \\
+      Z & \pi_1(Z) \geq \frac{|V'|}{2}
     \end{cases} \\
-    4. & \qquad \text{Let } X \subseteq Z \text{ where } \{v : (v, u) \in X\} = \{v : (v, u) \in Z\} \\
-    & \qquad \qquad \qquad \quad \: \: \: 
-    \: \text{ and } |X| = |\{v : (v, u) \in Z\}| \\
-    5. & \qquad E \leftarrow E \cup X \\
-    6. & \qquad \kw{return} \: ((V, E), Z \backslash X)
+    4. & \qquad X \leftarrow Y \subseteq Z \text{ where } |Y| = |\pi_1(Z)| \text{ and } \pi_1(Y) = \pi_1(Z) \\
+    5. & \qquad G \leftarrow (V, X) \\
+    6. & \qquad E \leftarrow E \cup \{(v, \rho_G(u)) : (v, u) \in X\} \\
+    7. & \qquad \kw{return} \: ((V, E), Z \backslash X)
   \end{align*}
 \end{algorithm}
+\noindent By definition we can clealy see atleast $\frac{|V'|}{2}$ vertices are
+given a parent as we wanted. It will now be shown that the added edges is a
+conflict-free set so a forest is still the result.
 \begin{proposition}[Maximal Union Correctness]\label{prop:maximal-union-correctness}
   Let forest $F = (V, E)$ be a forest and let $Z \subseteq \{(\rho_F(v),
   \rho_F(u)) : (v, u) \in V \times V\}$ be a set of root pairs $F$ and $(V, Z)$
@@ -786,39 +791,70 @@ be defined as following:
 \end{proposition}
 \begin{proof}
   Let forest $F = (V, E)$ be a forest and let $Z \subseteq \{(\rho_F(v),
-  \rho_F(u)) : (v, u) \in V \times V\}$ be a set of root pairs $F$ and $(V,
-  Z)$ is an acyclic directed graph. Since $X$ is defined such that $\{v : (v,
-  u) \in X\} = \{v : (v, u) \in Z\}$ and $|X| = |\{v : (v, u) \in Z\}|$ it
-  follows that $X$ is a conflict-free set in $F$ since no vertex $v$ appears
-  more than once as a child in $X$ i.e. $(V, X)$ is a forest. By adding the
-  edges in $X$ to $E$ it follows by proposition
+  \rho_F(u)) : (v, u) \in V \times V\}$ be a set of root pairs $F$ and $(V, Z)$
+  is an acyclic directed graph. From proposition
+  \ref{prop:inverted-acyclic-graph} we know that $(V, Z)$ remains an acyclic
+  graph through out the algorithm. Since $X$ is defined such that $\pi_1(X) =
+  \pi_1(Z)$ and $|X| = |\pi_1(Z)|$ it follows that $X$ is a conflict-free set in
+  $F$ since no vertex $v$ appears more than once as a child in $X$ i.e. $G = (V,
+  X)$ is a forest. We can also conclude that $(V, \{(v, \rho_G(u)) : (v, u) \in
+  X\})$ is a forest since every child directly points to its root. By adding the
+  edges in $\{(v, \rho_G(u)) : (v, u) \in X\}$ to $E$ it follows by proposition
   \ref{prop:conflict-free-forest-union} that $F' = (V, E')$ is a forest where
   $E' = E \cup X$.
 \end{proof}
+\noindent Before the time complexity of maximal union can be shown a conjecture
+will be needed. A problem that occur in the analysis is the computation of
+$\{(v, \rho_G(u)) : (v, u) \in X\}$. Since the forest $(V, X)$ that may be
+constructed could be just a tree which is one long chain so $\rho_G(u)$ does
+$O(|X|)$ work to find its parent. This problem can be solved using pointer
+jumping efficiently, specifically Wyllie's List Ranking algorithm
+\cite[59]{wyllie1979complexity} can be used on a forests to do $O(n \log n)$
+work with $O(\log n)$ span on a forests of $n$ vertices. This is not work
+efficient, you would want to do $O(n)$ work. There are list ranking algorithms
+\cite{Anderson1991} which can be used on lists but it is unclear to the author
+if this will work on forests but from looking at the literature it seems likely
+they will work. 
 
+\begin{conjecture}[Path Compression Time Complexity]
+  Let $F = (V, E)$ be a forest then the set $\{(v, \rho_F(u)) : (v, u) \in E\}$
+  can be computed in $O(|V|)$ work and $O(\log |V|)$ span.
+\end{conjecture}
 
-
-\begin{proposition}[Left Maximal Union Time
-  Complexity]\label{prop:left-maximal-union-time-complexity} Let forest $F = (V,
-  E)$ be a forest and let $Z \subseteq \{(\rho_F(v), \rho_F(u)) : (v, u) \in V
-  \times V\}$ be a set of root pairs $F$ and $(V, Z)$ is an acyclic directed
+\noindent Now that the path compression conjecture has been established the time
+complexity of maximal union can be found.
+\begin{proposition}[Maximal Union Time
+  Complexity]\label{prop:maximal-union-time-complexity} Let forest $F = (V, E)$
+  be a forest and let $Z \subseteq \{(\rho_F(v), \rho_F(u)) : (v, u) \in V
+  \times V\}$ be a set of root pairs in $F$ and $(V, Z)$ is an acyclic directed
   graph. Then the maximal union algorithm runs in $O(|Z|)$ work and $O(\log
   |Z|)$ depth.
 \end{proposition}
 
 \begin{proof}
-  For step 1. it takes $O(1)$ work and $O(1)$ if we assume that $E$ is only
-  used once in this function. Step 2. can be implemented by a parallel sort on
-  the first element of each pair in $Z$ followed by a parallel filter that
-  selects the first occurrence of each unique first element. This takes
-  $O(|Z|)$ work using radix sort with a fixed key length and $O(\log |Z|)$
-  depth. Step 3. takes $O(|X|)$ work and $O(1)$ depth to add the edges in $X$
-  to $E$. Step 4. takes $O(|Z|)$ work and $O(\log |Z|)$ depth to compute the
-  set difference $Z \backslash X$ by a filter. Hence the total work is
-  $O(|Z|)$ and the total depth is $O(\log |Z|)$. Hence the left maximal
-  conflict-free set algorithm runs in $O(|Z|)$ work and $O(\log |Z|)$ depth.
+  For step 1. it takes $O(1)$ work and $O(1)$ if we assume that $E$ is only used
+  once in this function. Step 2-3. finds unique elements and can be computed
+  with a parallel integer sort and a filter, assuming the encoding of vertices
+  uses a fixed number of $k$-bits then this part is $O(|Z|)$ work and $O(\log
+  |Z|)$ span. Step 4. can be implemented by a parallel integer sort on the first
+  element of each pair in $Z$ followed by a parallel filter that selects the
+  first occurrence of each unique first element, this takes $O(|Z|)$ work and
+  $O(\log |Z|)$ depth. Step 6. takes $O(|X|)$ work and $O(\log |X|)$ depth to do
+  path compression and add these edges to $E$. Step 7. takes $O(|Z|)$ work and
+  $O(\log |Z|)$ depth to compute the set difference $Z \backslash X$ by a
+  filter. Hence the total work is $O(|Z|)$ and the total depth is $O(\log |Z|)$.
+  Hence the left maximal conflict-free set algorithm runs in $O(|Z|)$ work and
+  $O(\log |Z|)$ depth.
 \end{proof}
-
+\noindent Now the time complexity is known we can finally give the algorithm for
+parallel union which performs bulk unification making a set of $A$ pair vertices
+become equivalent in the final forest. The way the algorithm works is by
+constructing a directed acyclic graph of roots from $A$ which will be called
+$Z$. Then have a while loop with the invariant that $(V, Z)$ is an directed
+acyclic graph. Then in the loop body simply perform maximal union and turn the
+remaining uninserted edge of $Z$ into an directed acyclic graph. Continue till
+$Z$ is empty and then $F$ is the final forest where all pairs of $A$ has been
+unified.
 
 \begin{algorithm}[Parallel Tree Union]\label{alg:parallel-tree-union}
   Let forest $F = (V, E)$ be a tree and let $A \subseteq V \times V$ be a set of pairs
@@ -829,12 +865,14 @@ be defined as following:
     1. & \qquad Z_p \leftarrow \{(\rho_F(v), \rho_F(u)) : (v, u) \in A \land \rho_F(v) \neq \rho_F(u)\} \\
     2. & \qquad Z \leftarrow \{(\min \{v, u\}, \max \{v, u\}) : (v, u) \in Z_p\} \\
     3. & \qquad \kw{while }~|Z| > 0~\kw{do} \\
-    4. & \quad \qquad (F, Z_q) \leftarrow \id{LeftMaximalUnion}(F, Z) \\
+    4. & \quad \qquad (F, Z_q) \leftarrow \id{MaximalUnion}(F, Z) \\
     5. & \qquad \quad Z_r \leftarrow \{(\rho_{F}(v), \rho_{F}(u)) : (v, u) \in Z_q \land \rho_{F}(v) \neq \rho_{F}(u)\} \\
     6. & \qquad \quad Z \leftarrow \{(\min \{v, u\}, \max \{v, u\}) : (v, u) \in Z_r\} \\
     7. & \qquad \kw{return} \: F
   \end{align*}
 \end{algorithm}
+
+First of all we have to establish that 
 
 \begin{proposition}[Parallel Tree Union Correctness]
   Let forest $F = (V, E)$ be a tree and let $A \subseteq V \times V$ be a set of pairs
@@ -1001,5 +1039,20 @@ Now we have all the functions needed to implement the union operation:
 \subsection{Union by Rank}
 
 \subsection{Union by Size}
+
+
+\section{Tests}
+
+
+\section{Benchmarks}
+
+
+\section{Examples}
+
+\subsection{Region Labeling}
+
+\subsection{Type Constraint}
+
+\section{Conclusion}
 
 \end{document}
