@@ -648,9 +648,10 @@ in the same order using Root Union \ref{prop:root-union}.
 \noindent From this equivalence it will be shown that Conflict-free Forest Union
 \ref{prop:conflict-free-forest-union} satisfies Tree Union Property
 \ref{def:tree-union-property}.
-\begin{corollary}[Conflict-free Union Satisfies Tree Union Property]
-  Let forest $F$ be a forest and let $X \subseteq V \times V$ be a
-  conflict-free set in $F$ where $|X| = n$. Then defining the following forests:
+\begin{corollary}[Conflict-free Union Satisfies Tree Union
+  Property]\label{cor:conflict-free-union-satisfies-tree-union-property} Let
+  forest $F$ be a forest and let $X \subseteq V \times V$ be a conflict-free set
+  in $F$ where $|X| = n$. Then defining the following forests:
   \begin{align*}
     F_0 &:= F \\
     F_{i} &:= (V, E_{i - 1} \cup \{(v_i, u_i)\}) \text{ for } (v_i, u_i) \in X \text{ and } 1 \leq i \leq n
@@ -783,25 +784,28 @@ just pick out as many pairs with a unique child.
 \noindent By definition we can clealy see atleast $\frac{|V'|}{2}$ vertices are
 given a parent as we wanted. It will now be shown that the added edges is a
 conflict-free set so a forest is still the result.
-\begin{proposition}[Maximal Union Correctness]\label{prop:maximal-union-correctness}
-  Let forest $F = (V, E)$ be a forest and let $Z \subseteq \{(\rho_F(v),
-  \rho_F(u)) : (v, u) \in V \times V\}$ be a set of root pairs $F$ and $(V, Z)$
-  is an acyclic directed graph. Then the maximal union algorithm returns a
-  forest $F' = (V, E')$ and a conflict-free set $X \subseteq Z$ in $F$.
+\begin{proposition}[Maximal Union
+  Correctness]\label{prop:maximal-union-correctness} Let forest $F = (V, E)$ be
+  a forest and let $Z \subseteq \{(\rho_F(v), \rho_F(u)) : (v, u) \in V \times
+  V\}$ be a set of root pairs $F$ and $(V, Z)$ is an acyclic directed graph.
+  Then the maximal union algorithm results in a forest $F' = (V, E')$ which
+  satifies the Tree Union Property \ref{def:tree-union-property} for the
+  conflict-free set $X \subseteq Z$ in $F$.
 \end{proposition}
 \begin{proof}
   Let forest $F = (V, E)$ be a forest and let $Z \subseteq \{(\rho_F(v),
   \rho_F(u)) : (v, u) \in V \times V\}$ be a set of root pairs $F$ and $(V, Z)$
   is an acyclic directed graph. From proposition
   \ref{prop:inverted-acyclic-graph} we know that $(V, Z)$ remains an acyclic
-  graph through out the algorithm. Since $X$ is defined such that $\pi_1(X) =
+  graph throughout the algorithm. Since $X$ is defined such that $\pi_1(X) =
   \pi_1(Z)$ and $|X| = |\pi_1(Z)|$ it follows that $X$ is a conflict-free set in
   $F$ since no vertex $v$ appears more than once as a child in $X$ i.e. $G = (V,
   X)$ is a forest. We can also conclude that $(V, \{(v, \rho_G(u)) : (v, u) \in
-  X\})$ is a forest since every child directly points to its root. By adding the
-  edges in $\{(v, \rho_G(u)) : (v, u) \in X\}$ to $E$ it follows by proposition
-  \ref{prop:conflict-free-forest-union} that $F' = (V, E')$ is a forest where
-  $E' = E \cup X$.
+  X\}) \cong (V, X)$ since every child directly points to its root. So adding
+  the edges in $\{(v, \rho_G(u)) : (v, u) \in X\}$ to $E$ it follows by
+  corollary \ref{cor:conflict-free-union-satisfies-tree-union-property} that the
+  algorithm fulfills the Tree Union Property \ref{def:tree-union-property} and
+  $F' = (V, E')$ where $E' = E \cup \{(v, \rho_G(u)) : (v, u) \in X\}$.
 \end{proof}
 \noindent Before the time complexity of maximal union can be shown a conjecture
 will be needed. A problem that occur in the analysis is the computation of
@@ -850,7 +854,7 @@ complexity of maximal union can be found.
 parallel union which performs bulk unification making a set of $A$ pair vertices
 become equivalent in the final forest. The way the algorithm works is by
 constructing a directed acyclic graph of roots from $A$ which will be called
-$Z$. Then have a while loop with the invariant that $(V, Z)$ is an directed
+$Z$. Then have a loop with the invariant that $(V, Z)$ is an directed
 acyclic graph. Then in the loop body simply perform maximal union and turn the
 remaining uninserted edge of $Z$ into an directed acyclic graph. Continue till
 $Z$ is empty and then $F$ is the final forest where all pairs of $A$ has been
@@ -871,15 +875,26 @@ unified.
     7. & \qquad \kw{return} \: F
   \end{align*}
 \end{algorithm}
-
-First of all we have to establish that 
+\noindent First of all we have to establish that the actual algorithm produces
+the correct output, as in it fullfills the Tree Union property \ref{def:tree-union-property}.
 
 \begin{proposition}[Parallel Tree Union Correctness]
-  Let forest $F = (V, E)$ be a tree and let $A \subseteq V \times V$ be a set of pairs
-  of elements in $V$ that will be unioned in parallel. Then the parallel tree union
-  algorithm returns a forest $F' = (V, E')$ where for all $(v, u) \in A$ it holds that
-  $v \sim_{F'} u$.
+  Let forest $F = (V, E)$ be a tree and let $A \subseteq V \times V$ be a set of
+  pairs of elements in $V$ that will be unioned in parallel. Then the parallel
+  tree union algorithm returns a forest $F' = (V, E')$ where for all $(v, u) \in
+  A$ it holds that $v \sim_{F'} u$.
 \end{proposition}
+\begin{proof}
+  Step. 1-2 creates a directed acyclic graph and it will be shown that this
+  suffices 
+  
+  The loop in Step. 3-6 has the following invariants where we enumerate $i$th 
+  \begin{enumerate}
+    \item $Z_i$ is an directed acyclic graph.
+    \item $|Z_i| \geq |Z_{i + 1}|$.
+  \end{enumerate}
+   .
+\end{proof}
 
 \begin{proposition}[Parallel Tree Union Time Complexity]
   Let forest $F = (V, E)$ be a tree and let $A \subseteq V \times V$ be a set
