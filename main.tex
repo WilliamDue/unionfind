@@ -822,7 +822,7 @@ they will work.
 
 \begin{conjecture}[Path Compression Time Complexity]
   Let $F = (V, E)$ be a forest then the set $\{(v, \rho_F(u)) : (v, u) \in E\}$
-  can be computed in $O(|V|)$ work and $O(\log |V|)$ span.
+  can be computed in $O(|V|)$ work and $O((\log |V|)^2)$ span.
 \end{conjecture}
 
 \noindent Now that the path compression conjecture has been established the time
@@ -831,7 +831,7 @@ complexity of maximal union can be found.
   Complexity]\label{prop:maximal-union-time-complexity} Let forest $F = (V, E)$
   be a forest and let $Z \subseteq \{(\rho_F(v), \rho_F(u)) : (v, u) \in V
   \times V\}$ be a set of root pairs in $F$ and $(V, Z)$ is an acyclic directed
-  graph. Then the maximal union algorithm runs in $O(|Z|)$ work and $O(\log
+  graph. Then the maximal union algorithm runs in $O(|Z|)$ work and $O(\log^2
   |Z|)$ depth.
 \end{proposition}
 
@@ -843,12 +843,12 @@ complexity of maximal union can be found.
   |Z|)$ span. Step 4. can be implemented by a parallel integer sort on the first
   element of each pair in $Z$ followed by a parallel filter that selects the
   first occurrence of each unique first element, this takes $O(|Z|)$ work and
-  $O(\log |Z|)$ depth. Step 6. takes $O(|X|)$ work and $O(\log |X|)$ depth to do
-  path compression and add these edges to $E$. Step 7. takes $O(|Z|)$ work and
-  $O(\log |Z|)$ depth to compute the set difference $Z \backslash X$ by a
+  $O(\log |Z|)$ depth. Step 6. takes $O(|X|)$ work and $O((\log |X|)^2)$ depth
+  to do path compression and add these edges to $E$. Step 7. takes $O(|Z|)$ work
+  and $O(\log |Z|)$ depth to compute the set difference $Z \backslash X$ by a
   filter. Hence the total work is $O(|Z|)$ and the total depth is $O(\log |Z|)$.
-  Hence the left maximal conflict-free set algorithm runs in $O(|Z|)$ work and
-  $O(\log |Z|)$ depth.
+  Hence the maximal conflict-free set algorithm runs in $O(|Z|)$ work and
+  $O((\log |Z|)^2)$ depth.
 \end{proof}
 \noindent Now the time complexity is known we can finally give the algorithm for
 parallel union which performs bulk unification making a set of $A$ pair vertices
@@ -881,26 +881,83 @@ the correct output, as in it fullfills the Tree Union property \ref{def:tree-uni
 \begin{proposition}[Parallel Tree Union Correctness]
   Let forest $F = (V, E)$ be a tree and let $A \subseteq V \times V$ be a set of
   pairs of elements in $V$ that will be unioned in parallel. Then the parallel
-  tree union algorithm returns a forest $F' = (V, E')$ where for all $(v, u) \in
-  A$ it holds that $v \sim_{F'} u$.
+  tree union algorithm results in a forest $F' = (V, E')$ which satifies the
+  Tree Union Property \ref{def:tree-union-property} for $A$.
 \end{proposition}
 \begin{proof}
-  Step. 1-2 creates a directed acyclic graph and it will be shown that this
-  suffices 
+  To show that the algorithm returns a forest $F' = (V, E')$ where for all $(v,
+  u) \in A$ it holds that $v \sim_{F'} u$ it will be shown that the steps in the
+  algorithm does not remove unification problems $(v, u) \in A$ which do not
+  hold at some step in the final forest $F$.
+
+  First in step. 1-2 creates a directed acyclic graph $(V, Z)$ which represents
+  the same unification problems as in $A$. Since if $\rho_F(v) = \rho_F(u)$
+  where $(v, u) \in A$ then $v \sim_{F} u$ so $u$ and $v$ have already been
+  unified. Secondly reordering the components of $(v, u)$ does not change the
+  since adding an edge $(u, v)$ or $(v, u)$ to a forest commutes since $v
+  \sim_{F} u$ commutes.
   
-  The loop in Step. 3-6 has the following invariants where we enumerate $i$th 
-  \begin{enumerate}
-    \item $Z_i$ is an directed acyclic graph.
-    \item $|Z_i| \geq |Z_{i + 1}|$.
-  \end{enumerate}
-   .
+  The loop in Step. 3-6 has the following invariant that $Z$ is an directed
+  acyclic graph. It will be shown that this invariant is fulfilled and that
+  implies $F$ fulfills $v \sim_{F} u$ for all $(v, u) \in A$ in the final $F$.
+  In the start of the loop the acylic directed graph invariant holds. Then in
+  step 4. using Maximal Union \ref{alg:maximal-union} achieves a forest with a
+  proper subset of $Z$ being unified and $Z_q$ is the remaining pairs that have
+  not been unified. In step 5-6. the directed acyclic graph $Z$ is constructed
+  (by the same arguments as in step 1-2.) from $Z_q$ fulfilling the loop
+  invariants.
+
+  Since the loop continuesly unifies using Maximal Union on the remaining
+  unification problems then the algorithm does fulfill the Tree Union property
+  \ref{def:tree-union-property}.
 \end{proof}
+\noindent Before giving the general analysis of union find a specicial case of
+when the initial forest is $F = (V, \emptyset)$. Since this is a likely case
+that can happen for certain algorithms.
+\begin{proposition}[Empty Parallel Tree Union Time Complexity]
+  Let forest $F = (V, \emptyset)$ be a tree, and let $A \subseteq V \times V$ be
+  a set of pairs of elements in $V$ that will be unified in parallel. Then the
+  parallel tree union algorithm runs in $O(|A|)$ work and $O(\log^3 |A|)$
+  span.
+\end{proposition}
+
+\begin{proof}
+  Let forest $F = (V, \emptyset)$ be a tree, step 1-2. a filter and a ordering
+  is applied which can be computes in $O(|A|)$ work and $O(\log |A|)$ span. This
+  is the time complexity since $\rho_F(v)$ and $\rho_F(u)$ is $O(1)$ work and
+  span so the maximum traversals to root is constant.
+  
+  The body of the loop at step 4-6 does at first $O(|Z|)$ work and $O(\log^2
+  |Z|)$ span where $|Z|$. The factor is dominated by Maximal Unions time
+  complexity \ref{prop:maximal-union-time-complexity} due to 5-6 being a filter
+  and the map. Since the search of the representative element is $O(1)$ because
+  the path compression in maximal union will make the distance to the
+  representative be at most $1$.
+
+  The amount of vertices removed from $V' = \pi_1(Z) \cup \pi_2(Z)$ in the next
+  iteration is lowerbounded by $\frac{|V'|}{2}$ due to maximal union
+  \ref{alg:maximal-union}. These remaining vertices are used to construct a
+  directed acyclic graph $(V', Z')$ where $Z' \subseteq V' \times V'$. We can
+  establish the following bound of $Z'$ using the fact that $\binom{n}{2}$ is
+  the upperbound for a directed acyclic graphs size of $n$ vertices. 
+  \begin{align*}
+    |Z'| \leq \binom{\frac{|V'|}{2}}{2} = \frac{\left(\frac{|V'|}{2}\right)^2 - \frac{|V'|}{2}}{2} = \frac{\frac{1}{2}|V'|^2 - |V'|}{4} 
+  \end{align*}
+\end{proof}
+Now what we see is
+\begin{align*}
+  |Z'| \leq \frac{\frac{1}{2}|V'|^2 - |V'|}{4} \leq \frac{<|V'|^2 - |V'|}{4} = \frac{\binom{|V'|}{2}}{2}
+\end{align*}
 
 \begin{proposition}[Parallel Tree Union Time Complexity]
   Let forest $F = (V, E)$ be a tree and let $A \subseteq V \times V$ be a set
   of pairs of elements in $V$ that will be unioned in parallel. Then the
   parallel tree union algorithm runs in $O(|A|^2)$ work and $O(|V|)$ span.
 \end{proposition}
+
+\begin{proof}
+
+\end{proof}
 
 \subsection{Union by Size and Rank}
 
