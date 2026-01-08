@@ -914,11 +914,11 @@ the correct output, as in it fullfills the Tree Union property \ref{def:tree-uni
 \noindent Before giving the general analysis of union find a specicial case of
 when the initial forest is $F = (V, \emptyset)$. Since this is a likely case
 that can happen for certain algorithms.
-\begin{proposition}[Empty Parallel Tree Union Time Complexity]
-  Let forest $F = (V, \emptyset)$ be a tree, and let $A \subseteq V \times V$ be
-  a set of pairs of elements in $V$ that will be unified in parallel. Then the
-  parallel tree union algorithm runs in $O(|A|)$ work and $O(\log^3 |A|)$
-  span.
+\begin{proposition}[Empty Parallel Tree Union Time
+  Complexity]\label{prop:empty-time-complexity} Let forest $F = (V, \emptyset)$
+  be a tree, and let $A \subseteq V \times V$ be a set of pairs of elements in
+  $V$ that will be unified in parallel. Then the parallel tree union algorithm
+  runs in $O(|A|)$ work and $O(\log^3 |A|)$ span.
 \end{proposition}
 
 \begin{proof}
@@ -943,20 +943,37 @@ that can happen for certain algorithms.
   \begin{align*}
     |Z'| \leq \binom{\frac{|V'|}{2}}{2} = \frac{\left(\frac{|V'|}{2}\right)^2 - \frac{|V'|}{2}}{2} = \frac{\frac{1}{2}|V'|^2 - |V'|}{4} 
   \end{align*}
+  Now if we consider the half amount of edges that $(V', Z')$ can maximally have
+  $\frac{\binom{|V'|}{2}}{2}$ the following inequality arises. 
+  \begin{align*}
+    |Z'| \leq \frac{\frac{1}{2}|V'|^2 - |V'|}{4} \leq \frac{|V'|^2 - |V'|}{4} = \frac{\binom{|V'|}{2}}{2}
+  \end{align*}
+  Meaning that by halving the amount of $V'$ every iteration is bounded by
+  halving the amount of $|Z'|$ worked on each iteration of the loop. Since
+  $|Z'|$ is upperbounded by $|A|$ we get the total work done by the loop is:
+  \begin{align*}
+    \sum^{\lfloor \log |A| \rfloor}_{k = 0} \frac{|A|}{2^k} = 
+    |A| \sum^{\lfloor \log |A| \rfloor}_{k = 0} \frac{1}{2^k} < 
+    |A| \sum^{\infty}_{k = 0} \frac{1}{2^k} = 2|A|
+  \end{align*}
+  Meaning the work of the function is $O(|A|)$. The span is $O(\log^3 |A|)$ since
+  the worst span is by maximal union $O(\log^2 |A|)$ which is done $\lfloor \log
+  |A| \rfloor$ times.
 \end{proof}
-Now what we see is
-\begin{align*}
-  |Z'| \leq \frac{\frac{1}{2}|V'|^2 - |V'|}{4} \leq \frac{<|V'|^2 - |V'|}{4} = \frac{\binom{|V'|}{2}}{2}
-\end{align*}
-
+\noindent The time complexity is good for certain cases, but in the general case
+for any forests the time complexity becomes way worse.
 \begin{proposition}[Parallel Tree Union Time Complexity]
   Let forest $F = (V, E)$ be a tree and let $A \subseteq V \times V$ be a set
   of pairs of elements in $V$ that will be unioned in parallel. Then the
   parallel tree union algorithm runs in $O(|A|^2)$ work and $O(|V|)$ span.
 \end{proposition}
-
 \begin{proof}
-
+  The worst case for an arbitrary forest can be shown to be quadratic work and
+  linear span. Analysis is the same as in the empty case
+  \ref{prop:empty-time-complexity} beside in step 1. In the worst case the tree
+  is one long chain so we get $O(|A|)$ work to find a single representative. For
+  alle representative it becomes $O(|A|^2)$ work. For this reason the span
+  becomes $O(|A|)$ when finding a representative in the worst case.
 \end{proof}
 
 \subsection{Union by Size and Rank}
