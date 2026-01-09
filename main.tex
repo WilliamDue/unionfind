@@ -978,12 +978,17 @@ for any forests the time complexity becomes way worse.
 
 \subsection{Union by Size and Rank}
 
-\subsection{Parallel Union-Find Imrovements}
-
 \section{Implementation}
+The theoretical algorithms have been formulated in a manner that is well suited
+for a functional data-parallel array language and they will be in this section
+implemented in such a language. The programming language they will be
+implemented in is the Futhark programming language and the following section
+will describe how to implement such algorithms.
 
 \subsection{Interface}
-The interface of the union-find structure consists of a data-type which is the
+The interface of the union-find structure is defined as a module type in figure
+\ref{code:unionfind-module-type}, this is a common interface for any
+data-parallel union-find implementation. It consists of a data type which is the
 union-find structure itself. The elements in the union-find structure are
 represented as integers. These integers are called \textit{handles} and are used
 to refer to the elements in the union-find structure. The union-find structure
@@ -993,137 +998,97 @@ exposing these elements to a user then they are abstract datatypes such that the
 the user cannot do uninteneded operations on the handles or give invalid handles
 to the union-find structures operations.
 
-The operations supported are \id{find} and \id{union}. The find operation takes
-a handle and returns the representative which is also a handle. This can be used
-to check if two elements are in the same set or is ``equivalent'' by checking if
-their representatives are the same. The union operation takes two handles such
-that they have the same representative and are therefore in the same set or to
-be considered ``equivalent''. These operations are done in bulk meaning that the
-find operation takes an array of handles and union can union multiple pairs of
-handles in parallel.
+The operations supported are \textit{create}, \textit{find}, and \textit{union}.
+The create function creates a union-find structure which is empty such that no
+element is ``equivalent'' with any other element. The find operation takes an
+array of handles and results in a array of each elements representative. This
+can be used to check if two elements are in the same set or is equivalent by
+checking if their representatives are the same. The union operation takes an
+array of 2-tuple handles, all tuples in the array will be unified such that they
+are equivalent in the resulting union-find structure.
+
+There are also the function \textit{handles} which gives an array of all
+available unique handles. There are also function which are able to cast a
+signed 64-bit integer \textit{to} and \textit{from} a handle. These are nice
+since in the handles array is an bijection between handles and their integer
+representation. 
+
+\begin{figure}
+\begin{lstlisting}
+module type unionfind = {
+  type unionfind [n]
+  type handle
+  val create : (n: i64) -> *unionfind [n]
+  val find [n] [u] : *unionfind [n] -> [u]handle -> *(unionfind [n], [u]handle)
+  val union [n] [u] : *unionfind [n] -> [u](handle, handle) -> *unionfind [n]
+  val handles [n] : unionfind [n] -> *[n]handle
+  val from_i64 [n] : unionfind [n] -> i64 -> *handle
+  val to_i64 [n] : unionfind [n] -> handle -> i64
+}
+\end{lstlisting}
+  \caption{Module type definition of union-find.}
+  \label{code:unionfind-module-type}
+\end{figure}
 
 \subsection{Union-find}
 The first and simplest implementation of the union-find structure is based on
-the basic parallel tree union algorithm \ref{alg:parallel-tree-union}. It will
-be extremely inefficient if we do not apply normalization of a left maximal
-union since you may produce long chains of elements pointing to each other which
-will make the find operation very expensive. This can be solves by compressing
-the paths during the find operation such that all elements point directly to
-their representative after a left maximal union. This will not optimize a
-sequence of union or find operations but assuming you only have to do one
-singular bulk union followed by multiple bulk find operations it will be
-efficient.
+the basic parallel tree union algorithm \ref{alg:parallel-tree-union}. And as
+seen from the asymptotic analysis \ref{prop:empty-time-complexity} it can be
+asymptotically efficient for certain inputs.
 
 \subsubsection{Data type}
 A simple union-find structure can be implemented using an array indices which
-where the index represents the element/handle and the value at that index is
-the parent of that element. If the value at that index is a special value which
-is the highest possible integer value then that element is a root and therefore
-its own representative. In pseudo code we denote this as an array of integers:
-\begin{flalign*}
-  & \id{parents} : [n]\Int &
-\end{flalign*}
-Initially all of these values are set to \id{none} which indicates that all
-elements are their own representative. Here \id{none} is defined as an integer
-$n \geq \id{none}$.
+where the index represents the handle and the value at that index is the parent
+of that element. If the value at that index is a special value which is the
+highest possible integer value then that element is a root and therefore its own
+representative. The type of the union-find structure and the creation of the
+structure can be seen in Figure \ref{code:unionfind-type-create}
+\begin{figure}
+\begin{lstlisting}
+type unionfind [n] = {parents: [n]handle}
+
+def create (n: i64) : *unionfind [n] =
+  {parents = rep none}
+\end{lstlisting}
+  \caption{The type of union-find structure and a function for creating such a structure.}
+  \label{code:unionfind-type-create}
+\end{figure}
 
 \subsubsection{Find}
-To implement the find operation we can simple do a parallel map over all
-elements to find their representative by a simple loop that follows the
-parent pointers until a root is found. Since this operation does not modify the
-structure we can simplify implement it as so:
-\begin{flalign*}
-  & \kw{def}~\id{find\_one}~(\id{parents} : [n]\Int)~(\id{handle} : \Int) = & \\
-  & \qquad \If~\id{parents}[\id{handle}] = \id{none} & \\
-  & \qquad \kw{then}~\id{handle} & \\
-  & \qquad \Else~\id{find}~\id{parents}~(\id{parents}[\id{handle}]) &
-\end{flalign*}
-Then the bulk find operation can be implemented as:
-\begin{flalign*}
-  & \kw{def}~\id{find}~(\id{parents} : [n]\Int)~(\id{handles} : [m]\Int) = & \\
-  & \qquad \kw{map}~(\id{find\_one}~\id{parents})~\id{handles} &
-\end{flalign*}
+To implement the find operation we can simply do a parallel map over all
+elements to find their representative by a simple loop that follows the parent
+pointers until a root is found. The implementation has an auxiliary function
+which finds the children of a vector, this auxiliary function is called in the
+actual implementation of find. This auxiliary function is helpful in other
+implementation due to how futhark handles uniqueness types and records. The implementation can be seen in Figure \ref{code:unionfind-find}.
+\begin{figure}
+\begin{lstlisting}
+def find_by_vector [n] [u]
+                    (parents: *[n]handle)
+                    (hs: [u]handle) : *([n]handle, [u]handle) =
+  let ps =
+    map (\h ->
+            loop h
+            while parents[h] != none do
+              parents[h])
+        hs
+  in (parents, ps)
+
+def find [n] [u]
+          ({parents}: *unionfind [n])
+          (hs: [u]handle) : *(unionfind [n], [u]handle) =
+  let (new_parents, ps) = find_by_vector parents hs
+  in ({parents = new_parents}, ps)
+\end{lstlisting}
+  \caption{The type of union-find structure and a function for creating such a structure.}
+  \label{code:unionfind-find}
+\end{figure}
 
 \subsubsection{Union}
 The union operation can be implemented using the parallel tree union algorithm
 \ref{alg:parallel-tree-union} but due to its abstract nature one must figure out
-how to make it work in the concrete implementation.
-
-The initial step is to find the representatives of all handle pairs that will
-be unioned. This can be done by a map followed by a filter to remove pairs
-where both elements already have the same representative:
-\begin{flalign*}
-& \kw{def}~\id{find\_pairs}~(\id{parents} : [n]\Int)~(\id{pairs}: [m](\Int, \Int)) = & \\
-& \qquad \Let~\id{find\_one\_pair}~(v, u) = & \\
-& \qquad \quad (\id{find\_one}~parents~v,~\id{find\_one}~parents~u) & \\
-& \qquad \In ~(\kw{filter}~(\lambda (v, u) \to v \neq u) \circ \kw{map}~\id{find\_one\_pair})~pairs &
-\end{flalign*}
-The next step is we want to order all pairs such that it forms an acyclic directed graph. This can be done by simply ordering each pair such that the
-first element is always less than the second element:
-\begin{flalign*}
-& \kw{def}~\id{order}~(\id{pairs} : [m](\Int, \Int)) = & \\
-& \qquad \kw{map}~(\lambda (v, u) \to \If~v < u~\kw{then}~(v, u)~\Else~(u, v))~\id{pairs} &
-\end{flalign*}
-Now left maximal union can be performed on the ordered pairs, we do this simply
-by selecting one parent for each unique first element in the pairs. This can be
-done by a reduce by index operation using \id{min} as the reduction operator.
-Now we just have to partition the pairs into those that were successfully
-unioned and those that were not. The ones that were not unioned are those where
-the parent did not change.
-
-There is just one problem with this approach and it is that this may construct
-one long chain of elements pointing to each other which will make future find
-operations expensive. This can be solved by normalizing the structure after the
-left maximal union such that all elements that were given a new parent now point
-directly to their representative. This results in the following left maximal
-union implementation:
-\begin{flalign*}
-& \kw{def}~\id{left\_maximal\_union}~(\id{parents} : [n]\Int)~(\id{pairs} : [m](\Int, \Int)) = & \\
-& \qquad \Let~(l, r) = \id{unzip}~\id{pairs} & \\
-& \qquad \Let~\id{parents'} = \id{reduce\_by\_index}~\id{parents}~\id{min}~\id{none}~l~r & \\
-& \qquad \Let~(\id{remaining}, \id{done}) = \id{partition}~(\lambda (i, p) \to \id{parents'}[i] \neq p)~\id{pairs} & \\
-& \qquad \Let~\id{parents''} = \id{normalize}~\id{parents'}~(\kw{map}~(\lambda (x, y) \to x)~\id{done}) & \\
-& \qquad \In ~(\id{parents''}, \id{remaining}) &
-\end{flalign*}
-The normalization step can be implemented by using the wyllie list ranking
-algorithm \cite[59]{wyllie1979complexity} to compress the paths in the
-union-find structure. The modification is instead of checking if the parent does
-not exists we have to check if it is a root or the grandparent is a root then we
-are done.
-\begin{flalign*}
-& \kw{def}~\id{normalize\_step}~(\id{is} : [m]\Int)~(\id{parents} : [n]\Int) = & \\
-& \qquad \Let~\id{next}~(\id{handle} : \Int) = & \\
-& \qquad \quad \If~\id{parents}[\id{handle}] = \id{none} & \\
-& \qquad \quad \kw{then}~\id{handle} & \\
-& \qquad \quad \Else~\If~\id{parents}[\id{parents}[\id{handle}]] = \id{none} & \\
-& \qquad \quad \kw{then}~\id{parents}[\id{handle}] & \\
-& \qquad \quad \Else~\id{parents}[\id{parents}[\id{handle}]] & \\
-& \qquad \In~\id{scatter}~\id{parents}~\id{is}~(\kw{map}~\id{next}~\id{is}) &
-\end{flalign*}
-Then we just have to repeat this process $\lceil \log_2 m \rceil$ times to
-ensure that all paths are compressed:
-\begin{flalign*}
-& \kw{def}~\id{normalize}~(\id{parents} : [n]\Int)~(\id{is} : [m]\Int) = & \\
-& \qquad \Let~\id{loop}~(\id{parents'} : [n]\Int)~(\id{is'} : [m]\Int)~(\id{count} : \Int) = & \\
-& \qquad \quad \If~\id{count} = 0 & \\
-& \qquad \quad \kw{then}~\id{parents'} & \\
-& \qquad \quad \Else~\id{normalize\_step}~\id{is'}~\id{parents'} & \\
-& \qquad \quad \In ~\id{loop}~\id{parents'}~\id{ps'}~(\id{count} - 1) & \\
-& \qquad \In ~\id{loop}~\id{parents}~\id{is}~\lceil\log_2 m\rceil &
-\end{flalign*}
-The last step in the parallel tree union algorithm is to swap the pairs such
-that we can perform left maximal union again on the inverted pairs. This takes
-the acyclic directed graph formed by the remaining pairs and inverts all edges:
-\begin{flalign*}
-  & \kw{def}~\id{swap} ~(\id{pairs} : [n](\Int, \Int)) = & \\
-  & \qquad \Map ~(\lambda (v, u) \to (u, v))~\id{pairs} &
-\end{flalign*} 
-Now we have all the functions needed to implement the union operation:
-\begin{flalign*}
-& \kw{def}~\id{union}~(\id{parents} : [n]\Int)~(\id{pairs} : [m](\Int, \Int)): [n]\Int = & \\
-& \qquad \text{let } pairs =
-\end{flalign*}
-
+how to make it work in the concrete implementation. The initial step is to
+consider maximal union.
 
 \subsection{Union by Rank}
 
@@ -1131,7 +1096,9 @@ Now we have all the functions needed to implement the union operation:
 
 
 \section{Tests}
-
+The approach for testing that he implementation uses property based testing. The
+property tested for is if we have a sequential union-find structure then the
+equivalence classes should be the samm
 
 \section{Benchmarks}
 
