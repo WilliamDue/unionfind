@@ -1080,7 +1080,9 @@ def find [n] [u]
   let (new_parents, ps) = find_by_vector parents hs
   in ({parents = new_parents}, ps)
 \end{lstlisting}
-  \caption{The type of union-find structure and a function for creating such a structure.}
+  \caption{A function to find the parents of an array of handles using the array
+  of parents and a function to find the parents of an array of handles using the
+  union-find structure.}
   \label{code:unionfind-find}
 \end{figure}
 
@@ -1088,24 +1090,142 @@ def find [n] [u]
 The union operation can be implemented using the parallel tree union algorithm
 \ref{alg:parallel-tree-union} but due to its abstract nature one must figure out
 how to make it work in the concrete implementation. The initial step is to
-consider maximal union.
+consider maximal union. First step of maximal union is it is given an directed
+acyclic graph and the question is if there the number of unique vertices in
+outgoing edges is more than half the total number of unique vertices occuring in
+all edges. This question is actually just whether there are more unique outgoing
+vertices that have an outgoing edge rather than an incoming one. This is used to
+determine if the directed acyclic graph should be inverted or not. In Futhark
+this can be computed using the builtin histogram or a integer sort with a
+segmented reduce. You can also modify the algorithm to have random asymptotics
+by randomly choosing to flip the edges. The actual implementation will use
+HyperLogLog++\cite{40671} which estimates the number of unique vertices. Meaning
+the implementation does not have the actual asymptotics as the one described in
+the theory section. Due to how good HyperLogLog++ is at giving an estimate then
+it should make little to no difference. Then based on this estimate this edges
+can be inverted if needed.
+
+The next problem is picking out a forest from the directed acyclic graph. This
+can again be done using histogram where the minimum (or even maximum) parent is
+selected. It is important to note this again strays away from the original
+algorithms asymptotic but it is unlikely it will perform badly. Now using the
+new parent vector simply partition the the directed acyclic graph into the edges
+that have been inserted and not added. The ones that have been added are
+compressed using pointer jumping with Wyllies List Ranking algorithm
+\cite[59]{wyllie1979complexity}. This strays from the asymptotics of the
+theoretical algorithm but it is still a very fast implementation. This was
+chosen since this is not at the core of this project ant it seems also likely
+that the constants of a work efficient implementation will be too large for
+pratical use. All of these details culminates into the the implementation of
+maximal union found in Figure \ref{code:unionfind-maximal-union}
+
+\begin{figure}
+\begin{lstlisting}
+module hll = mk_hyperloglog_plusplus i64key
+
+def maximal_union [n] [u]
+                  (parents: *[n]handle)
+                  (eqs: [u](handle, handle)) : ?[m].(*[n]handle, [m](handle, handle)) =
+  let (l, r) = unzip eqs
+  let unique_l = hll.insert () (hll.create 10) l |> hll.count
+  let unique_r = hll.insert () (hll.create 10) r |> hll.count
+  let (l, r) = if unique_l < unique_r then (r, l) else (l, r)
+  let parents = reduce_by_index parents i64.min none l r
+  let (eqs, done) =
+    copy (partition (\(i, p) -> parents[i] != p) eqs)
+  let parents = compression parents (map (.0) done)
+  in (parents, eqs)
+\end{lstlisting}
+  \caption{The implementation of maximal union using HyperLogLog++ with Wyllie
+  List ranking to compress the added vertices.}
+  \label{code:unionfind-maximal-union}
+\end{figure}
+
+It is now possible to implement the union operation, the implementation is a
+loop that check if there are no more pairs to be unified then continue trying to
+use maximal union. The implementation has an auxiliary function like
+\textit{find} but it operation on an array of tuples. The function takes the
+parent array and the tuples and find the representative of every component in
+the tuple pair and returns the parent array unchanged with an array of the pairs
+representatives. This function is used in the loop body and the then turned into
+a directed acyclic graph by ordering them and filtering otu any pairs with the
+same representative. Then finally maximal union can be applied until the loop
+terminates. The final implementation can be seen in Figure
+\ref{code:unionfind-union}.
+
+\begin{figure}
+\begin{lstlisting}
+def union [n] [u]
+          ({parents}: *unionfind [n])
+          (eqs: [u](handle, handle)) : *unionfind [n] =
+  let (parents, _) =
+    loop (parents, eqs)
+    while length eqs != 0 do
+      let (parents, eqs) = find_pairs parents eqs
+      let eqs =
+        map (\(a, b) -> if a < b then (a, b) else (b, a)) eqs
+        |> filter (\(a, b) -> a != b)
+      let (parents, eqs) = maximal_union parents eqs
+      in (parents, eqs)
+  in {parents}
+\end{lstlisting}
+  \caption{The implementation union.}
+  \label{code:unionfind-union}
+\end{figure}
 
 \subsection{Union by Rank}
 
 \subsection{Union by Size}
 
 
-\section{Tests}
+\section{Discussion}
+\subsection{Tests}
 The approach for testing that he implementation uses property based testing. The
 property tested for is if we have a sequential union-find structure then the
-equivalence classes should be the samm
+equivalence classes should be the same for all vertices that should be unified
+in the original input. The reason for doing this test is it is very easy to
+reason about the sequential union-find algorithm without any optimizations
+unlike the parallel algorithms.
 
-\section{Benchmarks}
+Now define $F = (V, E)$ as an initial union-find structure where every element is only
+equal to itself and $A$ as a set of unification problems. Then define that $U$
+is the sequential union algorithm and $V$ as some other union algorithm. The
+result of running the two algorithms must produce forests which represent the
+same equivalence classes.
+\begin{align*}
+  F' \cong F'' \text{ where } F' = U(F, A) \text{ and } F'' & = V(F, A)
+\end{align*}
+The implementation detail of doing this comparison is asserting that the minimum
+element of an elements equivalence class is the same in both $F'$ and $F''$.
+\begin{align*}
+  \min \mathcal{E}_{F'}(v) = \min \mathcal{E}_{F''}(v) \text{ for all } v \in V
+\end{align*}
+This can be implemented using a map over $V$ with a nested reduce over $V$ which
+is asymptotically slow but for testing it surffices.
 
+The tests inputs is generated by creating an even lengthed sequence of $V$ which
+are picked uniformily. Different number of $V$ is chosen and different number
+of sequences are picked to achieve confidence in the implementation. The result
+is according to this test the implementations works as expected.
+
+This approach does not catch that the parallel implementation may be in correct
+and produce a cycle. The hope is that with the random input no cycle should be
+producible since otherwise the test would go on forever. The approach does also
+not assert any guarantees about the height of the tree. The problem with being
+able to test this is the interface would have to expose the structure of the
+union-find structure and/or add functionalities to the interface that would only
+be useful for testing. Both of these cases would be confusing to a user of the
+library.
+
+\subsection{Benchmarks}
+
+\subsection{Related Work}
 
 \section{Examples}
 
 \subsection{Region Labeling}
+Region Labeling, or Connected-component labeling is an image analysis problem
+where we want to give neighbouring pixel with the color the same label. 
 
 \subsection{Type Constraint}
 
