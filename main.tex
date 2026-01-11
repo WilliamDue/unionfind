@@ -807,26 +807,23 @@ conflict-free set so a forest is still the result.
   algorithm fulfills the Tree Union Property \ref{def:tree-union-property} and
   $F' = (V, E')$ where $E' = E \cup \{(v, \rho_G(u)) : (v, u) \in X\}$.
 \end{proof}
-\noindent Before the time complexity of maximal union can be shown a conjecture
-will be needed. A problem that occur in the analysis is the computation of
-$\{(v, \rho_G(u)) : (v, u) \in X\}$. Since the forest $(V, X)$ that may be
-constructed could be just a tree which is one long chain so $\rho_G(u)$ does
-$O(|X|)$ work to find its parent. This problem can be solved using pointer
-jumping efficiently, specifically Wyllie's List Ranking algorithm
-\cite[59]{wyllie1979complexity} can be used on a forests to do $O(n \log n)$
-work with $O(\log n)$ span on a forests of $n$ vertices. This is not work
-efficient, you would want to do $O(n)$ work. There are list ranking algorithms
-\cite{Anderson1991} which can be used on lists but it is unclear to the author
-if this will work on forests but from looking at the literature it seems likely
-they will work. 
+\noindent Before the time complexity of maximal union can be shown the time
+complexity of path comopression has to be discussed. A problem that occur in the
+analysis is the computation of $\{(v, \rho_G(u)) : (v, u) \in X\}$. Since the
+forest $(V, X)$ that may be constructed could be just a tree which is one long
+chain so $\rho_G(u)$ does $O(|X|)$ work to find its parent. This problem can be
+solved using pointer jumping, specifically Wyllie's List Ranking algorithm
+\cite[59]{wyllie1979complexity} can be used directly on a forests to do $O(n
+\log n)$ work with $O(\log n)$ span on a forest of $n$ vertices. This is not
+work efficient, you would want to do $O(n)$ work. There are list ranking
+algorithms \cite{Anderson1991} which are work efficient with $O(\log^2 n)$
+span\footnote{They assume scan has $O(\log n)$ span.}. List ranking can be used
+to construct an euler tour of an edge
+list\footnote{\url{https://www.cs.cmu.edu/~scandal/nesl/algorithms.html\#trees}},
+this euler tour represents a V-Tree \cite[84-91]{Blelloch1990} and this method
+should also work on a forest. It is not clear if this method can be avoided and
+the list ranking can be directly used on the forrest as to avoid alot of work.
 
-\begin{conjecture}[Path Compression Time Complexity]
-  Let $F = (V, E)$ be a forest then the set $\{(v, \rho_F(u)) : (v, u) \in E\}$
-  can be computed in $O(|V|)$ work and $O((\log |V|)^2)$ span.
-\end{conjecture}
-
-\noindent Now that the path compression conjecture has been established the time
-complexity of maximal union can be found.
 \begin{proposition}[Maximal Union Time
   Complexity]\label{prop:maximal-union-time-complexity} Let forest $F = (V, E)$
   be a forest and let $Z \subseteq \{(\rho_F(v), \rho_F(u)) : (v, u) \in V
@@ -949,17 +946,25 @@ that can happen for certain algorithms.
     |Z'| \leq \frac{\frac{1}{2}|V'|^2 - |V'|}{4} \leq \frac{|V'|^2 - |V'|}{4} = \frac{\binom{|V'|}{2}}{2}
   \end{align*}
   Meaning that by halving the amount of $V'$ every iteration is bounded by
-  halving the amount of $|Z'|$ worked on each iteration of the loop. Since
+  halving the amount of $Z'$ worked on each iteration of the loop. Since
   $|Z'|$ is upperbounded by $|A|$ we get the total work done by the loop is:
   \begin{align*}
     \sum^{\lfloor \log |A| \rfloor}_{k = 0} \frac{|A|}{2^k} = 
     |A| \sum^{\lfloor \log |A| \rfloor}_{k = 0} \frac{1}{2^k} < 
     |A| \sum^{\infty}_{k = 0} \frac{1}{2^k} = 2|A|
   \end{align*}
-  Meaning the work of the function is $O(|A|)$. The span is $O(\log^3 |A|)$ since
-  the worst span is by maximal union $O(\log^2 |A|)$ which is done $\lfloor \log
-  |A| \rfloor$ times.
+  Meaning the work of the function is $O(|A|)$. The span is $O(\log^3 |A|)$
+  since the worst span is by maximal union $O(\log^2 |A|)$ which is done $O(\log
+  |A|)$ times.
 \end{proof}
+\noindent Now we 
+\begin{proposition}[Parallel Tree Find Time Complexity]
+  Let forest $F = (V, E)$ be a tree and let $v \in V$ be a element in $V$ which
+  representative will be found. Given $k$ uses of Parallel Tree Union
+  \ref{alg:parallel-tree-union} then find does $O(1 + k \log |V|)$ work and
+  has $O(1 + k \log |V|)$ span.
+\end{proposition}
+
 \noindent The time complexity is good for certain cases, but in the general case
 for any forests the time complexity becomes way worse.
 \begin{proposition}[Parallel Tree Union Time Complexity]
@@ -1225,9 +1230,81 @@ library.
 
 \subsection{Region Labeling}
 Region Labeling, or Connected-component labeling is an image analysis problem
-where we want to give neighbouring pixel with the color the same label. 
+where we want to give neighbouring pixel with the color the same label. A way to
+solve this problem is by producing a graph where a node is a pixel with edges to
+neighbouring pixels. So we create a graph $G = (V, E)$ consiting of every pixel
+in an image of width and height $w, h \in \mathbb{N}$. To define this graph we
+have a function $n: V \to \mathbb{P}(V)$ which gives the set of neighbours. For
+this specific example it would be:
+\begin{align*}
+  n((i, j)) & = V \cap \{(i - 1, j), (i + 1, j), (i, j - 1), (i, j + 1)\}
+\end{align*}
+And a second function $c: V \to C$ where $C$ is the set of colors a pixel can
+have. Then it is possible to define the following graph from the image.
+\begin{align*}
+  V & = \{(i, j) : i, j \in \mathbb{N} \land 0 \leq i < h \land 0 \leq j < w\} \\
+  E & = \bigcup_{(i, j) \in V} \{v : v \in n((i, j)) \land c(v) = c((i,j))\}
+\end{align*}
+Then one could use breath first search or depth first search to solve for
+strongly connected components. The connected components ends up being the
+equivalence class one should just assign every pixel in this equivalence class
+the same label to solve the problem. Another approach is to use union-find where
+the graph is seen as a set of constraint that must be solved. These constraint
+are solved simply by unifying two pixels such that they are equivalent.
+%
+% Is this work efficient?
 
-\subsection{Type Constraint}
+The implementation of this was done in futhark and is simply mapping over all
+pixel indices giving them an integer label which is the flat position in the
+array that can be used for union-find. Then inspect if the neighbours have
+equivalent colors, keep these edges and filter out the ones that are not
+equivalent. The implementation of creating these equivalences can be seen in
+Figure \ref{code:region-labeling-equivalences}.
+
+The next step is very simple, create the union find structure, add all
+equivalences t 
+\begin{figure}
+\begin{lstlisting}
+type dir = #n | #w | #e | #s
+
+def mk_equivalences [h] [w] (img: [h][w]u32) : ?[n].[n](i64, i64) =
+  tabulate_2d h
+              w
+              (\i j ->
+                 let p = (i, j)
+                 let flat_p = flat_pos w p
+                 in map (\n ->
+                           let p' = move n p
+                           in if in_bounds img p' && get p img == get p' img
+                              then (flat_p, flat_pos w p')
+                              else (flat_p, -1))
+                        [#n, #w, #e, #s])
+  |> flatten_3d
+  |> filter ((>= 0) <-< (.1))
+\end{lstlisting}
+  \caption{The construction of equivalences of neighbouring pixels.}
+  \label{code:region-labeling-equivalences}
+\end{figure}
+
+\begin{figure}
+\begin{lstlisting}
+entry region_label_unionfind [h] [w] (img: [h][w]u32) =
+  let uf = u.create (h * w)
+  let eqs =
+    copy (mk_equivalences img
+          |> map (\(i, j) ->
+                    ( u.from_i64 uf i
+                    , u.from_i64 uf j
+                    )))
+  let uf = u.union uf eqs
+  let labels = u.find' uf (u.handles uf)
+  in unflatten (map (u.to_i64 uf) labels :> [h * w]i64)
+\end{lstlisting}
+  \caption{Construct equivalences and then solve the constraints.}
+  \label{code:region-labeling}
+\end{figure}
+
+\subsection{Type Constraints}
 
 \section{Conclusion}
 
