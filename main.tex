@@ -821,8 +821,9 @@ span\footnote{They assume scan has $O(\log n)$ span.}. List ranking can be used
 to construct an euler tour of an edge
 list\footnote{\url{https://www.cs.cmu.edu/~scandal/nesl/algorithms.html\#trees}},
 this euler tour represents a V-Tree \cite[84-91]{Blelloch1990} and this method
-should also work on a forest. It is not clear if this method can be avoided and
-the list ranking can be directly used on the forrest as to avoid alot of work.
+will work on a forests. It is not clear if this method can be avoided and
+instead just directly applying the list ranking on the forest as to avoid alot
+of work. This can atleast be done with Wyllies List ranking.
 
 \begin{proposition}[Maximal Union Time
   Complexity]\label{prop:maximal-union-time-complexity} Let forest $F = (V, E)$
