@@ -179,10 +179,10 @@ forests.
 \subsection{Forests}
 To be able to define a union-find structure we first need to define some basic
 graph theory and specifically in relation to forests. The graphs used are
-directed graphs $G = (V, E)$ where $V$ is a set of vertices and $E \subseteq V
-\times V$ is a set of directed edges. Initially we need a definition of what it
-means for node $u \in V$ to be reachable from node $v \in V$ meaning there is a
-path from $u$ to $v$.
+directed graphs $G = (V, E)$ where $V$ is a set of vertices and $E
+\subseteq V \times V$ is a set of directed edges. Initially we need a definition
+of what it means for node $u \in V$ to be reachable from node $v \in V$ meaning
+there is a path from $u$ to $v$.
 
 \begin{definition}[Reachability]
   A node $v$ is \emph{reachable} from a node $u$ in a directed graph $G = (V,
@@ -916,7 +916,7 @@ that can happen for certain algorithms.
   Complexity]\label{prop:empty-time-complexity} Let forest $F = (V, \emptyset)$
   be a tree, and let $A \subseteq V \times V$ be a set of pairs of elements in
   $V$ that will be unified in parallel. Then the parallel tree union algorithm
-  runs in $O(|A|)$ work and $O(\log^3 |A|)$ span.
+  does $O(|A|)$ work and has $O(\log^3 |A|)$ span.
 \end{proposition}
 
 \begin{proof}
@@ -958,29 +958,47 @@ that can happen for certain algorithms.
   since the worst span is by maximal union $O(\log^2 |A|)$ which is done $O(\log
   |A|)$ times.
 \end{proof}
-\noindent Now we 
-\begin{proposition}[Parallel Tree Find Time Complexity]
-  Let forest $F = (V, E)$ be a tree and let $v \in V$ be a element in $V$ which
-  representative will be found. Given $k$ uses of Parallel Tree Union
-  \ref{alg:parallel-tree-union} then find does $O(1 + k \log |V|)$ work and
-  has $O(1 + k \log |V|)$ span.
-\end{proposition}
-
 \noindent The time complexity is good for certain cases, but in the general case
 for any forests the time complexity becomes way worse.
-\begin{proposition}[Parallel Tree Union Time Complexity]
-  Let forest $F = (V, E)$ be a tree and let $A \subseteq V \times V$ be a set
-  of pairs of elements in $V$ that will be unioned in parallel. Then the
-  parallel tree union algorithm runs in $O(|A|^2)$ work and $O(|V|)$ span.
+\begin{proposition}[Parallel Tree Union Time
+  Complexity]\label{prop:parallel-tree-union-time-complexity} Let forest $F =
+  (V, E)$ be a tree, $V \neq \emptyset$, and let $A \subseteq V \times V$ be a
+  set of pairs of elements in $V$ that will be unioned in parallel. Given $k$
+  applications of Parallel Tree Union \ref{alg:parallel-tree-union} before then
+  Parallel Tree Union does $O(|A| k \log |V|)$ work and has $O(k \log |V| +
+  \log^3 |A|)$ span.
 \end{proposition}
 \begin{proof}
   The worst case for an arbitrary forest can be shown to be quadratic work and
   linear span. Analysis is the same as in the empty case
-  \ref{prop:empty-time-complexity} beside in step 1. In the worst case the tree
-  is one long chain so we get $O(|A|)$ work to find a single representative. For
-  alle representative it becomes $O(|A|^2)$ work. For this reason the span
-  becomes $O(|A|)$ when finding a representative in the worst case.
+  \ref{prop:empty-time-complexity} beside in step 1. Considering a sequence of
+  unification problems that have been unified $A_1, A_2, \ldots, A_k$. In the
+  worst case then $|A_i|$ will extened upon a trees height by $\lfloor \log
+  |\pi(A_i) \cup \pi_2(A_i)| \rfloor$ since the alogrithm half the number of
+  vertices every iteration of $|A|$ in the worst case. since $|\pi(A_i) \cup
+  \pi_2(A_i)| \leq |V|$ the following bound can be derived on a sequence of
+  unification problems.
+  \begin{align*}
+    \sum_{i = 1}^k \lfloor \log |\pi(A_i) \cup \pi_2(A_i)| \rfloor \leq \sum_{i = 1}^k  \lfloor \log |V| \rfloor = k \lfloor \log |V| \rfloor
+  \end{align*}
+  Therefore we can conclude the amount the work is $O(|A| k \log |V|)$ and the
+  span is $O(k \log |V| + \log^3 |A|)$
 \end{proof}
+\noindent Now we can go on to consider the asymptotics of performing a find. 
+\begin{proposition}[Parallel Tree Find Time Complexity]
+  Let forest $F = (V, E)$ be a tree and let $v \in V$ be a element in $V$ which
+  representative will be found. Given $k$ applications of Parallel Tree Union
+  \ref{alg:parallel-tree-union} then find does $O(k \log |V|)$ work and has $O(k
+  \log |V|)$ span.
+\end{proposition}
+\begin{proof}
+  Using the proof of Parallel Tree Find Time Complexity
+  \ref{prop:parallel-tree-union-time-complexity} where it was shown that the
+  tree height is upperbounded by $k \lfloor \log |V| \rfloor$ after $k$
+  applications of parallel tree union. Hence finding a single elements
+  representative will have $O(k \log |V|)$ work and span.
+\end{proof}
+
 
 \subsection{Union by Size and Rank}
 
