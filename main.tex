@@ -817,8 +817,8 @@ solved using pointer jumping, specifically Wyllie's List Ranking algorithm
 \log n)$ work with $O(\log n)$ span on a forest of $n$ vertices. This is not
 work efficient, you would want to do $O(n)$ work. There are list ranking
 algorithms \cite{Anderson1991} which are work efficient with $O(\log^2 n)$
-span\footnote{They assume scan has $O(\log n)$ span.}. List ranking can be used
-to construct an euler tour of an edge
+span\footnote{They assume scan has $O(1)$ span which is not reasonable
+anymore.}. List ranking can be used to construct an euler tour of an edge
 list\footnote{\url{https://www.cs.cmu.edu/~scandal/nesl/algorithms.html\#trees}},
 this euler tour represents a V-Tree \cite[84-91]{Blelloch1990} and this method
 will work on a forests. It is not clear if this method can be avoided and
@@ -1243,6 +1243,10 @@ library.
 
 \subsection{Benchmarks}
 
+\begin{itemize}
+  \item 
+\end{itemize}
+
 \subsection{Related Work}
 
 \section{Examples}
@@ -1270,18 +1274,15 @@ equivalence class one should just assign every pixel in this equivalence class
 the same label to solve the problem. Another approach is to use union-find where
 the graph is seen as a set of constraint that must be solved. These constraint
 are solved simply by unifying two pixels such that they are equivalent.
-%
-% Is this work efficient?
 
 The implementation of this was done in futhark and is simply mapping over all
 pixel indices giving them an integer label which is the flat position in the
 array that can be used for union-find. Then inspect if the neighbours have
 equivalent colors, keep these edges and filter out the ones that are not
 equivalent. The implementation of creating these equivalences can be seen in
-Figure \ref{code:region-labeling-equivalences}.
+Figure \ref{code:region-labeling-equivalences}. The next step is very simple, create the union find structure, try to unify all
+equivalences, and then look up the labels of all equivalences.
 
-The next step is very simple, create the union find structure, add all
-equivalences t 
 \begin{figure}
 \begin{lstlisting}
 type dir = #n | #w | #e | #s
@@ -1322,9 +1323,28 @@ entry region_label_unionfind [h] [w] (img: [h][w]u32) =
   \caption{Construct equivalences and then solve the constraints.}
   \label{code:region-labeling}
 \end{figure}
+From the persepective of a user this is not work efficient. The solution would
+do $O(hw \log(hw))$ work and have $O(\log^3(hw))$ span since $k=0$. It is likely
+this would be $O(hw)$ work due to how the constraints are formed but it seems
+tricky to analyze. A much easier way to do it work efficient is to make
+constraints of horizontal and vertical neighbours seperately:
+\begin{align*}
+  n_v((i, j)) = V \cap \{(i + 1, j)\} \qquad n_h((i, j)) = V \cap \{(i, j + 1)\}
+\end{align*}
+Now when trying to solving any of these the loop in Parallel Tree Union
+\ref{alg:parallel-tree-union} will only be ran once. Since there are no
+conflicts in which constraint to pick, all the constraints form a directed
+acyclic graph that just so happen to be a forest. So just unify the first the
+horizontal constraints and then the vertical or vice versa which leads to
+$O(hw)$ work and $O(\log^2(hw))$ span. This is still not optimal, it is possible
+to solve this problem using a connected components algorithm by Shiloach and
+Vishkin \cite{SHILOACH198257} which would do $O(hw)$ work and have $O(\log
+(hw))$ span.
 
 \subsection{Type Constraints}
 
 \section{Conclusion}
+
+\printbibliography
 
 \end{document}
