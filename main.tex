@@ -1241,10 +1241,85 @@ union-find structure and/or add functionalities to the interface that would only
 be useful for testing. Both of these cases would be confusing to a user of the
 library.
 
-\subsection{Benchmarks}
+The implementations passes this test suite so it is seen as the implementations
+work as intended.
 
+\subsection{Benchmarks}
+To benchmark the implementations different \textit{datasets} and
+\textit{unification} \textit{strategies} for unifying subsets of the datasets is
+used. A dataset is made up of different constraints, here the constraints are of
+the form $(v, u) \in V^2$ where $V$ is the set of vertices or the elements that
+can become equivalent by unification. The unification strategy is how the
+subsets of the dataset should be unified. The idea is that when using union-find
+it probably is not the case that all unification problems can be solve
+immediately and som find operations will be interspersed between union
+operaions. So to see how this effects the performance of union by combining
+different datasets and strategies. And also see how the find operations
+performance is effected af the sequence of union operaions defined by the
+dataset and strategy.
+
+The following are the different Futhark implementations of union-find being
+compared.
 \begin{itemize}
-  \item 
+  \item \textbf{Data-Parallel: } This implementation uses Parallel Tree Union
+  \ref{alg:parallel-tree-union} and is the simplest data-parallel version.
+  \item \textbf{Data-Parallel (by Rank): } This implementation uses Parallel
+  Tree Union by Rank \ref{alg:parallel-tree-union-by-rank} which corresponds to
+  a union-find implementation with only the union by rank optimization.
+  \item \textbf{Data-Parallel (by Size):} This implementation uses Parallel Tree
+  Union by size \ref{alg:parallel-tree-union-by-size} which corresponds to a
+  union-find implementation with only the union by size optimization.
+  \item \textbf{Sequential (by Rank and Path Halving)} This is a classical
+  implementation of union-find which uses Union by Rank and Path Halving.
+\end{itemize}
+
+\subsubsection{Datasets}
+The following is the list of different ways datasets are generated, their
+construction is explained and afterwards why they are chosen is explained.
+\begin{itemize}
+  \item \textbf{Random: } From a set of vertices $V$ select uniformily random a
+  sequence $2m$ vertices and create tuples by pairing vertices with an even
+  index with the next vertex in the sequence. This allows for duplicate
+  unification problems. This dataset should be a case where most operations will
+  act nicely and show a good example of a best case scenario.
+  \item \textbf{Linear: } From a set of vertices $V$ let $W \subseteq V$ where
+  $|W| = m + 1$ then chain them together into unification problems such that
+  $v_i, v_{i + 1}$ where $v_i, v_{i + 1} \in W$. This forms one long chain of
+  unification problems of size $m$. The implementation uses integers for
+  vertices and the chain will be formed from a integer and its successor so this
+  will effect caching for this benchmark. This long chain effects effects the
+  list ranking the most but is also a good scenario for histograms.
+  \item \textbf{Single: } From a set of vertice $V$ let $W \subseteq V$ where
+  $|W| = m$. Now pick $v \in W$ and create a set of unification problems of $(v,
+  w)$ for all $w \in V$. This makes a problem where every thing is in the same
+  equivalence class. This can be a worst case scenario for histograms in the
+  algorithms.
+  \item \textbf{Inverse Single: } From a set of vertice $V$ let $W \subseteq V$
+  where $|W| = m$. Now pick $v \in W$ and create a set of unification problems
+  of $(w, v)$ for all $w \in V$. This is just the same as single but inverting
+  it makes the problem also account for if the algorithm poorly chooses which
+  side to use as children in the forest that is the union-find structure. Once
+  again a worst case scenario for histograms possibly.
+\end{itemize}
+\subsubsection{Unification Strategy}
+The following is the list of different ways subsets of the datasets are unified,
+after the strategy is explained and the choice is clarified. explained.
+\begin{itemize}
+  \item \textbf{All: } Try resolve all $m$ unification problems at once. This
+  leads ot $O(1)$ calls to union. This is an absolute best case scenario for
+  union-find.
+  \item \textbf{Halving: } Try by recursively resolving half of the $m$
+  unification problems. This leads ot $O(\log m)$ calls to union. This seems
+  like a likely scenario for a sequence of calls for union-find. Commonly we
+  want logarithmic depth.
+  \item \textbf{Reverse Halving: } This is the same as halving but in reverse
+  order. So now starting with one unification problem double the amount of
+  unification problems to resolve each iteration until all $m$ problems are
+  resolved. This leads to $O(\log m)$ calls to union. Same reason as halving 
+  \item \textbf{Chunked: } Resolve $10000$ unification problems of $m$ at a time
+  until all $m$ have been resolved. This is to see what happens what happens to
+  the find operation incase the union-find structure has poor asymptotics for
+  find after many union applications.
 \end{itemize}
 
 \subsection{Related Work}
