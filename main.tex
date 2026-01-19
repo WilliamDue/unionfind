@@ -173,9 +173,10 @@
 \thispagestyle{firstpage}
 
 \section{Theory}
-This section will derive the theoretical foundation for the data-parallel
-union-find. The theory is based on set theory, graph theory and properties of
-forests.
+This section will derive the theoretical foundation for a data-parallel
+union-find. The derived data structure will be with a data-parallel
+computational model that is suited for a functional array language \cite{vanBalen2025comparing}. The
+theory is based on set theory, graph theory and properties of forests.
 \subsection{Forests}
 To be able to define a union-find structure we first need to define some basic
 graph theory and specifically in relation to forests. The graphs used are
@@ -823,7 +824,12 @@ list\footnote{\url{https://www.cs.cmu.edu/~scandal/nesl/algorithms.html\#trees}}
 this euler tour represents a V-Tree \cite[84-91]{Blelloch1990} and this method
 will work on a forests. It is not clear if this method can be avoided and
 instead just directly applying the list ranking on the forest as to avoid alot
-of work. This can atleast be done with Wyllies List ranking.
+of work. This can atleast be done with Wyllies List ranking. It also seems that
+using a connected components algorithm by Shiloach and Vishkin
+\cite{SHILOACH198257} could be used which will give you a representative, it
+claims to be work efficient with $O(\log n)$ span but uses a computational model
+with concurrent write. This may or may not be a problem to express this in a
+parallel functional array language but there are implementations in NESL \cite{spaa-concomp}.
 
 \begin{proposition}[Maximal Union Time
   Complexity]\label{prop:maximal-union-time-complexity} Let forest $F = (V, E)$
@@ -1417,6 +1423,68 @@ Vishkin \cite{SHILOACH198257} which would do $O(hw)$ work and have $O(\log
 (hw))$ span.
 
 \subsection{Type Constraints}
+A use case for union-find is to type check programming languages, the following
+section will discuss type checking lambda calculus in Futhark. The syntax of
+lambda calculus consists of a variables, lambda function, and function
+application.
+\begin{align*}
+  e &::= x~|~\lambda x . e~|~e_0~e_1~
+\end{align*}
+And the type of an expression is either a type variable, or has an arrow type
+meaning the expression is an function from some type variable to another.
+\begin{align*}
+  \tau &::= \alpha~|~\tau_0 \to \tau_1
+\end{align*}
+The expressions and types can quite naturally be expressed in a language with
+recursive data types. A problem is Futhark does not have recursive data types
+and most functinoal array languages does not support this either. The way this
+is instead expression is by type constructors which has indices which points to
+its subexpressions. To do so first define \lstinline|vname| as the expression
+variable names, \lstinline|tname| as the type variable names, and \lstinline|e|
+as the pointer from an expression constructor to its subexpressions. From here
+the type definitions should be straightforward, these definitions can be seen in
+Figure \ref{code:lambda-calculus-types-futhark}.
+
+Now if we wish to express the application of the identity function to a variable
+$(\lambda v_0 \to v_0)~v_1$. Then we create an array of four type constructors,
+the first is the application type constructor \lstinline|#app 1 3|. The first
+argument of the type constructor is point to the function argument at index $1$
+and the second is poining to the value given to the function at index $3$. The
+next is \lstinline|#lam 0 1| where the first arugment is the function argument
+name $v_0$ and the second argument is pointing to the function body at index
+$2$. Next the body is just $v_0$ (i.e. \lstinline|#var 0|). And lastly is the
+argument given to the identity function $v_1$ (i.e. \lstinline|#var 1|). This
+result in the following encoding.
+\begin{center}
+  \lstinline|[#app 1 3, #lam 0 2, #var 0, #var 1]|
+\end{center}
+
+\begin{figure}
+\begin{lstlisting}
+type vname = i64
+type tname = i64
+type e = i64
+
+type exp =
+    #var vname
+  | #lam vname e
+  | #app e e
+
+type typ =
+    #tvar tname
+  | #tarrow tname tname
+\end{lstlisting}
+  \caption{The types defined for expressions of lambda calculus and the type of lambda calculus expressions in Futhark.}
+  \label{code:lambda-calculus-types-futhark}
+\end{figure}
+Now the next step is to generate constraints from the lambda expressions to do
+type checking. To generate the type constraints we define inference rules where
+we see that only function application gives rise to constraints.
+\begin{gather*}
+  \frac{\Gamma(e) = \alpha}{\Gamma \vdash e : \alpha, \emptyset{}} \\[5pt]
+  \frac{\Gamma[x \mapsto \alpha] \vdash e : \tau_1, C}{\Gamma \vdash \lambda x . e : \alpha \to \tau_1, C} \quad (\text{Fresh } \alpha) \\[5pt]
+  \frac{\Gamma \vdash e_0 : \tau_0 \to \tau_1, C_0 \quad \Gamma \vdash e_1 : \tau_0, C_1}{\Gamma \vdash e_0~e_1 : \alpha, C_0 \cup C_1 \cup \{\tau_0 \sim \tau_1 \to \alpha\}} \quad (\text{Fresh } \alpha)
+\end{gather*}
 
 \section{Conclusion}
 
