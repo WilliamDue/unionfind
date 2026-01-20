@@ -1481,7 +1481,7 @@ Now the next step is to generate constraints from the lambda expressions to do
 type checking. To generate the type constraints we define inference rules where
 we see that only function application gives rise to constraints.
 \begin{gather*}
-  \frac{\Gamma(e) = \alpha}{\Gamma \vdash e : \alpha, \emptyset{}} \\[5pt]
+  \frac{\Gamma(x) = \alpha}{\Gamma \vdash x : \alpha, \emptyset{}} \\[5pt]
   \frac{\Gamma[x \mapsto \alpha] \vdash e : \tau_1, C}{\Gamma \vdash \lambda x . e : \alpha \to \tau_1, C} \quad (\text{Fresh } \alpha) \\[5pt]
   \frac{\Gamma \vdash e_0 : \tau_0 \to \tau_1, C_0 \quad \Gamma \vdash e_1 : \tau_0, C_1}{\Gamma \vdash e_0~e_1 : \alpha, C_0 \cup C_1 \cup \{\tau_0 \sim \tau_1 \to \alpha\}} \quad (\text{Fresh } \alpha)
 \end{gather*}
