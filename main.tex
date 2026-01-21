@@ -1008,6 +1008,28 @@ for any forests the time complexity becomes way worse.
 
 \subsection{Union by Size and Rank}
 
+Let $G = (V, E)$ be a directed acyclic graph where $E$ is an edge cover of $V$
+and $v < u$ for all $(v, u) \in E$. Assume $|\pi_1(E)| < \frac{|V|}{2}$, define
+$A$ as.
+\begin{align*}
+  A = \{\{(v, u) : (v, u) \in E \land w = v\} : w \in V\}
+\end{align*}
+Now it holds that $|\pi_1(E)| = |A| < \frac{|V|}{2}$. Pick $w_i \in V$ for all
+$A_i \in A$ such that $a \leq w_i$ for all $a \in \pi_2(A_i)$. Define a new set
+$B$ such that:
+\begin{align*}
+  B = \{\{(u, w_i) : (v, u) \in A_i\} : A_i \in A\}
+\end{align*}
+The graph $(V, \bigcup_{B_i \in B} B_i)$ will have at most $|\pi_1(E)|$ cycles
+and atleast one cycle. Since if $v = w_i$ for a unique $v \in \pi_2(A_i)$ then
+$(w_i, w_i) \in B_i$. If $v < w_i$ for all $v \in \pi_2(A_i)$ then there are no
+cycles introduced by $B_i$. But since $E$ is an edge cover then $w_i$ must be
+component of some edge $e \in V$. Therefore, there must be atleast one $(w_i,
+w_i) \in B_i$ since otherwise $w_i$ would not be a component in an edge.
+
+Now let $E' = \bigcup_{B_i \in B} B_i \cap \{(v, v) : v \in V\}$ with out the
+cycles introduced and the vertices $V' = \pi_1(E') \cup \pi_2(E')$. We now know
+that $|V'| = |V| - |\pi_1(E)|$.
 \section{Implementation}
 The theoretical algorithms have been formulated in a manner that is well suited
 for a functional data-parallel array language and they will be in this section
