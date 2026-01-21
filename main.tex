@@ -187,9 +187,10 @@ there is a path from $u$ to $v$.
 
 \begin{definition}[Reachability]
   A node $v$ is \emph{reachable} from a node $u$ in a directed graph $G = (V,
-  E)$ if there exists a sequence of directed edges $e_1, e_2, \ldots, e_m \in
-  E$ where $m \geq 1$ and $e_i = (v_{i-1}, v_i)$ for $1 \leq i \leq m$,
-  such that $v_0 = u$ and $v_m = v$. We denote this by $u \leadsto v$.
+  E)$ if there exists a sequence of directed edges $e_1, e_2, \ldots, e_m \in E$
+  where $m \geq 1$ and $e_i = (v_{i-1}, v_i)$ for $1 \leq i \leq m$, such that
+  $v_0 = u$ and $v_m = v$. We denote this by $u \leadsto_G v$ and may write $u
+  \leadsto v$ if it is clear what graph is refered to.
 \end{definition}
 \noindent One of the first properties of reachability is it is neither
 \text{reflexive} nor \textit{irreflexive}. The reason for chosing such a
@@ -1014,15 +1015,22 @@ $A$ as.
 \begin{align*}
   A = \{\{(v, u) : (v, u) \in E \land w = v\} : w \in V\}
 \end{align*}
-Now it holds that $|\pi_1(E)| = |A| < \frac{|V|}{2}$. Pick $w_i \in V$ for all
-$A_i \in A$ such that $a \leq w_i$ for all $a \in \pi_2(A_i)$. Define a new set
-$B$ such that:
+Now it holds that $|\pi_1(E)| = |A| < \frac{|V|}{2}$ and define the set of
+maximum second component of all $A_i$ as $W = \{\max \pi_2(A_i) : A_i \in A\}$.
+Secondly define the subgraph $G' = (W, E')$ with edges $E' = \{(v, u) : (v, u)
+\in E \land v, u \in W\}$. We define $w_i$ has the maximum $w \in W$ that can
+not reach any $w$ or is able to reach another $w$.
+\begin{align*}
+  w_i = \max~\{w : w \in W \land \max \pi_2(A_i) \leadsto_{G'} w\} \cup \max \pi_2(A_i)
+\end{align*} 
+Now define a set $B$ where all the second components are substituted with the
+element $w_i$.
 \begin{align*}
   B = \bigcup_{A_i \in A} \{(u, w_i) : (v, u) \in A_i\}
 \end{align*}
-From this we see $|\pi_1(B)| = |\pi_2(E)|$ and $|\pi_2(B)| < |\pi_1(E)|$ so.
+From this we see $|\pi_1(B)| = |\pi_2(E)|$ and $|\pi_2(B)| \leq |\pi_1(E)|$ so.
 \begin{align*}
-  |\pi_2(B)| < |\pi_1(E)| < |\pi_2(E)| = |\pi_1(B)| 
+  |\pi_2(B)| \leq |\pi_1(E)| < |\pi_2(E)| = |\pi_1(B)| 
 \end{align*}
 
 Now let $E' = \bigcup_{B_i \in B} B_i \cap \{(v, v) : v \in V\}$ with out the
@@ -1505,6 +1513,52 @@ we see that only function application gives rise to constraints.
   \frac{\Gamma[x \mapsto \alpha] \vdash e : \tau_1, C}{\Gamma \vdash \lambda x . e : \alpha \to \tau_1, C} \quad (\text{Fresh } \alpha) \\[5pt]
   \frac{\Gamma \vdash e_0 : \tau_0 \to \tau_1, C_0 \quad \Gamma \vdash e_1 : \tau_0, C_1}{\Gamma \vdash e_0~e_1 : \alpha, C_0 \cup C_1 \cup \{\tau_0 \sim \tau_1 \to \alpha\}} \quad (\text{Fresh } \alpha)
 \end{gather*}
+When implementing constraint generation in any common functional language you
+would traverse the the asbtract syntax tree while keeping track of the type
+environment and generate constraints from this. It seems like it should be
+possible to emulate the type environment using an array of open-closed
+parenthesis. Open parenthesis introduce a new variable while closed remove a
+variable and computing the depth of these it should be possible to determine if
+a variable is in scope by solving for the previous or smaller element. Since the
+type system is so simple a approach can be used where every expression maps to a
+type variable and every variable name is unique so it easily maps to a type
+variable easily. Here every expressions type variable is its index and
+expression variables is the name plus the number of expression.
+
+The type constraints are defined by an equality on type $\tau_0 \sim \tau_1$ and
+a function $t$ which gives the type of an expression and a function
+$\mathit{vt}$ which gives the type of a expression variables name. Using this
+scheme a single type constraint arises for every expression.
+\begin{align}
+  x& \Rightarrow t(x) \sim \mathit{vt}(x) \\
+  \lambda x . e &\Rightarrow  t(\lambda x . e) \sim \mathit{vt}(x) \sim t(e) \\
+  e_0~e_1 &\Rightarrow  t(e_0) \sim t(e_1) \to t(e_0~e_1)
+\end{align}
+The implementation of generating all these rules can be seen in Figure
+\ref{code:lambda-calculus-constraints-futhark}.
+\begin{figure}
+\begin{lstlisting}
+type constraint = (typ, typ)
+def exp_tname (i: e) : tname = i
+def var_tname (n: i64) (v: vname) : tname = n + v
+
+def constraint [n]
+               (exps: [n]exp)
+               (i: i64) : constraint =
+  match exps[i]
+  case #var x ->
+    (#tvar (exp_tname i), #tvar (var_tname n x))
+  case #lam x e ->
+    (#tvar (exp_tname i), #tarrow (var_tname n x) (exp_tname e))
+  case #app e0 e1 ->
+    (#tvar (exp_tname e0), #tarrow (exp_tname e1) (exp_tname i))
+
+def constraints [n] (exps: [n]exp) =
+  tabulate n (constraint exps)
+\end{lstlisting}
+  \caption{The types defined for expressions of lambda calculus and the type of lambda calculus expressions in Futhark.}
+  \label{code:lambda-calculus-constraints-futhark}
+\end{figure}
 
 \section{Conclusion}
 
