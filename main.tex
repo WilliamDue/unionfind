@@ -1020,12 +1020,10 @@ $B$ such that:
 \begin{align*}
   B = \{\{(u, w_i) : (v, u) \in A_i\} : A_i \in A\}
 \end{align*}
-The graph $(V, \bigcup_{B_i \in B} B_i)$ will have at most $|\pi_1(E)|$ cycles
-and atleast one cycle. Since if $v = w_i$ for a unique $v \in \pi_2(A_i)$ then
-$(w_i, w_i) \in B_i$. If $v < w_i$ for all $v \in \pi_2(A_i)$ then there are no
-cycles introduced by $B_i$. But since $E$ is an edge cover then $w_i$ must be
-component of some edge $e \in V$. Therefore, there must be atleast one $(w_i,
-w_i) \in B_i$ since otherwise $w_i$ would not be a component in an edge.
+The graph $(V, \bigcup_{B_i \in B} B_i)$ will have atleast one cycle. Since $E$
+is an edge cover then $w_i$ must be component of some edge $e \in V$. Therefore,
+there must be atleast one $(w_i, w_i) \in B_i$ since otherwise $w_i$ would not
+be a component in an edge.
 
 Now let $E' = \bigcup_{B_i \in B} B_i \cap \{(v, v) : v \in V\}$ with out the
 cycles introduced and the vertices $V' = \pi_1(E') \cup \pi_2(E')$. We now know
