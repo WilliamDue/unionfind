@@ -1008,34 +1008,14 @@ for any forests the time complexity becomes way worse.
 
 
 \subsection{Union by Size and Rank}
+The next problem is to extend the data-parallel union-find structure such that
+it would allow the usage of the union by size or rank heurestic. To this graph
+$(V, E)$ with weighted vertices is introduced where the weight is given by a
+function $f : V \to \mathbb{N}$. We may update a functions a functions domain
+and codomain by $f' = f \oplus S$ where $S \subseteq V \times \mathbb{N}$ where
+the pair $(v, n) \in S$ with the maximum $n$ becomes the codoain of $v$ i.e.
+$f'(v) = n$.
 
-Let $G = (V, E)$ be a directed acyclic graph where $E$ is an edge cover of $V$
-and $v < u$ for all $(v, u) \in E$. Assume $|\pi_1(E)| < |\pi_2(E)|$, define
-$A$ as.
-\begin{align*}
-  A = \{\{(v, u) : (v, u) \in E \land w = v\} : w \in V\}
-\end{align*}
-Now it holds that $|\pi_1(E)| = |A| < \frac{|V|}{2}$ and define the set of
-maximum second component of all $A_i$ as $W = \{\max \pi_2(A_i) : A_i \in A\}$.
-Secondly define the subgraph $G' = (W, E')$ with edges $E' = \{(v, u) : (v, u)
-\in E \land v, u \in W\}$. We define $w_i$ has the maximum $w \in W$ that can
-not reach any $w$ or is able to reach another $w$.
-\begin{align*}
-  w_i = \max~\{w : w \in W \land \max \pi_2(A_i) \leadsto_{G'} w\} \cup \max \pi_2(A_i)
-\end{align*} 
-Now define a set $B$ where all the second components are substituted with the
-element $w_i$.
-\begin{align*}
-  B = \bigcup_{A_i \in A} \{(u, w_i) : (v, u) \in A_i\}
-\end{align*}
-From this we see $|\pi_1(B)| = |\pi_2(E)|$ and $|\pi_2(B)| \leq |\pi_1(E)|$ so.
-\begin{align*}
-  |\pi_2(B)| \leq |\pi_1(E)| < |\pi_2(E)| = |\pi_1(B)| 
-\end{align*}
-
-Now let $E' = \bigcup_{B_i \in B} B_i \cap \{(v, v) : v \in V\}$ with out the
-cycles introduced and the vertices $V' = \pi_1(E') \cup \pi_2(E')$. We now know
-that $|V'| = |V| - |\pi_1(E)|$.
 \section{Implementation}
 The theoretical algorithms have been formulated in a manner that is well suited
 for a functional data-parallel array language and they will be in this section
