@@ -1013,8 +1013,67 @@ it would allow the usage of the union by size or rank heurestic. To this graph
 $(V, E)$ with weighted vertices is introduced where the weight is given by a
 function $f : V \to \mathbb{N}$. We may update a functions a functions domain
 and codomain by $f' = f \oplus S$ where $S \subseteq V \times \mathbb{N}$ where
-the pair $(v, n) \in S$ with the maximum $n$ becomes the codoain of $v$ i.e.
-$f'(v) = n$.
+the pair $(v, n) \in S$ with the maximum $n$ becomes the codomain of $v$ i.e.
+$f'(v) = n$. Now using this we wish to show that it is possible to establish an
+total ordering on $f(v)$ where if $f(v) = f(u)$ then it default to ordering by
+the values given to $f$.
+
+\begin{proposition}[Weighted Total Ordering]
+  Let $V$ be a total ordering set $(V, \lesssim)$ and $f : V \to \mathbb{N}$ then
+  $(v, \preceq_f)$ is a total ordering where
+  \begin{align*}
+    v \preceq_f u \begin{cases}
+      f(v) < f(u) & f(v) < f(u) \\
+      v \lesssim u & f(v) = f(u)
+    \end{cases}
+  \end{align*}
+\end{proposition}
+\begin{proof}
+  To show it is a total ordering it must be shown that the relation is
+  reflexive, transitive, antisymmetric, and total.
+  \begin{enumerate}
+    \item If $v \preceq_f v$ holds  then $f(v) = f(v)$ holds and so does $v \lesssim v$.
+    \item If $v \preceq_f u$ and $u \preceq_f w$ holds then:
+    \begin{itemize}
+      \item If $f(v) < f(u) < f(w)$ holds then $v \preceq_f w$.
+      \item If $f(v) = f(u) = f(w)$ holds then $v \preceq_f w$.
+      \item If $f(v) < f(u) = f(w)$ holds then $v \preceq_f w$.
+      \item If $f(v) = f(u) < f(w)$ holds then $v \preceq_f w$.
+    \end{itemize}
+    \item If $v \preceq_f u$ and $u \preceq_f v$ holds then $f(v) < f(u)$ and $f(v)
+    > f(u)$ can not hold so $f(v) = f(u)$. So $v \lesssim u$ and $u \lesssim v$
+    both holds and since $(V, \lesssim)$ is a total ordering then $v = u$.
+    \item Since $(\mathbb{N}, \leq)$ then either $f(v) < f(u)$, $f(u) < f(v)$,
+    or $f(v) = f(u)$ holds. First case yields $v \preceq_f u$, second case yields
+    $u \preceq_f v$. Last case yields either $v \lesssim u$ or $v \lesssim u$,
+    since $(V, \lesssim)$ is total then either $v \preceq_f u$ or $v \preceq_f u$
+    holds making the relation total.
+  \end{enumerate}
+\end{proof}
+The idea now is to have $f$ be a function which reflects the rank/size of vertex
+and then create the directed acyclic graph from a set of root pairs. Then it is
+possible to pick conflict-free set and insert this into the forest which will
+respect the weights limiting the height of the trees.
+\begin{algorithm}[Weighted Maximal Union]\label{alg:weighted-maximal-union} Let
+  forest $F = (V, E)$ be a forest, $f: V \to \mathbb{N}$ and let $Z \subseteq \{(\rho_F(v), \rho_F(u))
+  : (v, u) \in V \times V\}$ be a set of root pairs $F$ and $(V, Z)$ is an graph
+  where $v \preceq_f u$ for all $(v, u) \in Z$. The weighted maximal union algorithm is defined as:
+  \begin{align*}
+    & \id{WeightedMaximalUnion}(F, Z, f) \\ 
+    1. & \qquad (V, E) \leftarrow F \\
+    2. & \qquad A \leftarrow \{(v, u) : (v, u) \in Z \land f(v) = f(u)\} \\
+    3. & \qquad B \leftarrow \{(v, u) : (v, u) \in Z \land f(v) \neq f(u)\} \\
+    2. & \qquad V' \leftarrow \pi_1(A) \cup \pi_2(A) \\
+    3. & \qquad Z \leftarrow \begin{cases}
+      \{(u, v) : (v, u) \in Z\} & \pi_1(Z) < \frac{|V'|}{2} \\
+      Z & \pi_1(Z) \geq \frac{|V'|}{2}
+    \end{cases} \\
+    4. & \qquad X \leftarrow Y \subseteq Z \text{ where } |Y| = |\pi_1(Z)| \text{ and } \pi_1(Y) = \pi_1(Z) \\
+    5. & \qquad G \leftarrow (V, X) \\
+    6. & \qquad E \leftarrow E \cup \{(v, \rho_G(u)) : (v, u) \in X\} \\
+    7. & \qquad \kw{return} \: ((V, E), Z \backslash X)
+  \end{align*}
+\end{algorithm}
 
 \section{Implementation}
 The theoretical algorithms have been formulated in a manner that is well suited
