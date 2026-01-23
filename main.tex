@@ -883,7 +883,7 @@ unified.
 \noindent First of all we have to establish that the actual algorithm produces
 the correct output, as in it fullfills the Tree Union property \ref{def:tree-union-property}.
 
-\begin{proposition}[Parallel Tree Union Correctness]
+\begin{proposition}[Parallel Tree Union Correctness]\label{prop:parallel-tree-union-correctness}
   Let forest $F = (V, E)$ be a tree and let $A \subseteq V \times V$ be a set of
   pairs of elements in $V$ that will be unioned in parallel. Then the parallel
   tree union algorithm results in a forest $F' = (V, E')$ which satifies the
@@ -1006,7 +1006,6 @@ for any forests the time complexity becomes way worse.
   representative will have $O(k \log |V|)$ work and span.
 \end{proof}
 
-
 \subsection{Union by Size and Rank}
 The next problem is to extend the data-parallel union-find structure such that
 it would allow the usage of the union by size or rank heurestic. To this graph
@@ -1050,30 +1049,148 @@ the values given to $f$.
     holds making the relation total.
   \end{enumerate}
 \end{proof}
-The idea now is to have $f$ be a function which reflects the rank/size of vertex
+\noindent The idea now is to have $f$ be a function which reflects the rank/size of vertex
 and then create the directed acyclic graph from a set of root pairs. Then it is
 possible to pick conflict-free set and insert this into the forest which will
-respect the weights limiting the height of the trees.
+respect the weights limiting the height of the trees. For this algorithm it has
+two different was of being instantiated, either with the by rank or by size
+heurestic. This modifies maximal union and parallel union quite a bit.
 \begin{algorithm}[Weighted Maximal Union]\label{alg:weighted-maximal-union} Let
-  forest $F = (V, E)$ be a forest, $f: V \to \mathbb{N}$ and let $Z \subseteq \{(\rho_F(v), \rho_F(u))
-  : (v, u) \in V \times V\}$ be a set of root pairs $F$ and $(V, Z)$ is an graph
-  where $v \preceq_f u$ for all $(v, u) \in Z$. The weighted maximal union algorithm is defined as:
+  forest $F = (V, E)$ be a forest, $f: V \to \mathbb{N}$ and let $Z \subseteq
+  \{(\rho_F(v), \rho_F(u)) : (v, u) \in V \times V\}$ be a set of root pairs $F$
+  and $(V, Z)$ where $v \preceq_f u$ and $v \neq u$ for all $(v, u) \in Z$. The
+  weighted maximal union algorithm is defined as:
   \begin{align*}
     & \id{WeightedMaximalUnion}(F, Z, f) \\ 
     1. & \qquad (V, E) \leftarrow F \\
     2. & \qquad A \leftarrow \{(v, u) : (v, u) \in Z \land f(v) = f(u)\} \\
     3. & \qquad B \leftarrow \{(v, u) : (v, u) \in Z \land f(v) \neq f(u)\} \\
-    2. & \qquad V' \leftarrow \pi_1(A) \cup \pi_2(A) \\
-    3. & \qquad Z \leftarrow \begin{cases}
-      \{(u, v) : (v, u) \in Z\} & \pi_1(Z) < \frac{|V'|}{2} \\
-      Z & \pi_1(Z) \geq \frac{|V'|}{2}
+    4. & \qquad V' \leftarrow \pi_1(A) \cup \pi_2(A) \\
+    5. & \qquad A \leftarrow \begin{cases}
+      \{(u, v) : (v, u) \in A\} & \pi_1(A) < \frac{|V'|}{2} \\
+      A & \pi_1(A) \geq \frac{|V'|}{2}
     \end{cases} \\
-    4. & \qquad X \leftarrow Y \subseteq Z \text{ where } |Y| = |\pi_1(Z)| \text{ and } \pi_1(Y) = \pi_1(Z) \\
-    5. & \qquad G \leftarrow (V, X) \\
-    6. & \qquad E \leftarrow E \cup \{(v, \rho_G(u)) : (v, u) \in X\} \\
-    7. & \qquad \kw{return} \: ((V, E), Z \backslash X)
+    6. & \qquad Z \leftarrow A \cup B \\
+    7. & \qquad X \leftarrow Y \subseteq Z \text{ where } |Y| = |\pi_1(Z)| \text{ and } \pi_1(Y) = \pi_1(Z) \\
+    8. & \qquad G \leftarrow (V, X) \\
+    9. & \qquad X \leftarrow \{(v, \rho_G(u)) : (v, u) \in X\} \\
+    10. & \qquad E \leftarrow E \cup X \\
+    11. & \qquad f \leftarrow f \oplus \{(v, f(u) + 1) : (v, u) \in X \land f(v) = f(u)\}  \quad (\text{By Rank}) \\
+    12. & \qquad f \leftarrow f \oplus \left\{\left(v, \sum_{(v, u) \in X} f(u)\right) : v \in V\right\} \quad (\text{By Size}) \\
+    13. & \qquad \kw{return} \: ((V, E), Z \backslash X, f)
   \end{align*}
 \end{algorithm}
+\begin{proposition}[Weighted Maximal Union
+  Correctness]\label{prop:weighted-maximal-union-correctness} Let forest $F =
+  (V, E)$ be a forest, $f: V \to \mathbb{N}$ and let $Z \subseteq \{(\rho_F(v),
+  \rho_F(u)) : (v, u) \in V \times V\}$ be a set of root pairs $F$ and $(V, Z)$
+  where $v \preceq_f u$ and $v \neq u$ for all $(v, u) \in Z$. Then the weighted
+  maximal union algorithm results in a forest $F' = (V, E')$ which satifies the
+  Tree Union Property \ref{def:tree-union-property} for the conflict-free set $X
+  \subseteq Z$ in $F$.
+\end{proposition}
+\begin{proof}
+  Let forest $F = (V, E)$ be a forest and let $Z \subseteq \{(\rho_F(v),
+  \rho_F(u)) : (v, u) \in V \times V\}$ be a set of root pairs $F$ and $(V, Z)$
+  be a set of root pairs $F$ and $(V, Z)$ where $v \preceq_f u$  and $v \neq u$
+  for all $(v, u) \in Z$. By Proposition
+  \ref{prop:ordered-edges-implies-acyclicity} we have that $(V, Z)$ is acyclic,
+  and by partitioning $Z$ in to $A$ and $B$ and swapping edges in $A$ changes
+  the relation from $(V, \lesssim)$ to $(V,\gtrsim)$ in $(V, \preceq_f)$ hence
+  it is still a total ordering so $(V, A \cup B)$ is still acyclic. The
+  algorithm will always remove at least one vertex from $\pi_1(Z) \cup \pi_2(Z)$
+  since there must be atleast one unique vertex on the left hand side of any
+  $(v, u) \in Z$. Therefore, the remaining of the algorithm does the same as in
+  Maximal Union \ref{alg:maximal-union} hence the algorithm results in a forest
+  $F' = (V, E')$ which satifies the Tree Union Property
+  \ref{def:tree-union-property} for the conflict-free set $X \subseteq Z$ in $F$
+  by Proposition \ref{prop:maximal-union-correctness}. The only way they differ
+  is changing the function $f$ which is not of importance to the correctness.
+\end{proof}
+\noindent Now analyzing the time complexity of weighted maximal union will not
+make sense yetm first we have to consider its corresponding parallel tree union
+algorithm.
+\begin{algorithm}[Weighted Parallel Tree
+  Union]\label{alg:weighted-parallel-tree-union} Let forest $F = (V, E)$ be a
+  tree, $f : V \to \mathbb{N}$ and let $A \subseteq V \times V$ be a set of
+  pairs of elements in $V$ that will be unioned in parallel. The weighted
+  parallel tree union algorithm is defined as:
+  \begin{align*}
+    & \id{WeightedParallelTreeUnion}(F, A, f) \\
+    1. & \qquad Z_p \leftarrow \{(\rho_F(v), \rho_F(u)) : (v, u) \in A \land \rho_F(v) \neq \rho_F(u)\} \\
+    2. & \qquad Z \leftarrow \{(v, u) : (v, u) \in Z_p \land v \preceq_f u\} \cup \{(u, v) : (v, u) \in Z_p \land u \preceq_f v\} \\
+    3. & \qquad \kw{while }~|Z| > 0~\kw{do} \\
+    4. & \quad \qquad (F, Z_q, f) \leftarrow \id{WeightedMaximalUnion}(F, Z, f) \\
+    5. & \qquad \quad Z_r \leftarrow \{(\rho_{F}(v), \rho_{F}(u)) : (v, u) \in Z_q \land \rho_{F}(v) \neq \rho_{F}(u)\} \\
+    6. & \qquad \quad Z \leftarrow  \{(v, u) : (v, u) \in Z_r \land v \preceq_f u\} \cup \{(u, v) : (v, u) \in Z_r \land u \preceq_f v\}\\
+    7. & \qquad \kw{return} \: F
+  \end{align*}
+\end{algorithm}
+\noindent The correctness of weighted parallel tree union should be quite
+evident but the proposition will be stated for completeness.
+\begin{proposition}[Weighted Parallel Tree Union Correctness]\label{prop:weighted-parallel-tree-union-correctness}
+  Let forest $F = (V, E)$ be a tree, $f : V \to \mathbb{N}$ and let $A \subseteq
+  V \times V$ be a set of pairs of elements in $V$ that will be unioned in
+  parallel.  Then the weighted parallel tree union algorithm results in a forest
+  $F' = (V, E')$ which satifies the Tree Union Property
+  \ref{def:tree-union-property} for $A$.
+\end{proposition}
+\begin{proof}
+  The proof follows mutatis mutandis from that of Proposition 
+  \ref{prop:parallel-tree-union-correctness}.
+\end{proof}
+\noindent Now the time complexity of Weighted Parallel Tree Union will be
+considered in regards to union by rank. Here we initially have $f(v) = 0$ for
+all $v \in V$ and we now realize the following from definition of Weighted
+Maximal Union by Rank that the weight of a representative $u$ only increase in
+weight if $f(v) = f(u)$ for $(v, u)$ from a set of root pairs. 
+\begin{remark}
+  From the definition of the Weighted Maximal Union
+  \ref{alg:weighted-maximal-union} the following follows. Let $F = (V, E)$, $f :
+  V \to \mathbb{N}$, $(v, u) \in Z \subseteq \{(\rho_F(v), \rho_F(u)) : (v, u)
+  \in V \times V\}$, $G = (V, Z)$ such that $\rho_{F'}(u) = \rho_{F'}(v) = u$
+  where $F' = (V', E')$ is the forest as a result of the algorithm then
+  the following holds.
+  \begin{itemize}
+    \item If $f(v) < f(u)$ for all $(v, u) \in Z$ then $(v, u) \in E'$ becomes
+    the new forest and $f'$ is the new weight function where $f'(u) = f(u)$
+    \item If $f(v) = f(u)$ for some $(v, u) \in Z$ then $(v, u) \in E'$ becomes
+    the new forest and and $f'$ is the new weight function where $f'(u) = f(u) +
+    1$.
+  \end{itemize}
+\end{remark}
+\noindent Now considering only the case where $f(v) < f(u)$ holds it will now be
+the goal to bound the number of different choices $(z, w)$ where $w \neq u$ and
+$z = v$. The idea is that this will be able to bound the lifespan of the
+unluckiest $u$ that never gets removed by Weighted Parallel Tree Union before
+the end.
+\begin{proposition}[Rank Bound]
+  Let $F = (V, E)$, $f : V \to \mathbb{N}$, $(v, u) \in Z \subseteq
+  \{(\rho_F(v), \rho_F(u)) : (v, u) \in V \times V\}$, $G = (V, Z)$. If $f(v) <
+  f(u)$ for all $(v, u) \in Z$ then the following inequality holds for any $v$
+  and $u$.
+  \begin{align*}
+    |\{(z, w) : (z, w) \in Z \land w \neq u \land z = v\}| < f(u) \leq \lfloor \log |V| \rfloor
+  \end{align*}
+\end{proposition}
+\begin{proof}
+  This can be shown by first showing that a given vertex in the tree is bounded
+  by $\lfloor \log k \rfloor$ given $k = |V|$ vertices using induction. The base
+  case holds since given $1$ vertex $w$ then $f(w) = 0 \leq \lfloor \log k
+  \rfloor$. Asume now the claim holds for $k$ vertices it will now be shown it
+  holds for $k + 1$ vertices. So by the induction hypothesis $f(w), f(z) \leq
+  \lfloor \log k \rfloor$ if $f(w) < f(z)$ then then new weight function $f'$ it
+  holds that $f'(z) = f(z) \leq \lfloor \log k \rfloor \leq \lfloor \log (k + 1)
+  \rfloor$. If $f(w) = f(z)$ then the new weight function it holds that $f'(z) +
+  1 \leq \lfloor \frac{\log (k + 1)}{2} \rfloor + 1 = \lfloor \frac{\log (k +
+  1)}{2} \rfloor$ since $w, z$ must be equal $f(w) = f(z)$  so they can not
+  succeed the value $\lfloor \frac{\log (k + 1)}{2} \rfloor$.
+
+  Now that we know have this bound then $f(w) \leq \lfloor \log |V| \rfloor$ for
+  all $w \in V$ then $f(u) \leq \lfloor \log |V| \rfloor$. Now since $f(v) <
+  f(u)$ for all $(v, u) \in Z$ then $|\{(z, w) : (z, w) \in Z \land w \neq u
+  \land z = v\}| \leq f(u) - 1$
+\end{proof}
 
 \section{Implementation}
 The theoretical algorithms have been formulated in a manner that is well suited
