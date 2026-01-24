@@ -172,6 +172,8 @@
 \maketitle
 \thispagestyle{firstpage}
 
+\section{Introduction}
+
 \section{Theory}
 This section will derive the theoretical foundation for a data-parallel
 union-find. The derived data structure will be with a data-parallel
@@ -1076,8 +1078,8 @@ heurestic. This modifies maximal union and parallel union quite a bit.
     9. & \qquad X \leftarrow \{(v, \rho_G(u)) : (v, u) \in X\} \\
     10. & \qquad E \leftarrow E \cup X \\
     11. & \qquad f \leftarrow f \oplus \{(v, f(u) + 1) : (v, u) \in X \land f(v) = f(u)\}  \quad (\text{By Rank}) \\
-    12. & \qquad f \leftarrow f \oplus \left\{\left(v, \sum_{(v, u) \in X} f(u)\right) : v \in V\right\} \quad (\text{By Size}) \\
-    13. & \qquad \kw{return} \: ((V, E), Z \backslash X, f)
+    11. & \qquad f \leftarrow f \oplus \left\{\left(v, \sum_{(v, u) \in X} f(u)\right) : v \in V\right\} \quad (\text{By Size}) \\
+    12. & \qquad \kw{return} \: ((V, E), Z \backslash X, f)
   \end{align*}
 \end{algorithm}
 \begin{proposition}[Weighted Maximal Union
@@ -1107,8 +1109,22 @@ heurestic. This modifies maximal union and parallel union quite a bit.
   by Proposition \ref{prop:maximal-union-correctness}. The only way they differ
   is changing the function $f$ which is not of importance to the correctness.
 \end{proof}
-\noindent Now analyzing the time complexity of weighted maximal union will not
-make sense yetm first we have to consider its corresponding parallel tree union
+\noindent Now we find the time complexity of Weighted Maximal Union.
+\begin{proposition}[Weighted Maximal Union Time
+  Complexity]\label{prop:weighted-maximal-union-time-complexity} Let forest $F =
+  (V, E)$ be a forest, $f : V \to \mathbb{N}$ be a function, and $Z \subseteq
+  \{(\rho_F(v), \rho_F(u)) : (v, u) \in V \times V\}$ be a set of root pairs in
+  $F$ and $(V, Z)$ is an acyclic directed graph. Then the maximal union
+  algorithm runs in $O(|Z|)$ work and $O(\log^2 |Z|)$ depth.
+\end{proposition}
+
+\begin{proof}
+  The arguments are almost the same as in Proposition
+  \ref{prop:maximal-union-time-complexity}. The step 2-3 is just a partition and
+  either of step 11. can be done using integer sorts and segmented reduce.
+\end{proof}
+
+\noindent Now we have to consider its corresponding parallel tree union
 algorithm.
 \begin{algorithm}[Weighted Parallel Tree
   Union]\label{alg:weighted-parallel-tree-union} Let forest $F = (V, E)$ be a
@@ -1164,7 +1180,7 @@ the goal to bound the number of different choices $(z, w)$ where $w \neq u$ and
 $z = v$. The idea is that this will be able to bound the lifespan of the
 unluckiest $u$ that never gets removed by Weighted Parallel Tree Union before
 the end.
-\begin{proposition}[Rank Bound]
+\begin{proposition}[Rank Bound]\label{prop:rank-bound}
   Let $F = (V, E)$, $f : V \to \mathbb{N}$, $(v, u) \in Z \subseteq
   \{(\rho_F(v), \rho_F(u)) : (v, u) \in V \times V\}$, $G = (V, Z)$. If $f(v) <
   f(u)$ for all $(v, u) \in Z$ then the following inequality holds for any $v$
@@ -1191,9 +1207,45 @@ the end.
   w \neq u \land z = v\}| \leq f(u)$ since otherwise there would be some $u \in
   V$ where $f(u) < f(w)$.
 \end{proof}
+\noindent The insight from this is if we had a set $\{(v, w_1), (v, w_2), \ldots
+ (v, w_n), (v, u)\}$ where $v < w_i < u$. Then if we we pick some $w_j$ to be
+ the parent of $v$ then the edges becomes $\{(w_j, w_a), (w_j, w_b), \ldots
+ (w_j, w_c), (w_j, u)\}$ and now $|\{f(w_1), f(w_2), \ldots, f(w_n)\}| <
+ |\{f(w_a), f(w_b), \ldots, f(w_c)\}|$ so there are fewer choices before $u$ can
+ be eliminated. Now it can finally be shown that union by ranks time complexity.
+\begin{proposition}[Weighted Parallel Tree Union (By Rank) Time
+  Complexity]\label{prop:weighted-parallel-tree-union-time-complexity} Let
+  forest $F = (V, E)$ be a tree, and let $A \subseteq V \times V$ be a set of
+  pairs of elements in $V$ that will be unioned in parallel. Then Weighted
+  Parallel Tree Union does $O(|A| \log |V|)$ work and has $O((\log |V|)(\log^2
+  |A|))$ span.
+\end{proposition}
+\begin{proof}
+  In step 1. $O(|A| \log |V|)$ work is done and have $O(\log |V|)$ span due to
+  trees bounded height. Now the key The key to determining the time complexity
+  of the loop body is to consider a element $v \in \pi_1(A) \cup \pi_2(A)$ that
+  never occurs as the left first component of a tuple in $v \notin \pi_1(Z)$ in
+  step 6. of Weighted Maximal Union \ref{alg:weighted-maximal-union}. Since then
+  the element will not be removed from future iterations of the loop body. By
+  Proposition \ref{prop:rank-bound} then if $f(v) = 0$ on first iteration then
+  its rank can most be increased to $f(v) = \lfloor \log |V| \rfloor$ and at
+  most $\lfloor \log |V| \rfloor$ other edges $(w, u) \in A$ can be added to the
+  forest before $v$. So the loop must run atmost $O(\log |V|)$ times so the span
+  is $O((\log |V|)(\log^2 |A|))$. An upperbound is if every vertex had to go
+  through $O(\log |V|)$ iterations then the work is upperboundedby $O(|A| \log
+  |V|)$ work.
+\end{proof}
+Lastly I did not have time go prove union by size is work-efficient in the sense
+that it does as much work as a sequention union-find structure with union by
+size so instead conjecture.
+\begin{conjecture}[Weighted Parallel Tree Union (By Size) Time Complexity] Let
+  forest $F = (V, E)$ be a tree, and let $A \subseteq V \times V$ be a set of
+  pairs of elements in $V$ that will be unioned in parallel. Then Weighted
+  Parallel Tree Union does $O(|A| \log |V|)$ work and has $O((\log |V|)(\log^2
+  |A|))$ span.
+\end{conjecture}
 
-
-\section{Implementation}
+\section{Implementation} \label{sec:implementation}
 The theoretical algorithms have been formulated in a manner that is well suited
 for a functional data-parallel array language and they will be in this section
 implemented in such a language. The programming language they will be
@@ -1275,7 +1327,8 @@ elements to find their representative by a simple loop that follows the parent
 pointers until a root is found. The implementation has an auxiliary function
 which finds the children of a vector, this auxiliary function is called in the
 actual implementation of find. This auxiliary function is helpful in other
-implementation due to how futhark handles uniqueness types and records. The implementation can be seen in Figure \ref{code:unionfind-find}.
+implementation due to how futhark handles uniqueness types and records. The
+implementation can be seen in Figure \ref{code:unionfind-find}.
 \begin{figure}
 \begin{lstlisting}
 def find_by_vector [n] [u]
@@ -1389,9 +1442,142 @@ def union [n] [u]
 \end{figure}
 
 \subsection{Union by Rank}
+Union-find with union by rank follows almost the same structure union-find but
+now with an added array to keep track of the roots rank. The definition of this
+can be seen in Figure \ref{code:unionfind-by-rank-type-create}. The find
+operation will be exactly the same as before but the union operation becomes
+more complex.
+\begin{figure}
+\begin{lstlisting}
+type unionfind [n] =
+  { parents: [n]handle
+  , ranks: [n]u8
+  }
+
+def create (n: i64) : *unionfind [n] =
+    { parents = rep none
+    , ranks = rep 0
+    }
+\end{lstlisting}
+  \caption{The type of union-find structure using union by rank and a function 
+  for creating such a structure.}
+  \label{code:unionfind-by-rank-type-create}
+\end{figure}
+\subsubsection{Union}
+The outer loop of union is almost the same as in the union operation without
+heurestics. Some changes were made to make the code nice the Weighted Parallel
+Tree Union and Weighted Maximal Union has been adjusted. The the tree union
+algorithm consists of only a loop where it ``normalizes'' the equalities and
+then gives them to a maximal union algorhtm. This structure can be seen in
+Figure \ref{code:unionfind-by-rank-union}.
+\begin{figure}
+\begin{lstlisting}
+def union [n] [u]
+          ({parents, ranks}: *unionfind [n])
+          (eqs: [u](handle, handle)) : *unionfind [n] =
+  let (new_parents, new_ranks, _) =
+    loop (parents, ranks, eqs)
+    while not (null eqs) do
+      let (parents, ranks, eqs) = order parents ranks eqs
+      let (parents, ranks, eqs) = maximal_union parents ranks eqs
+      in (parents, ranks, eqs)
+  in { parents = new_parents
+      , ranks = new_ranks
+      }
+\end{lstlisting}
+  \caption{The union operation used for Union by Rank.}
+  \label{code:unionfind-by-rank-union}
+\end{figure}
+
+How the order works is in first of all finds the representatives of the
+equalities and then it orders them by rank if they differ otherwise the integer
+value. Lastly it removes if the equalities would create a cycle, and create to
+arrays where one of them consists of cases where the rank differ and the other
+array are for equalities where the ranks differs. Now just count the number of
+unique elements for each component and invert constraints with the same rank if
+needed based on the number of unique elements. The implementation can be see in
+Figure \ref{code:unionfind-by-rank-order} and should look quite familiar to
+Figure \ref{code:unionfind-maximal-union}.
+\begin{figure}
+\begin{lstlisting}
+def order [n] [u]
+          (parents: *[n]handle)
+          (ranks: *[n]u8)
+          (eqs: [u](handle, handle)) : ?[m].( *[n]handle, *[n]u8, [m](handle, handle)) =
+  let eqs_elems = unzip eqs |> uncurry (++)
+  let (new_parents, new_eqs_elems) = find_by_vector none parents eqs_elems
+  let (_, value_eqs, rank_eqs) =
+    split new_eqs_elems
+    |> uncurry zip
+    |> map (\(v, u) ->
+              if ranks[v] == ranks[u]
+              then if v < u then (v, u) else (u, v)
+              else if ranks[v] < ranks[u] then (v, u) else (u, v))
+    |> partition2 (uncurry (==)) (\(v, u) -> ranks[v] == ranks[u])
+  let (vs, us) = unzip value_eqs
+  let unique_vs = hll.insert () (hll.create 10) vs |> hll.count
+  let unique_us = hll.insert () (hll.create 10) us |> hll.count
+  let value_eqs = if unique_vs < unique_us then zip us vs else zip vs us
+  let eqs = value_eqs ++ rank_eqs
+  in (new_parents, ranks, eqs)
+\end{lstlisting}
+  \caption{The order auxiliary used for Union by Rank.}
+  \label{code:unionfind-by-rank-order}
+\end{figure}
+
+Now maximal union becomes almost the same as in for union-find with out
+heurestics. You have to pick some constraint and remove the constraints that got
+picked. There is one small difference and that is if a constraint contained
+elements with the same rank and one of the elements becomes the new root then
+the rank should be incremented by one. This is done using a reduce by index and
+the implementation can be seen in Figure
+\ref{code:unionfind-by-rank-maximal-union}.
+
+\begin{figure}
+\begin{lstlisting}
+def maximal_union [n] [u]
+                  (parents: *[n]handle)
+                  (ranks: *[n]u8)
+                  (eqs: [u](handle, handle)) : ?[m].( *[n]handle, *[n]u8, [m](handle, handle)) =
+  let (ls, rs) = unzip eqs
+  let parents = reduce_by_index parents i64.min none ls rs
+  let (new_eqs, done) =
+    copy (partition (\(i, p) -> parents[i] != p) eqs)
+  let is = map (.0) done
+  let (new_parents, new_ps) = compression none parents is
+  let new_ranks_done =
+    copy
+    <| map2 (\l p ->
+                u8.bool (ranks[l] u8.== ranks[p]) + ranks[p])
+            is
+            new_ps
+  let new_ranks = reduce_by_index ranks u8.max 0 new_ps new_ranks_done
+  in (new_parents, new_ranks, new_eqs)
+\end{lstlisting}
+  \caption{The maximal union used for Union by Rank.}
+  \label{code:unionfind-by-rank-maximal-union}
+\end{figure}
+
 
 \subsection{Union by Size}
+\begin{figure}
+\begin{lstlisting}
+type unionfind [n] =
+  { parents: [n]handle
+  , sizes: [n]i64
+  , temporary_indices: [n]i64
+  }
 
+def create (n: i64) : *unionfind [n] =
+  { parents = rep none
+  , sizes = rep 1
+  , temporary_indices = rep none
+  }
+\end{lstlisting}
+  \caption{The type of union-find structure using union by size and a function 
+  for creating such a structure.}
+  \label{code:unionfind-by-size-type-create}
+\end{figure}
 
 \section{Discussion}
 \subsection{Tests}
@@ -1463,7 +1649,11 @@ compared.
   corresponds to a union-find implementation with only the union by size
   optimization.
   \item \textbf{Sequential (by Rank and Path Halving)} This is a classical
-  implementation of union-find which uses Union by Rank and Path Halving.
+  implementation of union-find which uses Union by Rank and Path Halving. This
+  implementation is also made in Futhark only using sequential code and the C
+  code has been inspected and the implementation is deemed resonable. It was
+  chosen to write this in Futhark so it was more comparable to the other
+  implementations.
 \end{itemize}
 
 \subsubsection{Datasets}
@@ -1509,13 +1699,20 @@ after the strategy is explained and the choice is clarified. explained.
   \item \textbf{Reverse Halving: } This is the same as halving but in reverse
   order. So now starting with one unification problem double the amount of
   unification problems to resolve each iteration until all $m$ problems are
-  resolved. This leads to $O(\log m)$ calls to union. Same reason as halving 
+  resolved. This leads to $O(\log m)$ calls to union. Same reason as halving but
+  is here just as a sanity check.
   \item \textbf{Chunked: } Resolve $10000$ unification problems of $m$ at a time
   until all $m$ have been resolved. This is to see what happens what happens to
   the find operation incase the union-find structure has poor asymptotics for
   find after many union applications.
 \end{itemize}
 
+\subsubsection{Sortware and Hardware Details}
+The benchmarks are made in Futhark and are described in th Section
+\ref{sec:implementation}, the data-parallel implementations are benchmarked with
+the OpenCL backend on an RTX 3060. The sequential implementation uses the C
+backend on an 12th Gen Intel(R) Core(TM) i7-12700 CPU.
+% Union
 \begin{table}
   \centering
   \begin{tabular}{lrrrr}
@@ -1532,23 +1729,6 @@ after the strategy is explained and the choice is clarified. explained.
   \caption{Data-Parallel Union-Find Union Operation Benchmark Results (times in
   $\mu$s, $m=1{,}000{,}000$, $n=200{,}000$)}
   \label{tab:unionfind_union_benchmarks}
-\end{table}
-\begin{table}
-  \centering
-  \begin{tabular}{lrrrr}
-    \hline
-     & \textbf{All} & \textbf{Halving} & \textbf{Reverse Halving} &
-    \textbf{Chunked} \\
-    \hline
-    Random & 9406 & 9215 & 8960 & 9206 \\
-    Linear & 8329 & 9257 & 8301 & 506588 \\
-    Single & 7617 & 8248 & 7949 & 7931 \\
-    Inverse Single & 8015 & 7952 & 8130 & 7977 \\
-    \hline
-  \end{tabular}
-  \caption{Data-Parallel Union-Find Find Operation Benchmark Results (times in
-  $\mu$s, $m=10{,}000{,}000$, $n=1{,}000{,}000$, 10 finds per element)}
-  \label{tab:unionfind_find_benchmarks}
 \end{table}
 \begin{table}
   \centering
@@ -1574,6 +1754,57 @@ after the strategy is explained and the choice is clarified. explained.
      & \textbf{All} & \textbf{Halving} & \textbf{Reverse Halving} &
      \textbf{Chunked} \\
     \hline
+    Random & 1939 & 13750 & 14638 & 22719 \\
+    Linear & 1637 & 9983 & 10540 & 10323 \\
+    Single & 1361 & 5800 & 5618 & 6615 \\
+    Inverse Single & 1362 & 5651 & 5469 & 6766 \\
+    \hline
+  \end{tabular}
+  \caption{Data-Parallel Union-Find by Rank Union Operation Benchmark Results
+  (times in $\mu$s, $m=1{,}000{,}000$, $n=200{,}000$)}
+  \label{tab:unionfind_by_rank_union_benchmarks}
+\end{table}
+\begin{table}
+  \centering
+  \begin{tabular}{lrrrr}
+    \hline
+    \textbf{Test Type} & \textbf{All} & \textbf{Halving} & \textbf{Reverse Halving} & \textbf{Chunked} \\
+    \hline
+    Random & 409323 & 412848 & 411768 & 396458 \\
+    Linear & 412875 & 409061 & 402656 & 415118 \\
+    Single & 411821 & 422046 & 402506 & 407269 \\
+    Inverse Single & 403909 & 407411 & 403082 & 410958 \\
+    \hline
+  \end{tabular}
+  \caption{Sequential Union-Find Union Operation Benchmark Results (times in
+  $\mu$s, $m=1{,}000{,}000$, $n=200{,}000$)}
+  \label{tab:unionfind_sequential_union_benchmarks}
+\end{table}
+% Find
+\begin{table}
+  \centering
+  \begin{tabular}{lrrrr}
+    \hline
+     & \textbf{All} & \textbf{Halving} & \textbf{Reverse Halving} &
+    \textbf{Chunked} \\
+    \hline
+    Random & 9406 & 9215 & 8960 & 9206 \\
+    Linear & 8329 & 9257 & 8301 & 506588 \\
+    Single & 7617 & 8248 & 7949 & 7931 \\
+    Inverse Single & 8015 & 7952 & 8130 & 7977 \\
+    \hline
+  \end{tabular}
+  \caption{Data-Parallel Union-Find Find Operation Benchmark Results (times in
+  $\mu$s, $m=10{,}000{,}000$, $n=1{,}000{,}000$, 10 finds per element)}
+  \label{tab:unionfind_find_benchmarks}
+\end{table}
+\begin{table}
+  \centering
+  \begin{tabular}{lrrrr}
+    \hline
+     & \textbf{All} & \textbf{Halving} & \textbf{Reverse Halving} &
+     \textbf{Chunked} \\
+    \hline
     Random & 9484 & 9752 & 9385 & 9497 \\
     Linear & 8160 & 8151 & 8195 & 8069 \\
     Single & 8142 & 7939 & 8275 & 8031 \\
@@ -1584,23 +1815,6 @@ after the strategy is explained and the choice is clarified. explained.
   (times in $\mu$s, $m=10{,}000{,}000$, $n=1{,}000{,}000$, 10 finds per
   element)}
   \label{tab:unionfind_by_size_find_benchmarks}
-\end{table}
-  \begin{table}
-  \centering
-  \begin{tabular}{lrrrr}
-    \hline
-     & \textbf{All} & \textbf{Halving} & \textbf{Reverse Halving} &
-     \textbf{Chunked} \\
-    \hline
-    Random & 1939 & 13750 & 14638 & 22719 \\
-    Linear & 1637 & 9983 & 10540 & 10323 \\
-    Single & 1361 & 5800 & 5618 & 6615 \\
-    Inverse Single & 1362 & 5651 & 5469 & 6766 \\
-    \hline
-  \end{tabular}
-  \caption{Data-Parallel Union-Find by Rank Union Operation Benchmark Results
-  (times in $\mu$s, $m=1{,}000{,}000$, $n=200{,}000$)}
-  \label{tab:unionfind_by_rank_union_benchmarks}
 \end{table}
 \begin{table}
   \centering
@@ -1620,7 +1834,58 @@ after the strategy is explained and the choice is clarified. explained.
   element)}
   \label{tab:unionfind_by_rank_find_benchmarks}
 \end{table}
+\begin{table}
+  \centering
+  \begin{tabular}{lrrrr}
+    \hline
+    \textbf{Test Type} & \textbf{All} & \textbf{Halving} & \textbf{Reverse Halving} & \textbf{Chunked} \\
+    \hline
+    Random & 20502732 & 20217976 & 20192048 & 20195360 \\
+    Linear & 20288659 & 20537245 & 20518061 & 20532433 \\
+    Single & 23240794 & 23227048 & 23192741 & 20183378 \\
+    Inverse Single & 23196742 & 23256317 & 23255364 & 20191462 \\
+    \hline
+  \end{tabular}
+  \caption{Sequential Union-Find Find Operation Benchmark Results (times in
+  $\mu$s, $m=10{,}000{,}000$, $n=1{,}000{,}000$, 10 finds per element)}
+  \label{tab:unionfind_sequential_find_benchmarks}
+\end{table}
+
 \subsubsection{Discussion}
+It is clear to see the data-parallel implementations are much faster in regards
+to union and find operation for this input size. But since all the data-parallel
+algorithms does more work than the sequential version and we have a finite
+amount of processors then the sequential implementation should become faster in
+theory. It seems like this will happen on very incrediable large input so these
+data-parallel implementation seems more than well off. Generally the sequential
+implementation does well in the sense it is consistent in the benchmark result.
+
+It is also arguably bad faith to do a purely sequential version, a concurrent
+union-find would be more reasonable to compare against. The sequential
+implementation was chosen since this is the common implementation found in the
+real world. And the sequential algorithm does few instructions so it was the
+hope that it would still be very fast but clearly a sequential version is very
+slow despite the little overhead. It could be that the futhark C backend was bad
+at writing C but the code seems reasonable so it is assumed to perform well.
+
+It would also had been good to compare against a work-efficient parallel
+union-find \cite{https://doi.org/10.1002/cpe.4333}. This algorithm was
+originally discarded as being too task-parallel to consider but with alter
+reflection it might still be worth trying to implement the union algorithm. It
+could had been an idea to compare against a connected components algorithm but
+such algorithms do not have the properties that a union-find structure should
+have.
+
+When comparing the data-parallel implementations union operation we generally
+see that union by size performs worst, then union rank rank and then union-find
+without heurestics is quickest. There are some outliers like for when the
+unification strategy is chunked. This should make sense since union by size and
+union by rank will bound the tree height.
+
+The biggest difference in regards to the performance of the data-parallel
+union-find structures is for the find operation. When the unification strategy
+is chunked then for the linear input the performance difference becomes clear.
+While using union by size or union by rank will keep the performance reasonable.
 
 \section{Examples}
 
@@ -1653,8 +1918,9 @@ pixel indices giving them an integer label which is the flat position in the
 array that can be used for union-find. Then inspect if the neighbours have
 equivalent colors, keep these edges and filter out the ones that are not
 equivalent. The implementation of creating these equivalences can be seen in
-Figure \ref{code:region-labeling-equivalences}. The next step is very simple, create the union find structure, try to unify all
-equivalences, and then look up the labels of all equivalences.
+Figure \ref{code:region-labeling-equivalences}. The next step is very simple,
+create the union find structure, try to unify all equivalences, and then look up
+the labels of all equivalences.
 
 \begin{figure}
 \begin{lstlisting}

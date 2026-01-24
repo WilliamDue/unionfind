@@ -79,3 +79,19 @@ author = {Yossi Shiloach and Uzi Vishkin}
   note      = {Preprint submitted to Elsevier},
   publisher = {Cornell University}
 }
+
+@article{https://doi.org/10.1002/cpe.4333,
+  author = {Simsiri, Natcha and Tangwongsan, Kanat and Tirthapura, Srikanta and Wu, Kun-Lung},
+  title = {Work-efficient parallel union-find},
+  journal = {Concurrency and Computation: Practice and Experience},
+  volume = {30},
+  number = {4},
+  pages = {e4333},
+  keywords = {incremental graph connectivity, parallel streaming, shared-memory, streaming graph analytics, union-find},
+  doi = {https://doi.org/10.1002/cpe.4333},
+  url = {https://onlinelibrary.wiley.com/doi/abs/10.1002/cpe.4333},
+  eprint = {https://onlinelibrary.wiley.com/doi/pdf/10.1002/cpe.4333},
+  note = {e4333 cpe.4333},
+  abstract = {Summary The incremental graph connectivity (IGC) problem is to maintain a data structure that can quickly answer whether two given vertices in a graph are connected, while allowing more edges to be added to the graph. IGC is a fundamental problem and can be solved efficiently in the sequential setting using a solution to the classical union-find problem. However, sequential solutions are not sufficient to handle modern-day large, rapidly-changing graphs where edge updates arrive at a very high rate. We present the first shared-memory parallel data structure for union-find (equivalently, IGC) that is both provably work-efficient (ie, performs no more work than the best sequential counterpart) and has polylogarithmic parallel depth. We also present a simpler algorithm with slightly worse theoretical properties, but which is easier to implement and has good practical performance. Our experiments on large graph streams with various degree distributions show that it has good practical performance, capable of processing hundreds of millions of edges per second using a 20-core machine.},
+  year = {2018}
+}
