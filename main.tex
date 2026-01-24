@@ -1170,7 +1170,7 @@ the end.
   f(u)$ for all $(v, u) \in Z$ then the following inequality holds for any $v$
   and $u$.
   \begin{align*}
-    |\{(z, w) : (z, w) \in Z \land w \neq u \land z = v\}| < f(u) \leq \lfloor \log |V| \rfloor
+    |\{f(w) : (z, w) \in Z \land w \neq u \land z = v\}| \leq f(u) \leq \lfloor \log |V| \rfloor
   \end{align*}
 \end{proposition}
 \begin{proof}
@@ -1186,10 +1186,10 @@ the end.
   1)}{2} \rfloor$ since $w, z$ must be equal $f(w) = f(z)$  so they can not
   succeed the value $\lfloor \frac{\log (k + 1)}{2} \rfloor$.
 
-  Now that we know have this bound then $f(w) \leq \lfloor \log |V| \rfloor$ for
-  all $w \in V$ then $f(u) \leq \lfloor \log |V| \rfloor$. Now since $f(v) <
-  f(u)$ for all $(v, u) \in Z$ then $|\{(z, w) : (z, w) \in Z \land w \neq u
-  \land z = v\}| \leq f(u) - 1$
+  Now with this bound then $f(w) \leq \lfloor \log |V| \rfloor$ for all $w \in
+  V$ so $f(u) \leq \lfloor \log |V| \rfloor$. And $|\{f(w) : (z, w) \in Z \land
+  w \neq u \land z = v\}| \leq f(u)$ since otherwise there would be some $u \ V$
+  where $f(i) < f(w)$.
 \end{proof}
 
 \section{Implementation}
@@ -1453,12 +1453,14 @@ compared.
 \begin{itemize}
   \item \textbf{Data-Parallel: } This implementation uses Parallel Tree Union
   \ref{alg:parallel-tree-union} and is the simplest data-parallel version.
-  \item \textbf{Data-Parallel (by Rank): } This implementation uses Parallel
-  Tree Union by Rank \ref{alg:parallel-tree-union-by-rank} which corresponds to
-  a union-find implementation with only the union by rank optimization.
-  \item \textbf{Data-Parallel (by Size):} This implementation uses Parallel Tree
-  Union by size \ref{alg:parallel-tree-union-by-size} which corresponds to a
-  union-find implementation with only the union by size optimization.
+  \item \textbf{Data-Parallel (by Rank): } This implementation uses Weighted
+  Parallel Tree Union by Rank \ref{alg:weighted-parallel-tree-union} which
+  corresponds to a union-find implementation with only the union by rank
+  optimization.
+  \item \textbf{Data-Parallel (by Size):} This implementation uses Weighted
+  Parallel Tree Union by Size \ref{alg:weighted-parallel-tree-union} which
+  corresponds to a union-find implementation with only the union by size
+  optimization.
   \item \textbf{Sequential (by Rank and Path Halving)} This is a classical
   implementation of union-find which uses Union by Rank and Path Halving.
 \end{itemize}
@@ -1491,6 +1493,7 @@ construction is explained and afterwards why they are chosen is explained.
   side to use as children in the forest that is the union-find structure. Once
   again a worst case scenario for histograms possibly.
 \end{itemize}
+
 \subsubsection{Unification Strategy}
 The following is the list of different ways subsets of the datasets are unified,
 after the strategy is explained and the choice is clarified. explained.
@@ -1512,7 +1515,111 @@ after the strategy is explained and the choice is clarified. explained.
   find after many union applications.
 \end{itemize}
 
-\subsection{Related Work}
+\begin{table}
+  \centering
+  \begin{tabular}{lrrrr}
+    \hline
+     & \textbf{All} & \textbf{Halving} & \textbf{Reverse Halving} &
+    \textbf{Chunked} \\
+    \hline
+    Random & 1342 & 11806 & 12443 & 17152 \\
+    Linear & 1281 & 5507 & 5766 & 15811 \\
+    Single & 819 & 7888 & 7318 & 8521 \\
+    Inverse Single & 818 & 7783 & 7097 & 8129 \\
+    \hline
+  \end{tabular}
+  \caption{Data-Parallel Union-Find Union Operation Benchmark Results (times in
+  $\mu$s, $m=1{,}000{,}000$, $n=200{,}000$)}
+  \label{tab:unionfind_union_benchmarks}
+\end{table}
+\begin{table}
+  \centering
+  \begin{tabular}{lrrrr}
+    \hline
+     & \textbf{All} & \textbf{Halving} & \textbf{Reverse Halving} &
+    \textbf{Chunked} \\
+    \hline
+    Random & 9406 & 9215 & 8960 & 9206 \\
+    Linear & 8329 & 9257 & 8301 & 506588 \\
+    Single & 7617 & 8248 & 7949 & 7931 \\
+    Inverse Single & 8015 & 7952 & 8130 & 7977 \\
+    \hline
+  \end{tabular}
+  \caption{Data-Parallel Union-Find Find Operation Benchmark Results (times in
+  $\mu$s, $m=10{,}000{,}000$, $n=1{,}000{,}000$, 10 finds per element)}
+  \label{tab:unionfind_find_benchmarks}
+\end{table}
+\begin{table}
+  \centering
+  \begin{tabular}{lrrrr}
+    \hline
+     & \textbf{All} & \textbf{Halving} & \textbf{Reverse Halving} &
+     \textbf{Chunked} \\
+    \hline
+    Random & 2283 & 17279 & 18501 & 26252 \\
+    Linear & 1566 & 9176 & 10138 & 10897 \\
+    Single & 1273 & 5636 & 5621 & 6205 \\
+    Inverse Single & 1264 & 5827 & 5399 & 6122 \\
+    \hline
+  \end{tabular}
+  \caption{Data-Parallel Union-Find by Size Union Operation Benchmark Results
+  (times in $\mu$s, $m=1{,}000{,}000$, $n=200{,}000$)}
+  \label{tab:unionfind_by_size_union_benchmarks}
+\end{table}
+\begin{table}
+  \centering
+  \begin{tabular}{lrrrr}
+    \hline
+     & \textbf{All} & \textbf{Halving} & \textbf{Reverse Halving} &
+     \textbf{Chunked} \\
+    \hline
+    Random & 9484 & 9752 & 9385 & 9497 \\
+    Linear & 8160 & 8151 & 8195 & 8069 \\
+    Single & 8142 & 7939 & 8275 & 8031 \\
+    Inverse Single & 8187 & 7991 & 8247 & 8339 \\
+    \hline
+  \end{tabular}
+  \caption{Data-Parallel Union-Find by Size Find Operation Benchmark Results
+  (times in $\mu$s, $m=10{,}000{,}000$, $n=1{,}000{,}000$, 10 finds per
+  element)}
+  \label{tab:unionfind_by_size_find_benchmarks}
+\end{table}
+  \begin{table}
+  \centering
+  \begin{tabular}{lrrrr}
+    \hline
+     & \textbf{All} & \textbf{Halving} & \textbf{Reverse Halving} &
+     \textbf{Chunked} \\
+    \hline
+    Random & 1939 & 13750 & 14638 & 22719 \\
+    Linear & 1637 & 9983 & 10540 & 10323 \\
+    Single & 1361 & 5800 & 5618 & 6615 \\
+    Inverse Single & 1362 & 5651 & 5469 & 6766 \\
+    \hline
+  \end{tabular}
+  \caption{Data-Parallel Union-Find by Rank Union Operation Benchmark Results
+  (times in $\mu$s, $m=1{,}000{,}000$, $n=200{,}000$)}
+  \label{tab:unionfind_by_rank_union_benchmarks}
+\end{table}
+\begin{table}
+  \centering
+  \begin{tabular}{lrrrr}
+    \hline
+     & \textbf{All} & \textbf{Halving} & \textbf{Reverse Halving} &
+     \textbf{Chunked} \\
+    \hline
+    Random & 9618 & 9498 & 9580 & 9765 \\
+    Linear & 8423 & 8182 & 8355 & 8072 \\
+    Single & 8321 & 8188 & 8293 & 7873 \\
+    Inverse Single & 8198 & 8163 & 8301 & 7988 \\
+    \hline
+  \end{tabular}
+  \caption{Data-Parallel Union-Find by Rank Find Operation Benchmark Results
+  (times in $\mu$s, $m=10{,}000{,}000$, $n=1{,}000{,}000$, 10 finds per
+  element)}
+  \label{tab:unionfind_by_rank_find_benchmarks}
+\end{table}
+\subsubsection{Discussion}
 
 \section{Examples}
 
