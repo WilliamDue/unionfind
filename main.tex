@@ -164,6 +164,8 @@
   {\Large \textsc{University of Copenhagen}} \\[5pt]
   {\large Data-Parallel Union-Find} \\[10pt]
   Author: William Henrich Due \\[0pt]
+  Advisor: Troels Henriksen \\[0pt]
+  Submitted: 25th of January, 2026.
 }
 \author{}
 \date{}
@@ -173,12 +175,30 @@
 \thispagestyle{firstpage}
 
 \section{Introduction}
+This is a thesis preparation project about deriving theory, implementing and
+using a data-parallel union-find structure well suited for a functional array
+language \cite{vanBalen2025comparing}. The union-find structure is structure
+which allows for maintaining equivalences between elements and its data-parallel
+variant has the following operations.
+\begin{itemize}
+  \item \texttt{create}: Creating an union-find structure of $n$ elements.
+  \item \texttt{union}: An input array of tuple pairs of elements will be
+  unified and is therefore said to be ``equivalent''.
+  \item \texttt{find}: An input array of elements where the single
+  representative of the equivalence class the element belongs to such that it
+  can be determine if two elements belong to the same equivalence class.
+\end{itemize}
+Three different data-parallel union-find structures will be proposed is a
+union-find structure without any heurestics, a union-find structure using union
+by rank and union-find structure using union by size. These structures are
+implemented in the parallel functional array language Futhark and these
+implementations are tested and benchmarks. In the end these implementations are
+used in a region labeling example and type checking example.
 
 \section{Theory}
 This section will derive the theoretical foundation for a data-parallel
-union-find. The derived data structure will be with a data-parallel
-computational model that is suited for a functional array language \cite{vanBalen2025comparing}. The
-theory is based on set theory, graph theory and properties of forests.
+union-find. The theory is based on set theory, graph theory and properties of
+forests.
 \subsection{Forests}
 To be able to define a union-find structure we first need to define some basic
 graph theory and specifically in relation to forests. The graphs used are
@@ -255,7 +275,8 @@ has a path to a root.
   a vertex $v \in V$ that either $v = r$ or $(v, p) \in E$ such that $p \leadsto
   r$.
   \begin{itemize}
-    \item If $(v, p) \notin E$ then $v \centernot\leadsto u \text{ for all } u \in V$ so $v = r$.
+    \item If $(v, p) \notin E$ then $v \centernot\leadsto u \text{ for all } u
+    \in V$ so $v = r$.
     \item If $(v, p) \in E$ then by induction hypothesis $p \leadsto r$ such
     that $r \in V$ and $\mathcal{R}_F(r)$. It follows that since $v \leadsto p
     \leadsto r$ so $v \leadsto r$.
@@ -274,19 +295,6 @@ is only one tree for each vertex in the forest.
   that there is only one out going edge from each vertex in the path from $v$ to
   $u$. Hence the path from $v$ to $u$ is unique.
 \end{proof}
-
-% \begin{proposition}[Forest Edge Limit]\label{prop:forest-edge-limit}
-%   A forest $F = (V, E)$ where $|V| = n$ and $|E| > n - 1$ is not a forest.
-% \end{proposition}
-% 
-% \begin{proof}
-%   Let $F = (V, E)$ be a forest where $|V| = n$ and $|E| > n - 1$. By
-%   proposition \ref{prop:forest-root-count} a forest with $n - 1$ has exactly
-%   one root, so it is a tree. By adding one more edge to the tree it must make
-%   one vertex have two parents. Or since every vertex $v \in V$ has a path to
-%   the root $r \in V$ it must create a cycle $v \leadsto v$ for some $v \in V$.
-%   In both cases it contradicts the properties of a forest.
-% \end{proof}
 
 \subsection{Union-Find Structure}
 Using the definition of a forest we can now define a union-find structure, the
@@ -1175,44 +1183,35 @@ weight if $f(v) = f(u)$ for $(v, u)$ from a set of root pairs.
     1$.
   \end{itemize}
 \end{remark}
-\noindent Now considering only the case where $f(v) < f(u)$ holds it will now be
-the goal to bound the number of different choices $(z, w)$ where $w \neq u$ and
-$z = v$. The idea is that this will be able to bound the lifespan of the
-unluckiest $u$ that never gets removed by Weighted Parallel Tree Union before
-the end.
-\begin{proposition}[Rank Bound]\label{prop:rank-bound}
-  Let $F = (V, E)$, $f : V \to \mathbb{N}$, $(v, u) \in Z \subseteq
-  \{(\rho_F(v), \rho_F(u)) : (v, u) \in V \times V\}$, $G = (V, Z)$. If $f(v) <
-  f(u)$ for all $(v, u) \in Z$ then the following inequality holds for any $v$
-  and $u$.
+\noindent Now to show that the time complexity is work efficient first a bound
+on the rank of every element is needed.
+\begin{proposition}[Rank Bound]\label{prop:rank-bound} Let $F = (V, E)$, $f : V
+  \to \mathbb{N}$, and $v \in V$, then the follow bound holds after running the
+  Weighted Parallel Tree Union algorithm with union by rank.
   \begin{align*}
-    |\{f(w) : (z, w) \in Z \land w \neq u \land z = v\}| \leq f(u) \leq \lfloor \log |V| \rfloor
+    f(v) \leq \lfloor \log |V| \rfloor
   \end{align*}
 \end{proposition}
 \begin{proof}
-  This can be shown by first showing that a given vertex in the tree is bounded
-  by $\lfloor \log k \rfloor$ given $k = |V|$ vertices using induction. The base
-  case holds since given $1$ vertex $w$ then $f(w) = 0 \leq \lfloor \log k
-  \rfloor$. Asume now the claim holds for $k$ vertices it will now be shown it
-  holds for $k + 1$ vertices. So by the induction hypothesis $f(w), f(z) \leq
-  \lfloor \log k \rfloor$ if $f(w) < f(z)$ then then new weight function $f'$ it
-  holds that $f'(z) = f(z) \leq \lfloor \log k \rfloor \leq \lfloor \log (k + 1)
-  \rfloor$. If $f(w) = f(z)$ then the new weight function it holds that $f'(z) +
-  1 \leq \lfloor \frac{\log (k + 1)}{2} \rfloor + 1 = \lfloor \frac{\log (k +
-  1)}{2} \rfloor$ since $w, z$ must be equal $f(w) = f(z)$  so they can not
-  succeed the value $\lfloor \frac{\log (k + 1)}{2} \rfloor$.
-
-  Now with this bound then $f(w) \leq \lfloor \log |V| \rfloor$ for all $w \in
-  V$ so $f(u) \leq \lfloor \log |V| \rfloor$. And $|\{f(w) : (z, w) \in Z \land
-  w \neq u \land z = v\}| \leq f(u)$ since otherwise there would be some $u \in
-  V$ where $f(u) < f(w)$.
+  It can be shown that the tree is bounded by $\lfloor \log k \rfloor$ given $k
+  = |V|$ vertices using induction. The base case holds since given $1$ vertex
+  $v$ then $f(v) = 0 \leq \lfloor \log k \rfloor$. Assume now the claim holds
+  for $k$ vertices it will now be shown it holds for $k + 1$ vertices. So by the
+  induction hypothesis $f(v), f(u) \leq \lfloor \log k \rfloor$ if $f(u) < f(v)$
+  then for the new weight function $f'$ it must hold that $f'(v) = f(v) \leq
+  \lfloor \log k \rfloor \leq \lfloor \log (k + 1) \rfloor$. If $f(v) = f(u) =
+  h$ then $f'(v) = f(v) + 1$. By the induction hypothesis for $v, u \in V$ it
+  holds that $f(v), f(u) \leq \lfloor \log k \rfloor$ so the height is bounded
+  by $h$ meaning the subtrees $v$ and $u$ has at most $2^h$ vertices. Therefore,
+  when unifying $v$ and $u$ with $v$ as the parent the final tree contains at
+  least $2^h + 2^h = 2^{h + 1}$ vertices. Since the final tree has at most $k +
+  1$ vertices it follows that $h + 1 \leq k + 1$ and therefore $h + 1 = f(v) + 1
+  = f'(v) \leq \lfloor \log (k + 1) \rfloor$.
 \end{proof}
-\noindent The insight from this is if we had a set $\{(v, w_1), (v, w_2), \ldots
- (v, w_n), (v, u)\}$ where $v < w_i < u$. Then if we we pick some $w_j$ to be
- the parent of $v$ then the edges becomes $\{(w_j, w_a), (w_j, w_b), \ldots
- (w_j, w_c), (w_j, u)\}$ and now $|\{f(w_1), f(w_2), \ldots, f(w_n)\}| <
- |\{f(w_a), f(w_b), \ldots, f(w_c)\}|$ so there are fewer choices before $u$ can
- be eliminated. Now it can finally be shown that union by ranks time complexity.
+\noindent Usin the bound on ranks it is possible to derive the the time
+complexity of the Weighted Parallel Tree Union algorithm when using the rank
+heurestic.
+
 \begin{proposition}[Weighted Parallel Tree Union (By Rank) Time
   Complexity]\label{prop:weighted-parallel-tree-union-time-complexity} Let
   forest $F = (V, E)$ be a tree, and let $A \subseteq V \times V$ be a set of
@@ -1223,21 +1222,29 @@ the end.
 \begin{proof}
   In step 1. $O(|A| \log |V|)$ work is done and have $O(\log |V|)$ span due to
   trees bounded height. Now the key The key to determining the time complexity
-  of the loop body is to consider a element $v \in \pi_1(A) \cup \pi_2(A)$ that
-  never occurs as the left first component of a tuple in $v \notin \pi_1(Z)$ in
-  step 6. of Weighted Maximal Union \ref{alg:weighted-maximal-union}. Since then
-  the element will not be removed from future iterations of the loop body. By
-  Proposition \ref{prop:rank-bound} then if $f(v) = 0$ on first iteration then
-  its rank can most be increased to $f(v) = \lfloor \log |V| \rfloor$ and at
-  most $\lfloor \log |V| \rfloor$ other edges $(w, u) \in A$ can be added to the
-  forest before $v$. So the loop must run atmost $O(\log |V|)$ times so the span
-  is $O((\log |V|)(\log^2 |A|))$. An upperbound is if every vertex had to go
-  through $O(\log |V|)$ iterations then the work is upperboundedby $O(|A| \log
-  |V|)$ work.
+  is to show that the loop runs at most $1 + \lfloor \log |V| \rfloor$ times. This
+  can be done by induction where we say that after the $k$th iteration $k \leq
+  f(v)$ for all $v \in V$.
+  \begin{itemize}
+    \item The base case holds since for all $v \in V$ it holds that $k = 0 \leq
+    f(v)$.
+    \item By induction hypothesis $k \leq f(v), f(u)$, for some $(v, u) \in A$
+    then $v$ will be removed and replaced by $u$ since it is the first component
+    so $v \notin \pi_1(A') \cup \pi_2(A')$ where $A'$ is $A$ in the next
+    iteration. Now if $f(v) < f(u)$ then $k + 1 \leq f'(v)$ and if $f(v) = f(u)$
+    then $k + 1 \leq f(u) + 1 = f'(u)$. Now if $(u, v) \in A$ then $u$ will be
+    removed and replaced by $v$ since it is the first component so $u \notin
+    \pi_1(A') \cup \pi_2(A')$. Now if $f(u) < f(v)$ then $k + 1 \leq f'(v)$ and
+    if $f(u) = f(v)$ then $k + 1 \leq f'(v) = f(v) + 1$.
+  \end{itemize}
+  So after $1 + \lfloor \log |V| \rfloor$ iterations iterations $1 + \lfloor
+  \log |V| \rfloor \leq f(v)$ but since $f(v) \leq \lfloor \log |V| \rfloor$
+  then $A$ must be empty in the end. So the work done is at most $O(|A| \log
+  |V|)$ work and the span is $O((\log |V|)(\log^2 |A|))$.
 \end{proof}
-Lastly I did not have time go prove union by size is work-efficient in the sense
-that it does as much work as a sequention union-find structure with union by
-size so instead conjecture.
+\noindent Lastly I did not have time go prove union by size is work-efficient in
+the sense that it does as much work as a sequention union-find structure with
+union by size so instead conjecture.
 \begin{conjecture}[Weighted Parallel Tree Union (By Size) Time Complexity] Let
   forest $F = (V, E)$ be a tree, and let $A \subseteq V \times V$ be a set of
   pairs of elements in $V$ that will be unioned in parallel. Then Weighted
@@ -1560,6 +1567,11 @@ def maximal_union [n] [u]
 
 
 \subsection{Union by Size}
+Union by size needs still a parent vector, the sizes of a root and some
+temporary indices. The temporary indices are needed to keep track of what
+element got selected as a parent without allocating a whole array for every call
+to maximal union. The precise data type and function for creating can be see in
+Figure \ref{code:unionfind-by-size-type-create}.
 \begin{figure}
 \begin{lstlisting}
 type unionfind [n] =
@@ -1577,6 +1589,47 @@ def create (n: i64) : *unionfind [n] =
   \caption{The type of union-find structure using union by size and a function 
   for creating such a structure.}
   \label{code:unionfind-by-size-type-create}
+\end{figure}
+\subsubsection{Union}
+
+Union has the same loop structure as in union by rank but with sizes and the
+added temporary indices. Order is also still an auxiliary function but it now
+order on size instead of rank. The big change is how maximal union works, to
+pick a constraint the index of the constraint is used to garentee a unique
+constraint. Then the constraints are partitioned into constraint that are done
+when the function is called and the remaining constraints that have not been
+solved. Now do path compression to find the representative and find the sizes of
+the representatives children. Then these can be used to update the the size of
+the parent using a reduce by index. Lastly clear the content of the temporary
+indices such that it can be used for the next time. This implementation can be
+seen in Figure \ref{code:unionfind-by-size-maximal-union}.
+
+\begin{figure}
+\begin{lstlisting}
+def maximal_union [n] [u]
+                  (parents: *[n]handle)
+                  (sizes: *[n]i64)
+                  (temporary_indices: *[n]i64)
+                  (eqs: [u](handle, handle)) : ?[m].( *[n]handle, *[n]i64, *[n]i64, [m](handle, handle)) =
+  let lefts = map (.0) eqs
+  let eq_is = indices eqs
+  let temporary_indices =
+    reduce_by_index temporary_indices i64.min i64.highest lefts eq_is
+  let (done, eqs) =
+    zip (indices eqs) eqs
+    |> partition (\(i, (l, _)) -> i == temporary_indices[l])
+    |> bimap (map (.1)) (map (.1))
+  let (is, ps) = unzip done
+  let parents = scatter parents is ps
+  let (new_parents, new_ps) = compression none parents is
+  let children_sizes = map (\i -> sizes[i]) is
+  let new_sizes = reduce_by_index sizes (+) 0 new_ps children_sizes
+  let new_eqs = copy eqs
+  let new_temporary_indices = scatter temporary_indices lefts (rep i64.highest)
+  in (new_parents, new_sizes, new_temporary_indices, new_eqs)
+\end{lstlisting}
+  \caption{The maximal union used for Union by Size.}
+  \label{code:unionfind-by-size-maximal-union}
 \end{figure}
 
 \section{Discussion}
@@ -1617,6 +1670,11 @@ able to test this is the interface would have to expose the structure of the
 union-find structure and/or add functionalities to the interface that would only
 be useful for testing. Both of these cases would be confusing to a user of the
 library.
+
+A pitfall of the test suite is it should probably have more different sequences
+of union on different datasets. It is quite clear that is is easy to create a
+bug where a cycle is introduce leading to an infinite loop. These cases were
+usually captured by the benchmark suite instead.
 
 The implementations passes this test suite so it is seen as the implementations
 work as intended.
@@ -1868,14 +1926,6 @@ hope that it would still be very fast but clearly a sequential version is very
 slow despite the little overhead. It could be that the futhark C backend was bad
 at writing C but the code seems reasonable so it is assumed to perform well.
 
-It would also had been good to compare against a work-efficient parallel
-union-find \cite{https://doi.org/10.1002/cpe.4333}. This algorithm was
-originally discarded as being too task-parallel to consider but with alter
-reflection it might still be worth trying to implement the union algorithm. It
-could had been an idea to compare against a connected components algorithm but
-such algorithms do not have the properties that a union-find structure should
-have.
-
 When comparing the data-parallel implementations union operation we generally
 see that union by size performs worst, then union rank rank and then union-find
 without heurestics is quickest. There are some outliers like for when the
@@ -1886,6 +1936,12 @@ The biggest difference in regards to the performance of the data-parallel
 union-find structures is for the find operation. When the unification strategy
 is chunked then for the linear input the performance difference becomes clear.
 While using union by size or union by rank will keep the performance reasonable.
+
+Something that should probably also had been benchmarked is a work-efficient
+parallel union-find \cite{https://doi.org/10.1002/cpe.4333}. It was known it
+existed in the beginning of the projekt but it was early dismissed since it
+seemed highly task parallel. But now looking back there are parts of it that
+could had been implemented like a union by rank or union by size implementation.
 
 \section{Examples}
 
@@ -2089,8 +2145,60 @@ def constraints [n] (exps: [n]exp) =
   \caption{The types defined for expressions of lambda calculus and the type of lambda calculus expressions in Futhark.}
   \label{code:lambda-calculus-constraints-futhark}
 \end{figure}
+Now before we can go ahead and solve these constraints some helper functions are
+needed, top-level equality on types is needed. It does not need to recurse down
+and check if they are equivalent. A way to compute the number of type variables
+and type variables combined with arrows between type variables. A way of
+encoding types into an integer that can be used for union-find.
+\begin{figure}
+\begin{lstlisting}
+def eq (t: typ) (t': typ) : bool =
+  match (t, t')
+  case (#tarrow _ _, #tvar _) -> false
+  case (#tvar _, #tarrow _ _) -> false
+  case (#tvar a, #tvar a') -> a == a'
+  case (#tarrow a b, #tarrow a' b') -> a == a' && b == b'
+
+def vname (exp: exp) : vname =
+  match exp
+  case #app _ _ -> 0
+  case #lam v _ -> v
+  case #var v -> v
+
+def num_tvars [n] (exps: [n]exp) : i64 =
+  n + i64.maximum (map vname exps)
+
+def num_types [n] (exp: [n]exp) : i64 =
+  let n = num_tvars exp
+  in n + n * n
+\end{lstlisting}
+  \caption{The helper function for type checking.}
+  \label{code:lambda-calculus-helper-futhark}
+\end{figure}
+Now the big problem is to actually solve the constraints, to implement this you
+would have to encode the constraints then unify them. Then for the arrow types
+you would have to recurse down the arrow type and create type equalities. In a
+sequential implementation with recursion this is easy but for Futhark you would
+have to flatten this recursive function.
 
 \section{Conclusion}
+The project succesfully derived a data-parallel union-find structures which
+should be ideal for functional array language. Specifically an union-find
+structure using a union by rank heurestic was work-efficient in regards to only
+using this heurestic would do $O(m \log |V|)$ work where $m$ is the number of
+elements pairs being unioned. It was not possible to find a way to get a
+work-efficient algorithm which does amortized $O(m\alpha(|V|))$ where $m$ is the
+number of elements being unioned or found. The data-parallel union-find
+structure using union by rank structure has the added advantage that it is quite
+simple to implement in a functional array language context. The union by size
+variant was conjectured to be work-efficient but from a practical standpoint the
+implementation is complicated compared to union by rank. Lastly a union-find
+structure without any heurestics was presented but it may be the case it is not
+a useful structure due to its little difference to the union by rank variant.
+Besides this some use cases for these union-find structures was shown,
+specifically region labeling has a less strong case for the structure being
+useful. The stronger case is for type checking but the example was of poor
+quality.
 
 \printbibliography
 
