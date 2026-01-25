@@ -175,66 +175,66 @@
 \thispagestyle{firstpage}
 
 \section{Introduction}
-This is a thesis preparation project about deriving theory, implementing and
-using a data-parallel union-find structure well suited for a functional array
-language \cite{vanBalen2025comparing}. The union-find structure is structure
-which allows for maintaining equivalences between elements and its data-parallel
-variant has the following operations.
+This is a thesis preparation project about data-parallel union-find structure
+well suited for a functional array language \cite{vanBalen2025comparing}. The
+project is about the theory, implementation and usage of the structure. The
+union-find structure is structure which allows for maintaining equivalences
+between elements. Union-find operate on single elements but the data-parallel
+variant operates on multiple elements, in this project the structure will have
+the following operations.
 \begin{itemize}
   \item \texttt{create}: Creating an union-find structure of $n$ elements.
   \item \texttt{union}: An input array of tuple pairs of elements will be
   unified and is therefore said to be ``equivalent''.
-  \item \texttt{find}: An input array of elements where the single
-  representative of the equivalence class the element belongs to such that it
-  can be determine if two elements belong to the same equivalence class.
+  \item \texttt{find}: An input array of elements where a single unique
+  representative of the equivalence class is returned for every element.
 \end{itemize}
-Three different data-parallel union-find structures will be proposed is a
+Three different data-parallel union-find structures will be presented, a
 union-find structure without any heurestics, a union-find structure using union
 by rank and union-find structure using union by size. These structures are
-implemented in the parallel functional array language Futhark and these
-implementations are tested and benchmarks. In the end these implementations are
+implemented in the parallel functional array language Futhark and the
+implementations are tested and benchmarked. In the end these implementations are
 used in a region labeling example and type checking example.
 
 \section{Theory}
 This section will derive the theoretical foundation for a data-parallel
-union-find. The theory is based on set theory, graph theory and properties of
-forests.
+union-find. The theory is based on set theory and graph theory.
 \subsection{Forests}
 To be able to define a union-find structure we first need to define some basic
-graph theory and specifically in relation to forests. The graphs used are
-directed graphs $G = (V, E)$ where $V$ is a set of vertices and $E
-\subseteq V \times V$ is a set of directed edges. Initially we need a definition
-of what it means for node $u \in V$ to be reachable from node $v \in V$ meaning
-there is a path from $u$ to $v$.
+graph theory, specifically in relation to forests. The graphs used are directed
+graphs $G = (V, E)$ where $V$ is a set of vertices and $E \subseteq V \times V$
+is a set of directed edges. Initially we need a definition of what it means for
+a vertex $u \in V$ to be reachable from vertex $v \in V$ meaning there is a path
+from $u$ to $v$.
 
 \begin{definition}[Reachability]
-  A node $v$ is \emph{reachable} from a node $u$ in a directed graph $G = (V,
-  E)$ if there exists a sequence of directed edges $e_1, e_2, \ldots, e_m \in E$
-  where $m \geq 1$ and $e_i = (v_{i-1}, v_i)$ for $1 \leq i \leq m$, such that
-  $v_0 = u$ and $v_m = v$. We denote this by $u \leadsto_G v$ and may write $u
-  \leadsto v$ if it is clear what graph is refered to.
+  A veterx $v \in V$ is \emph{reachable} from a vertex $u \in V$ in a directed
+  graph $G = (V, E)$ if there exists a sequence of directed edges $e_1, e_2,
+  \ldots, e_m \in E$ where $m \geq 1$ and $e_i = (v_{i-1}, v_i)$ for $1 \leq i
+  \leq m$, such that $v_0 = u$ and $v_m = v$. We denote this by $u \leadsto_G v$
+  and may write $u \leadsto v$ if it is clear what graph is refered to.
 \end{definition}
 \noindent One of the first properties of reachability is it is neither
 \text{reflexive} nor \textit{irreflexive}. The reason for chosing such a
 definition is that the definition of an cycle in a directed graph becomes
 simply.
 \begin{definition}[Cycle]
-  A cycle in a directed graph $G = (V, E)$ has a cycle if there exists
-  $v \in V$ such that $v \leadsto v$.
+  A cycle in a directed graph $G = (V, E)$ has a cycle if there exists a $v \in
+  V$ such that $v \leadsto v$.
 \end{definition}
-\noindent With this definition of cycles a forest can be defined as follows:
+\noindent With this definition of cycles a forest can be defined as following:
 \begin{definition}[Forest]
   A forest is a directed graph $F = (V, E)$ where $V$ is a set of vertices and $E
   \subseteq V \times V$ is a set of directed edges such that:
   \begin{enumerate}
     \item There are no cycles $v \centernot\leadsto v$ for all $v \in V$, and
-    \item each node has at most one parent i.e. for all $(u, v_1), (u, v_2)
+    \item each vertex has at most one parent i.e. for all $(u, v_1), (u, v_2)
     \in E$ it holds that $v_1 = v_2$.
   \end{enumerate}
 \end{definition}
 \noindent With the definition of a forest we can now define roots in a forest.
 \begin{definition}[Root]
-  A node $v \in V$ in a forest $F = (V, E)$ is a root if it has no parent.
+  A vertex $v \in V$ in a forest $F = (V, E)$ is a root if it has no parent.
   This is defined as the predicate:
   \begin{align*}
     \mathcal{R}_F(v) : v \centernot\leadsto u \text{ for all } u \in V
@@ -260,12 +260,12 @@ trees. To do this we first need to establish how many roots a forest has.
     vertices $r_1, r_2, \ldots, r_k \in V$ that has no parent. Hence there are
     exactly $k$ roots in $F$.
 \end{proof}
-\noindent Knowing how many roots a forest does not finish the picture of how
+\noindent Knowing how many roots a forest has does not finish the picture of how
 a forest is a collection of trees. We also need to show that each vertex also
 has a path to a root.
-\begin{proposition}[Root Path Exist]\label{prop:roots-path-exist}
-  In a forest $F = (V, E)$ for each element $v \in V$ there exists a root $r \in
-  V$ such that $\mathcal{R}_F(r)$ and either $v \leadsto r$ or $v = r$.
+\begin{proposition}[Root Path Exist]\label{prop:roots-path-exist} In a forest $F
+  = (V, E)$ for each element $v \in V$ then there exists a root $r \in V$ such
+  that $\mathcal{R}_F(r)$ and either $v \leadsto r$ or $v = r$.
 \end{proposition}
 
 \begin{proof}
@@ -276,7 +276,7 @@ has a path to a root.
   r$.
   \begin{itemize}
     \item If $(v, p) \notin E$ then $v \centernot\leadsto u \text{ for all } u
-    \in V$ so $v = r$.
+    \in V$ so $v = r$ and $\mathcal{R}_F(r)$.
     \item If $(v, p) \in E$ then by induction hypothesis $p \leadsto r$ such
     that $r \in V$ and $\mathcal{R}_F(r)$. It follows that since $v \leadsto p
     \leadsto r$ so $v \leadsto r$.
@@ -305,7 +305,7 @@ class.
   A union-find structure is a forest $F = (V, E)$.
 \end{definition}
 \noindent The way this equivalence relation is defined is by the representative
-of each element in the forest. The representative of a node is found by
+of each element in the forest. The representative of a vertex is found by
 traversing the edges in the forest until a root is found. Using the notion of a
 root we can now define the representative of an element in a forest.
 \begin{definition}[Representative]
@@ -325,9 +325,9 @@ of vertices in the same tree in a forest.
     \mathcal{E}_F(v) := \{u : u \in V \text{ where } \rho_F(u) = \rho_F(v)\}
   \end{align*}
 \end{definition}
-\noindent The notion of equivalence classes can now be formalized using the the
-definition of a partition. We need this to show properties of the union-find
-structure.
+\noindent The notion of equivalence classes can now be formalized using the
+definition of a partition. This will be needed to show properties of the
+union-find structure.
 \begin{definition}[Partition]\label{def:partition}
   The set $P \subseteq \mathbb{P}(S)$ is a partition of a set $S$ if:
   \begin{enumerate}
@@ -418,12 +418,11 @@ other trees in the forest should remain unchanged.
   \end{enumerate}
 \end{definition}
 \noindent It is now possible to define a tree union operation that satisfies the
-tree union property. It uses the fact that if we make the representative of one
-tree the parent of the representative of the other tree then all elements in the
-two trees will have the same representative in the new forest. But we actually
-only care about the trees still being trees and not the structure of the trees
-themselves. Hence it does not matter which representative becomes the parent of
-the other.
+tree union property. It uses the fact if with assign one root as a parent to a
+another root then we still get a forest. But we actually only care about the
+trees still being trees containing the same vertices and not the structure of
+the trees themselves. Hence it does not matter which representative becomes the
+parent of the other.
 \begin{proposition}[Root Union]\label{prop:root-union}
   Let forest $F = (V, E)$, $p = \rho_F(u)$ be the representative of $u$ and
   let $q = \rho_F(v)$ be the representative of $v$ where $q \neq p$. Then
@@ -451,28 +450,25 @@ the other.
   \mathcal{E}_F(w)$.
 \end{proof}
 This operation can now be used to define the union operation on a union-find
-structure. This operation corresponds to the union operation in a trivial
-sequential union-find data structure. The efficient implementations of
-union-find will do things like path compression or path halving to optimize the
-distance from a node to its representative. And these operations would also
-fulfill the tree union property since they do not change the equivalence classes
-of the forest. 
+structure. This operation corresponds to the union operation in a sequential
+union-find data structure. The efficient implementations of union-find will do
+things like path compression or path halving to optimize the distance from a
+vertex to its representative. And these operations would also fulfill the tree
+union property since they do not change the equivalence classes of the forest. 
 
 \subsection{Conflict-Free Sets}
 The problem now is how to define a parallel union operation on a union-find
 structure. The challenge is that multiple union operations might try to change
-the same part of the forest at the same time. And do to the nature of working in
-a data-parallel model we can not have atomic operations that would solve these
-problems in an concurrent manner. The way this problem will be solve is we
+the same part of the forest at the same time. And due to the nature of working
+in a data-parallel model we can not have atomic operations that would solve
+these problems in an concurrent manner. The way this problem will be solve is we
 consider a set of pairs of vertices that must be unified in the forest. We can
 find the representative of all of these vertex pairs, these representative pairs
 forms an graph of roots in the forest. We can simply pick out a subset of edges
 from this graph of roots that forms a forest and glue these edges onto the
 original forest. This will ensure that there are no conflicts when adding the
 edges to the original forest. We will call such a set of edges a conflict-free
-set. An example of a conflict-set is Root Union \ref{prop:root-union} since it
-only adds one edge between two roots to the forest and hence there can not be
-any conflicts.
+set.
 
 An example of this process can be seen in figures \ref{fig:forest} here we have
 a forest with three trees. In figure \ref{fig:conflict-free-set} we see the
@@ -646,16 +642,15 @@ in the same order using Root Union \ref{prop:root-union}.
   Then $F_{n} \cong G_{n}$.
 \end{proposition}
 \begin{proof}
-  Let forest $F$ be a forest, $X \subseteq V \times V$ be a conflict-free set
-  in $F$. We will show that $F_n \cong G_n$. We know that for some $(v_i, u_i)
-  \in X$ then $v_i \neq y$ for all  $(y, w) \in X \backslash \{(v_i, u_i)\}$
-  since otherwise $(V, X)$ would not be a forest and $X$ would not be a
-  conflict-free set in $F$. So all edge set unions will only give a root $v_i$
-  a new parent $u_i$ once. So $\rho_{F_n}(v_i) = \rho_{F_n}(u_i)$ and
-  $\rho_{G_n}(u_i) = \rho_{G_n}(v_i)$ hence $v_i$ remains in the same tree in
-  both $F_n$ and $G_n$. Since this holds for all $(v_i, u_i) \in X$ it follows
-  that all elements in $V$ remains in the same tree in both $F_n$ and $G_n$.
-  Hence $F_n \cong G_n$.
+  Let $F$ be a forest, $X \subseteq V \times V$ be a conflict-free set in $F$.
+  We will show that $F_n \cong G_n$. We know that for some $(v_i, u_i) \in X$
+  then $v_i \neq y$ for all  $(y, w) \in X \backslash \{(v_i, u_i)\}$ since
+  otherwise $(V, X)$ would not be a forest and $X$ would not be a conflict-free
+  set in $F$. So all edge set unions will only give a root $v_i$ a new parent
+  $u_i$ once. So $\rho_{F_n}(v_i) = \rho_{F_n}(u_i)$ and $\rho_{G_n}(u_i) =
+  \rho_{G_n}(v_i)$ hence $v_i$ remains in the same tree in both $F_n$ and $G_n$.
+  Since this holds for all $(v_i, u_i) \in X$ it follows that all elements in
+  $V$ remains in the same tree in both $F_n$ and $G_n$. Hence $F_n \cong G_n$.
 \end{proof}
 \noindent From this equivalence it will be shown that Conflict-free Forest Union
 \ref{prop:conflict-free-forest-union} satisfies Tree Union Property
@@ -708,22 +703,22 @@ vertices in the forest.
   $v_0 \neq v_m$ hence there are no cycles in $G$.
 \end{proof}
 \noindent The nice property of using a directed acyclic graph is we can now pick
-out any vertices from the graph such that no two vertices have the same child.
-This will ensure that the picked out edges forms a forest.
+out any edges from the graph such that no two edges have the same child. This
+will ensure that the picked out edges forms a forest.
 
 \subsection{Parallel Union-Find}
 The conflict-free sets makes it is possible to define how unification in the
 union-find strucutre works. If we consider that we have some forest $F = (V, E)$
-and then are given a set of variables pairs $A \subseteq V \times V$ we wish to
+and then are given a set of vertex pairs $A \subseteq V \times V$ we wish to
 unify these pairs such that they are equivalent in some forest $F$. We can turn
-$A$ into an acyclic graph $(V, Z)$ where $Z$ only consists of root pairs from
-$F$. We want to pick out a subset of $Z$ such that we unify as many of the
-vertex pairs of $Z$ in $F$ as possible leading to a good time complexity of the
-algorithm. All of these pairs can not be unified immediately so an algorithm
-will be first derived which picks out a subset of the directed acyclic graph
-$(V, Z)$ and then unifies them in $F$. To determine what a large set is we is
-first need to define a notion of an edge cover that can be serve as a measure of
-how many vertex pairs in $Z$ can be unified:
+$A$ into an directed acyclic graph $(V, Z)$ where $Z$ only consists of root
+pairs from $F$. We want to pick out a subset of $Z$ such that we unify as many
+of the vertex pairs of $Z$ in $F$ as possible leading to a good time complexity
+of the algorithm. All of these pairs can not be unified immediately so an
+algorithm will be first derived which picks out a subset of the directed acyclic
+graph $(V, Z)$ and then unifies them in $F$. To determine what a large set is,
+we first need to define a notion of an edge cover that can be serve as a measure
+of how many vertex pairs in $Z$ can be unified:
 \begin{definition}[Edge Cover]
     Let $V$ be a set and $E \subseteq V \times V$ such that $\pi_1(E) \cup
     \pi_2(E) = V$ then $E$ is an edge cover of $V$.
@@ -731,11 +726,11 @@ how many vertex pairs in $Z$ can be unified:
 \noindent Using this definition we know that $V' = \pi_1(Z) \cup \pi_2(E)$ is an
 edge cover of the subgraph $(V', Z)$ of $(V, Z)$. Why this is relevant is that
 vertices in $V\backslash V'$ will not be unified so they are not relevant during
-unification. Futhermore, the bound that will be establish is for every iteration
-then atleast $\frac{|V'|}{2}$ vertices must be unified. The intuition behind
-this is that every time a vertex is given a parent then it can not be given a
-parent later so it has been dealt with. We can show that when we have such an
-edge cover then the following inequality holds:
+unification. Futhermore, the bound that will be established is for every
+iteration then atleast $\frac{|V'|}{2}$ vertices must be unified. The intuition
+behind this is that every time a vertex is given a parent then it can not be
+given a parent later so it has been dealt with. We can show that when we have
+such an edge cover then the following inequality holds:
 \begin{proposition}[Edge Cover Inequality]\label{prop:set-2-tuple-inequality}
     Let $V$ be a set and $E \subseteq V \times V$ be a edge cover of V then: 
     \begin{align*}
@@ -756,7 +751,7 @@ edge cover then the following inequality holds:
 \noindent This inequality tells us that if $Z$ does not resolve enough vertices,
 then if we invert the edges in $Z$ then it would be possible to resolve enough
 vertices. It just remains to show that inverting these edges direction will
-still give an acyclic graph.  
+still give an directed acyclic graph.  
 \begin{proposition}[Inverted Acyclic Graph is Acyclic]\label{prop:inverted-acyclic-graph}
   Let $G = (V, E)$ be a directed acyclic graph. Then the inverted graph $G' =
   (V, E')$ where $E' = \{(u, v) : (v, u) \in E\}$ is also acyclic.
@@ -793,7 +788,7 @@ just pick out as many pairs with a unique child.
     7. & \qquad \kw{return} \: ((V, E), Z \backslash X)
   \end{align*}
 \end{algorithm}
-\noindent By definition we can clealy see atleast $\frac{|V'|}{2}$ vertices are
+\noindent By definition we can clearly see atleast $\frac{|V'|}{2}$ vertices are
 given a parent as we wanted. It will now be shown that the added edges is a
 conflict-free set so a forest is still the result.
 \begin{proposition}[Maximal Union
@@ -827,8 +822,8 @@ chain so $\rho_G(u)$ does $O(|X|)$ work to find its parent. This problem can be
 solved using pointer jumping, specifically Wyllie's List Ranking algorithm
 \cite[59]{wyllie1979complexity} can be used directly on a forests to do $O(n
 \log n)$ work with $O(\log n)$ span on a forest of $n$ vertices. This is not
-work efficient, you would want to do $O(n)$ work. There are list ranking
-algorithms \cite{Anderson1991} which are work efficient with $O(\log^2 n)$
+work-efficient, you would want to do $O(n)$ work. There are list ranking
+algorithms \cite{Anderson1991} which are work-efficient with $O(\log^2 n)$
 span\footnote{They assume scan has $O(1)$ span which is not reasonable
 anymore.}. List ranking can be used to construct an euler tour of an edge
 list\footnote{\url{https://www.cs.cmu.edu/~scandal/nesl/algorithms.html\#trees}},
@@ -838,7 +833,7 @@ instead just directly applying the list ranking on the forest as to avoid alot
 of work. This can atleast be done with Wyllies List ranking. It also seems that
 using a connected components algorithm by Shiloach and Vishkin
 \cite{SHILOACH198257} could be used which will give you a representative, it
-claims to be work efficient with $O(\log n)$ span but uses a computational model
+claims to be work-efficient with $O(\log n)$ span but uses a computational model
 with concurrent write. This may or may not be a problem to express this in a
 parallel functional array language but there are implementations in NESL \cite{spaa-concomp}.
 
@@ -875,9 +870,9 @@ remaining uninserted edge of $Z$ into an directed acyclic graph. Continue till
 $Z$ is empty and then $F$ is the final forest where all pairs of $A$ has been
 unified.
 
-\begin{algorithm}[Parallel Tree Union]\label{alg:parallel-tree-union}
-  Let forest $F = (V, E)$ be a tree and let $A \subseteq V \times V$ be a set of pairs
-  of elements in $V$ that will be unioned in parallel. The parallel tree union
+\begin{algorithm}[Parallel Tree Union]\label{alg:parallel-tree-union} Let forest
+  $F = (V, E)$ be a tree and let $A \subseteq V \times V$ be a set of pairs of
+  elements in $V$ that will be unified in parallel. The parallel tree union
   algorithm is defined as:
   \begin{align*}
     & \id{ParallelTreeUnion}(F, A) \\
@@ -895,7 +890,7 @@ the correct output, as in it fullfills the Tree Union property \ref{def:tree-uni
 
 \begin{proposition}[Parallel Tree Union Correctness]\label{prop:parallel-tree-union-correctness}
   Let forest $F = (V, E)$ be a tree and let $A \subseteq V \times V$ be a set of
-  pairs of elements in $V$ that will be unioned in parallel. Then the parallel
+  pairs of elements in $V$ that will be unified in parallel. Then the parallel
   tree union algorithm results in a forest $F' = (V, E')$ which satifies the
   Tree Union Property \ref{def:tree-union-property} for $A$.
 \end{proposition}
@@ -937,8 +932,8 @@ that can happen for certain algorithms.
 \end{proposition}
 
 \begin{proof}
-  Let forest $F = (V, \emptyset)$ be a tree, step 1-2. a filter and a ordering
-  is applied which can be computes in $O(|A|)$ work and $O(\log |A|)$ span. This
+  Let forest $F = (V, \emptyset)$ be a tree, step 1-2. a filter and an ordering
+  is applied which can be computed in $O(|A|)$ work and $O(\log |A|)$ span. This
   is the time complexity since $\rho_F(v)$ and $\rho_F(u)$ is $O(1)$ work and
   span so the maximum traversals to root is constant.
   
@@ -976,25 +971,22 @@ that can happen for certain algorithms.
   |A|)$ times.
 \end{proof}
 \noindent The time complexity is good for certain cases, but in the general case
-for any forests the time complexity becomes way worse.
+for any forests, the time complexity becomes way worse.
 \begin{proposition}[Parallel Tree Union Time
   Complexity]\label{prop:parallel-tree-union-time-complexity} Let forest $F =
-  (V, E)$ be a tree, $V \neq \emptyset$, and let $A \subseteq V \times V$ be a
-  set of pairs of elements in $V$ that will be unioned in parallel. Given $k$
-  applications of Parallel Tree Union \ref{alg:parallel-tree-union} before then
-  Parallel Tree Union does $O(|A| k \log |V|)$ work and has $O(k \log |V| +
-  \log^3 |A|)$ span.
+  (V, E)$ be a tree, and let $A \subseteq V \times V$ be a set of pairs of
+  elements in $V$ that will be unified in parallel. Given $k$ applications of
+  Parallel Tree Union \ref{alg:parallel-tree-union} before then Parallel Tree
+  Union does $O(|A| k \log |V|)$ work and has $O(k \log |V| + \log^3 |A|)$ span.
 \end{proposition}
 \begin{proof}
-  The worst case for an arbitrary forest can be shown to be quadratic work and
-  linear span. Analysis is the same as in the empty case
-  \ref{prop:empty-time-complexity} beside in step 1. Considering a sequence of
-  unification problems that have been unified $A_1, A_2, \ldots, A_k$. In the
-  worst case then $|A_i|$ will extened upon a trees height by $\lfloor \log
-  |\pi(A_i) \cup \pi_2(A_i)| \rfloor$ since the alogrithm half the number of
-  vertices every iteration of $|A|$ in the worst case. since $|\pi(A_i) \cup
-  \pi_2(A_i)| \leq |V|$ the following bound can be derived on a sequence of
-  unification problems.
+  The analysis is the same as in the empty case \ref{prop:empty-time-complexity}
+  beside in step 1. Considering a sequence of unification problems that have
+  been unified $A_1, A_2, \ldots, A_k$. In the worst case then $|A_i|$ will
+  extened upon a trees height by $\lfloor \log |\pi(A_i) \cup \pi_2(A_i)|
+  \rfloor$ since the alogrithm half the number of vertices every iteration of
+  $|A|$ in the worst case. since $|\pi(A_i) \cup \pi_2(A_i)| \leq |V|$ the
+  following bound can be derived on a sequence of unification problems.
   \begin{align*}
     \sum_{i = 1}^k \lfloor \log |\pi(A_i) \cup \pi_2(A_i)| \rfloor \leq \sum_{i = 1}^k  \lfloor \log |V| \rfloor = k \lfloor \log |V| \rfloor
   \end{align*}
@@ -1018,14 +1010,13 @@ for any forests the time complexity becomes way worse.
 
 \subsection{Union by Size and Rank}
 The next problem is to extend the data-parallel union-find structure such that
-it would allow the usage of the union by size or rank heurestic. To this graph
-$(V, E)$ with weighted vertices is introduced where the weight is given by a
-function $f : V \to \mathbb{N}$. We may update a functions a functions domain
-and codomain by $f' = f \oplus S$ where $S \subseteq V \times \mathbb{N}$ where
-the pair $(v, n) \in S$ with the maximum $n$ becomes the codomain of $v$ i.e.
-$f'(v) = n$. Now using this we wish to show that it is possible to establish an
-total ordering on $f(v)$ where if $f(v) = f(u)$ then it default to ordering by
-the values given to $f$.
+it would allow the usage of the union by size or rank heurestic. To do this
+graph $(V, E)$ with weighted vertices is introduced where the weight is given by
+a function $f : V \to \mathbb{N}$. We may update a functions range by $f' = f
+\oplus S$ where $S \subseteq V \times \mathbb{N}$ where the pair $(v, n) \in S$
+with the maximum $n$ becomes the result of $v$ i.e. $f'(v) = n$. Now using this
+we wish to show that it is possible to establish an total ordering on $f(v)$
+where if $f(v) = f(u)$ then it default to ordering by the values given to $f$.
 
 \begin{proposition}[Weighted Total Ordering]
   Let $V$ be a total ordering set $(V, \lesssim)$ and $f : V \to \mathbb{N}$ then
@@ -1059,12 +1050,13 @@ the values given to $f$.
     holds making the relation total.
   \end{enumerate}
 \end{proof}
-\noindent The idea now is to have $f$ be a function which reflects the rank/size of vertex
-and then create the directed acyclic graph from a set of root pairs. Then it is
-possible to pick conflict-free set and insert this into the forest which will
-respect the weights limiting the height of the trees. For this algorithm it has
-two different was of being instantiated, either with the by rank or by size
-heurestic. This modifies maximal union and parallel union quite a bit.
+\noindent The idea now is to have $f$ be a function which reflects the rank/size
+of a vertex and then create the directed acyclic graph from a set of root pairs.
+Then it is possible to pick conflict-free set and insert this into the forest
+which will respect the weights limiting the height of the trees. For this
+algorithm it has two different was of being instantiated, either with the by
+rank or by size heurestic. This modifies maximal union and parallel union quite
+a bit.
 \begin{algorithm}[Weighted Maximal Union]\label{alg:weighted-maximal-union} Let
   forest $F = (V, E)$ be a forest, $f: V \to \mathbb{N}$ and let $Z \subseteq
   \{(\rho_F(v), \rho_F(u)) : (v, u) \in V \times V\}$ be a set of root pairs $F$
@@ -1137,7 +1129,7 @@ algorithm.
 \begin{algorithm}[Weighted Parallel Tree
   Union]\label{alg:weighted-parallel-tree-union} Let forest $F = (V, E)$ be a
   tree, $f : V \to \mathbb{N}$ and let $A \subseteq V \times V$ be a set of
-  pairs of elements in $V$ that will be unioned in parallel. The weighted
+  pairs of elements in $V$ that will be unified in parallel. The weighted
   parallel tree union algorithm is defined as:
   \begin{align*}
     & \id{WeightedParallelTreeUnion}(F, A, f) \\
@@ -1154,7 +1146,7 @@ algorithm.
 evident but the proposition will be stated for completeness.
 \begin{proposition}[Weighted Parallel Tree Union Correctness]\label{prop:weighted-parallel-tree-union-correctness}
   Let forest $F = (V, E)$ be a tree, $f : V \to \mathbb{N}$ and let $A \subseteq
-  V \times V$ be a set of pairs of elements in $V$ that will be unioned in
+  V \times V$ be a set of pairs of elements in $V$ that will be unified in
   parallel.  Then the weighted parallel tree union algorithm results in a forest
   $F' = (V, E')$ which satifies the Tree Union Property
   \ref{def:tree-union-property} for $A$.
@@ -1183,11 +1175,11 @@ weight if $f(v) = f(u)$ for $(v, u)$ from a set of root pairs.
     1$.
   \end{itemize}
 \end{remark}
-\noindent Now to show that the time complexity is work efficient first a bound
+\noindent Now to show that the time complexity is work-efficient first a bound
 on the rank of every element is needed.
 \begin{proposition}[Rank Bound]\label{prop:rank-bound} Let $F = (V, E)$, $f : V
-  \to \mathbb{N}$, and $v \in V$, then the follow bound holds after running the
-  Weighted Parallel Tree Union algorithm with union by rank.
+  \to \mathbb{N}$, and $v \in V$, then the follow bound holds for all elements
+  $v$ when used for union by rank.
   \begin{align*}
     f(v) \leq \lfloor \log |V| \rfloor
   \end{align*}
@@ -1205,17 +1197,17 @@ on the rank of every element is needed.
   by $h$ meaning the subtrees $v$ and $u$ has at most $2^h$ vertices. Therefore,
   when unifying $v$ and $u$ with $v$ as the parent the final tree contains at
   least $2^h + 2^h = 2^{h + 1}$ vertices. Since the final tree has at most $k +
-  1$ vertices it follows that $h + 1 \leq k + 1$ and therefore $h + 1 = f(v) + 1
-  = f'(v) \leq \lfloor \log (k + 1) \rfloor$.
+  1$ vertices it follows that $2^{h + 1} \leq k + 1$ and therefore $h + 1 = f(v)
+  + 1 = f'(v) \leq \lfloor \log (k + 1) \rfloor$.
 \end{proof}
-\noindent Usin the bound on ranks it is possible to derive the the time
+\noindent Using the bound on ranks it is possible to derive the the time
 complexity of the Weighted Parallel Tree Union algorithm when using the rank
 heurestic.
 
 \begin{proposition}[Weighted Parallel Tree Union (By Rank) Time
   Complexity]\label{prop:weighted-parallel-tree-union-time-complexity} Let
   forest $F = (V, E)$ be a tree, and let $A \subseteq V \times V$ be a set of
-  pairs of elements in $V$ that will be unioned in parallel. Then Weighted
+  pairs of elements in $V$ that will be unified in parallel. Then Weighted
   Parallel Tree Union does $O(|A| \log |V|)$ work and has $O((\log |V|)(\log^2
   |A|))$ span.
 \end{proposition}
@@ -1242,12 +1234,12 @@ heurestic.
   then $A$ must be empty in the end. So the work done is at most $O(|A| \log
   |V|)$ work and the span is $O((\log |V|)(\log^2 |A|))$.
 \end{proof}
-\noindent Lastly I did not have time go prove union by size is work-efficient in
-the sense that it does as much work as a sequention union-find structure with
+\noindent Lastly I did not have time prove union by size is work-efficient in
+the sense that it does as much work as a sequential union-find structure with
 union by size so instead conjecture.
 \begin{conjecture}[Weighted Parallel Tree Union (By Size) Time Complexity] Let
   forest $F = (V, E)$ be a tree, and let $A \subseteq V \times V$ be a set of
-  pairs of elements in $V$ that will be unioned in parallel. Then Weighted
+  pairs of elements in $V$ that will be unified in parallel. Then Weighted
   Parallel Tree Union does $O(|A| \log |V|)$ work and has $O((\log |V|)(\log^2
   |A|))$ span.
 \end{conjecture}
@@ -1268,9 +1260,9 @@ represented as integers. These integers are called \textit{handles} and are used
 to refer to the elements in the union-find structure. The union-find structure
 is initialized with a fixed number of elements $n$ where the handles are in the
 range $[0, n - 1]$ so they can be used as indices in an array of size $n$. When
-exposing these elements to a user then they are abstract datatypes such that the
-the user cannot do uninteneded operations on the handles or give invalid handles
-to the union-find structures operations.
+exposing these elements to a user then they are abstract data types such that
+the the user cannot do uninteneded operations on the handles or give invalid
+handles to the union-find structures operations.
 
 The operations supported are \textit{create}, \textit{find}, and \textit{union}.
 The create function creates a union-find structure which is empty such that no
@@ -1390,7 +1382,7 @@ compressed using pointer jumping with Wyllies List Ranking algorithm
 \cite[59]{wyllie1979complexity}. This strays from the asymptotics of the
 theoretical algorithm but it is still a very fast implementation. This was
 chosen since this is not at the core of this project ant it seems also likely
-that the constants of a work efficient implementation will be too large for
+that the constants of a work-efficient implementation will be too large for
 pratical use. All of these details culminates into the the implementation of
 maximal union found in Figure \ref{code:unionfind-maximal-union}
 
@@ -1449,7 +1441,7 @@ def union [n] [u]
 \end{figure}
 
 \subsection{Union by Rank}
-Union-find with union by rank follows almost the same structure union-find but
+Union-find with union by rank follows almost the same pattern as union-find but
 now with an added array to keep track of the roots rank. The definition of this
 can be seen in Figure \ref{code:unionfind-by-rank-type-create}. The find
 operation will be exactly the same as before but the union operation becomes
@@ -1472,11 +1464,11 @@ def create (n: i64) : *unionfind [n] =
 \end{figure}
 \subsubsection{Union}
 The outer loop of union is almost the same as in the union operation without
-heurestics. Some changes were made to make the code nice the Weighted Parallel
-Tree Union and Weighted Maximal Union has been adjusted. The the tree union
-algorithm consists of only a loop where it ``normalizes'' the equalities and
-then gives them to a maximal union algorhtm. This structure can be seen in
-Figure \ref{code:unionfind-by-rank-union}.
+heurestics. Some changes were made to make the code easier to read so the
+Weighted Parallel Tree Union and Weighted Maximal Union has been adjusted. The
+tree union algorithm consists of only a loop where it ``normalizes'' the
+equalities and then gives them to a maximal union algorhtm. This structure can
+be seen in Figure \ref{code:unionfind-by-rank-union}.
 \begin{figure}
 \begin{lstlisting}
 def union [n] [u]
@@ -1496,14 +1488,14 @@ def union [n] [u]
   \label{code:unionfind-by-rank-union}
 \end{figure}
 
-How the order works is in first of all finds the representatives of the
+How the order works is it first of all finds the representatives of the
 equalities and then it orders them by rank if they differ otherwise the integer
 value. Lastly it removes if the equalities would create a cycle, and create to
 arrays where one of them consists of cases where the rank differ and the other
 array are for equalities where the ranks differs. Now just count the number of
-unique elements for each component and invert constraints with the same rank if
-needed based on the number of unique elements. The implementation can be see in
-Figure \ref{code:unionfind-by-rank-order} and should look quite familiar to
+unique elements for each component and invert the constraints with the same rank
+if needed based on the number of unique elements. The implementation can be see
+in Figure \ref{code:unionfind-by-rank-order} and should look quite familiar to
 Figure \ref{code:unionfind-maximal-union}.
 \begin{figure}
 \begin{lstlisting}
@@ -1532,7 +1524,7 @@ def order [n] [u]
   \label{code:unionfind-by-rank-order}
 \end{figure}
 
-Now maximal union becomes almost the same as in for union-find with out
+Now maximal union becomes almost the same as in for union-find without
 heurestics. You have to pick some constraint and remove the constraints that got
 picked. There is one small difference and that is if a constraint contained
 elements with the same rank and one of the elements becomes the new root then
@@ -1570,8 +1562,8 @@ def maximal_union [n] [u]
 Union by size needs still a parent vector, the sizes of a root and some
 temporary indices. The temporary indices are needed to keep track of what
 element got selected as a parent without allocating a whole array for every call
-to maximal union. The precise data type and function for creating can be see in
-Figure \ref{code:unionfind-by-size-type-create}.
+to union. The precise data type and function for creation can be see in Figure
+\ref{code:unionfind-by-size-type-create}.
 \begin{figure}
 \begin{lstlisting}
 type unionfind [n] =
@@ -1595,12 +1587,12 @@ def create (n: i64) : *unionfind [n] =
 Union has the same loop structure as in union by rank but with sizes and the
 added temporary indices. Order is also still an auxiliary function but it now
 order on size instead of rank. The big change is how maximal union works, to
-pick a constraint the index of the constraint is used to garentee a unique
-constraint. Then the constraints are partitioned into constraint that are done
+pick a constraint the index of the constraint is used to guarantee a unique
+constraint. Then the constraints are partitioned into constraints that are done
 when the function is called and the remaining constraints that have not been
 solved. Now do path compression to find the representative and find the sizes of
-the representatives children. Then these can be used to update the the size of
-the parent using a reduce by index. Lastly clear the content of the temporary
+the representatives children. Then these can be used to update the size of the
+parent using a reduce by index. Lastly clear the content of the temporary
 indices such that it can be used for the next time. This implementation can be
 seen in Figure \ref{code:unionfind-by-size-maximal-union}.
 
@@ -1634,18 +1626,18 @@ def maximal_union [n] [u]
 
 \section{Discussion}
 \subsection{Tests}
-The approach for testing that he implementation uses property based testing. The
+The approach for testing the implementation is property based testing. The
 property tested for is if we have a sequential union-find structure then the
-equivalence classes should be the same for all vertices that should be unified
-in the original input. The reason for doing this test is it is very easy to
-reason about the sequential union-find algorithm without any optimizations
-unlike the parallel algorithms.
+equivalence classes should be the same for all vertices that must be unified in
+the original input. The reason for doing this test is it is very easy to reason
+about the sequential union-find algorithm without any optimizations unlike the
+parallel algorithms.
 
-Now define $F = (V, E)$ as an initial union-find structure where every element is only
-equal to itself and $A$ as a set of unification problems. Then define that $U$
-is the sequential union algorithm and $V$ as some other union algorithm. The
-result of running the two algorithms must produce forests which represent the
-same equivalence classes.
+Now define $F = (V, E)$ as an initial union-find structure where every element
+is only equal to itself and $A$ as a set of unification problems. Then define
+that $U$ is the sequential union algorithm and $V$ as some other union
+algorithm. The result of running the two algorithms must produce forests which
+represent the same equivalence classes.
 \begin{align*}
   F' \cong F'' \text{ where } F' = U(F, A) \text{ and } F'' & = V(F, A)
 \end{align*}
@@ -1655,25 +1647,24 @@ element of an elements equivalence class is the same in both $F'$ and $F''$.
   \min \mathcal{E}_{F'}(v) = \min \mathcal{E}_{F''}(v) \text{ for all } v \in V
 \end{align*}
 This can be implemented using a map over $V$ with a nested reduce over $V$ which
-is asymptotically slow but for testing it surffices.
+is asymptotically slow but for testing it suffice.
 
 The tests inputs is generated by creating an even lengthed sequence of $V$ which
-are picked uniformily. Different number of $V$ is chosen and different number
-of sequences are picked to achieve confidence in the implementation. The result
-is according to this test the implementations works as expected.
+are picked uniformily. Different number of $|V|$ is chosen and a different
+number of sequences are picked to achieve confidence in the implementation.
 
-This approach does not catch that the parallel implementation may be in correct
-and produce a cycle. The hope is that with the random input no cycle should be
+This approach does not catch problems like there may be a cycle in the
+union-find structure. The hope is that with the random input no cycle should be
 producible since otherwise the test would go on forever. The approach does also
 not assert any guarantees about the height of the tree. The problem with being
-able to test this is the interface would have to expose the structure of the
-union-find structure and/or add functionalities to the interface that would only
-be useful for testing. Both of these cases would be confusing to a user of the
-library.
+able to test this is the interface would have to expose the inner wrokings of
+the union-find structure and/or add functionalities to the interface that would
+only be useful for testing. Both of these cases would be confusing to a user of
+the library.
 
 A pitfall of the test suite is it should probably have more different sequences
 of union on different datasets. It is quite clear that is is easy to create a
-bug where a cycle is introduce leading to an infinite loop. These cases were
+bug where a cycle is introduced leading to an infinite loop. These cases were
 usually captured by the benchmark suite instead.
 
 The implementations passes this test suite so it is seen as the implementations
@@ -1687,10 +1678,10 @@ the form $(v, u) \in V^2$ where $V$ is the set of vertices or the elements that
 can become equivalent by unification. The unification strategy is how the
 subsets of the dataset should be unified. The idea is that when using union-find
 it probably is not the case that all unification problems can be solve
-immediately and som find operations will be interspersed between union
+immediately and some find operations will be interspersed between union
 operaions. So to see how this effects the performance of union by combining
 different datasets and strategies. And also see how the find operations
-performance is effected af the sequence of union operaions defined by the
+performance is effected by the sequence of union operaions defined by the
 dataset and strategy.
 
 The following are the different Futhark implementations of union-find being
@@ -1701,15 +1692,15 @@ compared.
   \item \textbf{Data-Parallel (by Rank): } This implementation uses Weighted
   Parallel Tree Union by Rank \ref{alg:weighted-parallel-tree-union} which
   corresponds to a union-find implementation with only the union by rank
-  optimization.
+  heurestic.
   \item \textbf{Data-Parallel (by Size):} This implementation uses Weighted
   Parallel Tree Union by Size \ref{alg:weighted-parallel-tree-union} which
   corresponds to a union-find implementation with only the union by size
-  optimization.
+  heurestic.
   \item \textbf{Sequential (by Rank and Path Halving)} This is a classical
   implementation of union-find which uses Union by Rank and Path Halving. This
   implementation is also made in Futhark only using sequential code and the C
-  code has been inspected and the implementation is deemed resonable. It was
+  code has been inspected and the implementation is deemed reasonable. It was
   chosen to write this in Futhark so it was more comparable to the other
   implementations.
 \end{itemize}
@@ -1728,8 +1719,8 @@ construction is explained and afterwards why they are chosen is explained.
   $v_i, v_{i + 1}$ where $v_i, v_{i + 1} \in W$. This forms one long chain of
   unification problems of size $m$. The implementation uses integers for
   vertices and the chain will be formed from a integer and its successor so this
-  will effect caching for this benchmark. This long chain effects effects the
-  list ranking the most but is also a good scenario for histograms.
+  will effect caching for this benchmark. This long chain effects the list
+  ranking the most but is also a good scenario for histograms.
   \item \textbf{Single: } From a set of vertice $V$ let $W \subseteq V$ where
   $|W| = m$. Now pick $v \in W$ and create a set of unification problems of $(v,
   w)$ for all $w \in V$. This makes a problem where every thing is in the same
@@ -1748,7 +1739,7 @@ The following is the list of different ways subsets of the datasets are unified,
 after the strategy is explained and the choice is clarified. explained.
 \begin{itemize}
   \item \textbf{All: } Try resolve all $m$ unification problems at once. This
-  leads ot $O(1)$ calls to union. This is an absolute best case scenario for
+  leads to $O(1)$ calls to union. This is an absolute best case scenario for
   union-find.
   \item \textbf{Halving: } Try by recursively resolving half of the $m$
   unification problems. This leads ot $O(\log m)$ calls to union. This seems
@@ -1911,12 +1902,12 @@ backend on an 12th Gen Intel(R) Core(TM) i7-12700 CPU.
 
 \subsubsection{Discussion}
 It is clear to see the data-parallel implementations are much faster in regards
-to union and find operation for this input size. But since all the data-parallel
-algorithms does more work than the sequential version and we have a finite
-amount of processors then the sequential implementation should become faster in
-theory. It seems like this will happen on very incrediable large input so these
-data-parallel implementation seems more than well off. Generally the sequential
-implementation does well in the sense it is consistent in the benchmark result.
+to union and find operation. But since all the data-parallel algorithms does
+more work than the sequential version and we have a finite amount of processors
+so the sequential implementation should become faster in theory. It seems like
+this will happen on very incrediable large inputs so these data-parallel
+implementation seems more than well off. Generally the sequential implementation
+does well in the sense it is consistent in the benchmark result.
 
 It is also arguably bad faith to do a purely sequential version, a concurrent
 union-find would be more reasonable to compare against. The sequential
@@ -1948,11 +1939,11 @@ could had been implemented like a union by rank or union by size implementation.
 \subsection{Region Labeling}
 Region Labeling, or Connected-component labeling is an image analysis problem
 where we want to give neighbouring pixel with the color the same label. A way to
-solve this problem is by producing a graph where a node is a pixel with edges to
-neighbouring pixels. So we create a graph $G = (V, E)$ consiting of every pixel
-in an image of width and height $w, h \in \mathbb{N}$. To define this graph we
-have a function $n: V \to \mathbb{P}(V)$ which gives the set of neighbours. For
-this specific example it would be:
+solve this problem is by producing a graph where a vertex is a pixel with edges
+to neighbouring pixels. So we create a graph $G = (V, E)$ consiting of every
+pixel in an image of width and height $w, h \in \mathbb{N}$. To define this
+graph we have a function $n: V \to \mathbb{P}(V)$ which gives the set of
+neighbours. For this specific example it would be:
 \begin{align*}
   n((i, j)) & = V \cap \{(i - 1, j), (i + 1, j), (i, j - 1), (i, j + 1)\}
 \end{align*}
@@ -1963,11 +1954,10 @@ have. Then it is possible to define the following graph from the image.
   E & = \bigcup_{(i, j) \in V} \{v : v \in n((i, j)) \land c(v) = c((i,j))\}
 \end{align*}
 Then one could use breath first search or depth first search to solve for
-strongly connected components. The connected components ends up being the
-equivalence class one should just assign every pixel in this equivalence class
-the same label to solve the problem. Another approach is to use union-find where
-the graph is seen as a set of constraint that must be solved. These constraint
-are solved simply by unifying two pixels such that they are equivalent.
+strongly connected components where each component is given a label. Another
+approach is to use union-find where the graph is seen as a set of constraints
+that must be solved. These constraint are solved simply by unifying two pixels
+such that they are equivalent.
 
 The implementation of this was done in futhark and is simply mapping over all
 pixel indices giving them an integer label which is the flat position in the
@@ -2018,15 +2008,15 @@ entry region_label_unionfind [h] [w] (img: [h][w]u32) =
   \caption{Construct equivalences and then solve the constraints.}
   \label{code:region-labeling}
 \end{figure}
-From the persepective of a user this is not work efficient. The solution would
+From the persepective of a user this is not work-efficient. The solution would
 do $O(hw \log(hw))$ work and have $O(\log^3(hw))$ span since $k=0$. It is likely
 this would be $O(hw)$ work due to how the constraints are formed but it seems
-tricky to analyze. A much easier way to do it work efficient is to make
-constraints of horizontal and vertical neighbours seperately:
+tricky to analyze. A much easier way to do it work-efficient implementation is
+to make constraints of horizontal and vertical neighbours seperately:
 \begin{align*}
   n_v((i, j)) = V \cap \{(i + 1, j)\} \qquad n_h((i, j)) = V \cap \{(i, j + 1)\}
 \end{align*}
-Now when trying to solving any of these the loop in Parallel Tree Union
+Now when trying to solve any of these the loop in Parallel Tree Union
 \ref{alg:parallel-tree-union} will only be ran once. Since there are no
 conflicts in which constraint to pick, all the constraints form a directed
 acyclic graph that just so happen to be a forest. So just unify the first the
@@ -2051,7 +2041,7 @@ meaning the expression is an function from some type variable to another.
 \end{align*}
 The expressions and types can quite naturally be expressed in a language with
 recursive data types. A problem is Futhark does not have recursive data types
-and most functinoal array languages does not support this either. The way this
+and most functional array languages does not support this either. The way this
 is instead expression is by type constructors which has indices which points to
 its subexpressions. To do so first define \lstinline|vname| as the expression
 variable names, \lstinline|tname| as the type variable names, and \lstinline|e|
@@ -2062,8 +2052,8 @@ Figure \ref{code:lambda-calculus-types-futhark}.
 Now if we wish to express the application of the identity function to a variable
 $(\lambda v_0 \to v_0)~v_1$. Then we create an array of four type constructors,
 the first is the application type constructor \lstinline|#app 1 3|. The first
-argument of the type constructor is point to the function argument at index $1$
-and the second is poining to the value given to the function at index $3$. The
+argument of the type constructor points to the function argument at index $1$
+and the second is pointing to the value given to the function at index $3$. The
 next is \lstinline|#lam 0 1| where the first arugment is the function argument
 name $v_0$ and the second argument is pointing to the function body at index
 $2$. Next the body is just $v_0$ (i.e. \lstinline|#var 0|). And lastly is the
@@ -2088,7 +2078,8 @@ type typ =
     #tvar tname
   | #tarrow tname tname
 \end{lstlisting}
-  \caption{The types defined for expressions of lambda calculus and the type of lambda calculus expressions in Futhark.}
+  \caption{The types defined for expressions of lambda calculus and the type of
+  lambda calculus expressions in Futhark.}
   \label{code:lambda-calculus-types-futhark}
 \end{figure}
 Now the next step is to generate constraints from the lambda expressions to do
@@ -2100,15 +2091,15 @@ we see that only function application gives rise to constraints.
   \frac{\Gamma \vdash e_0 : \tau_0 \to \tau_1, C_0 \quad \Gamma \vdash e_1 : \tau_0, C_1}{\Gamma \vdash e_0~e_1 : \alpha, C_0 \cup C_1 \cup \{\tau_0 \sim \tau_1 \to \alpha\}} \quad (\text{Fresh } \alpha)
 \end{gather*}
 When implementing constraint generation in any common functional language you
-would traverse the the asbtract syntax tree while keeping track of the type
+would traverse the the abstract syntax tree while keeping track of the type
 environment and generate constraints from this. It seems like it should be
 possible to emulate the type environment using an array of open-closed
-parenthesis. Open parenthesis introduce a new variable while closed remove a
+parenthesis. Open parenthesis introduces a new variable while closed remove a
 variable and computing the depth of these it should be possible to determine if
 a variable is in scope by solving for the previous or smaller element. Since the
-type system is so simple a approach can be used where every expression maps to a
-type variable and every variable name is unique so it easily maps to a type
-variable easily. Here every expressions type variable is its index and
+type system is so simple an approach can be used where every expression maps to
+a type variable and every expression variable name is unique so it easily maps
+to a type variable easily. Here every expressions type variable is its index and
 expression variables is the name plus the number of expression.
 
 The type constraints are defined by an equality on type $\tau_0 \sim \tau_1$ and
@@ -2175,30 +2166,73 @@ def num_types [n] (exp: [n]exp) : i64 =
   \caption{The helper function for type checking.}
   \label{code:lambda-calculus-helper-futhark}
 \end{figure}
+
 Now the big problem is to actually solve the constraints, to implement this you
 would have to encode the constraints then unify them. Then for the arrow types
 you would have to recurse down the arrow type and create type equalities. In a
 sequential implementation with recursion this is easy but for Futhark you would
-have to flatten this recursive function.
+have to flatten this recursive function. I sadly ran out of time and have
+therefore only made a version which check top level equalities. So the type
+checker does not owrk but there is possibly good idea behind this which would
+make good use of the union-find structure. The implementation can be seen in
+Figure \ref{code:lambda-calculus-solve-futhark}
+\begin{figure}
+\begin{lstlisting}
+def solve [n] (exps: [n]exp) =
+  let cons = constraints exps
+  let num_ts = num_types exps
+  let num_tvars = num_tvars exps
+  let u = uf.create num_ts
+  let types = unzip cons |> uncurry (++)
+  let table = map (\i -> if i < num_tvars then tvar i else tvar (-1)) (iota num_ts)
+  let table = scatter table (map (encode n) types) types
+  let (u, _) =
+    loop (u, cons) = (u, cons)
+    while length cons != 0 do
+      let econs =
+        map (\(t, t') -> (uf.from_i64 u (encode n t), uf.from_i64 u (encode n t'))) cons
+      let u = uf.union u econs
+      let is = map (.0) econs |> uf.find' u |> map (uf.to_i64 u)
+      let cons =
+        map2 (\i (_, t) -> (table[i], t)) is cons
+        |> filter (not <-< uncurry eq)
+        |> map new_constraints
+        |> filter (is_valid <-< (.0) <-< (.0))
+        |> unzip
+        |> uncurry (++)
+      in (u, cons)
+  let exp_types = tabulate n (uf.from_i64 u) |> uf.find' u |> map (table[uf.to_i64 u]) |> zip exps
+  let type_eqs =
+    tabulate num_ts (uf.from_i64 u)
+    |> uf.find' u
+    |> map (uf.to_i64 u)
+    |> map2 (\j i -> (table[j], table[i])) (iota num_ts)
+    |> filter (is_valid <-< (.1))
+    |> filter (not <-< uncurry eq)
+  in (exp_types, type_eqs)
+\end{lstlisting}
+  \caption{The constraint solver.}
+  \label{code:lambda-calculus-solve-futhark}
+\end{figure}
 
 \section{Conclusion}
 The project succesfully derived a data-parallel union-find structures which
-should be ideal for functional array language. Specifically an union-find
-structure using a union by rank heurestic was work-efficient in regards to only
-using this heurestic would do $O(m \log |V|)$ work where $m$ is the number of
-elements pairs being unioned. It was not possible to find a way to get a
-work-efficient algorithm which does amortized $O(m\alpha(|V|))$ where $m$ is the
-number of elements being unioned or found. The data-parallel union-find
-structure using union by rank structure has the added advantage that it is quite
-simple to implement in a functional array language context. The union by size
-variant was conjectured to be work-efficient but from a practical standpoint the
-implementation is complicated compared to union by rank. Lastly a union-find
-structure without any heurestics was presented but it may be the case it is not
-a useful structure due to its little difference to the union by rank variant.
-Besides this some use cases for these union-find structures was shown,
-specifically region labeling has a less strong case for the structure being
-useful. The stronger case is for type checking but the example was of poor
-quality.
+should be ideal for functional array languages. Specifically an union-find
+structure using a union by rank heurestic was work-efficient in regards to
+union-find structure only using this heurestic would do $O(m \log |V|)$ work
+where $m$ is the number of elements pairs being unified. It was not possible to
+find a way to get a work-efficient algorithm which does amortized
+$O(m\alpha(|V|))$ where $m$ is the number of elements being unified or found.
+The data-parallel union-find structure using union by rank has the added
+advantage that it is quite simple to implement in a functional array language
+context. The union by size variant was conjectured to be work-efficient but from
+a practical standpoint the implementation is complicated compared to union by
+rank and uses alot of extra memory. Lastly a union-find structure without any
+heurestics was presented but it may be the case it is not a useful structure due
+to its little difference to the union by rank variant. Besides this some use
+cases for these union-find structures was shown, specifically region labeling
+has a less strong case for the structure being useful. The stronger case is for
+type checking but the example was of poor quality.
 
 \printbibliography
 
