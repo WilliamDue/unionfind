@@ -1261,8 +1261,8 @@ to refer to the elements in the union-find structure. The union-find structure
 is initialized with a fixed number of elements $n$ where the handles are in the
 range $[0, n - 1]$ so they can be used as indices in an array of size $n$. When
 exposing these elements to a user then they are abstract data types such that
-the the user cannot do uninteneded operations on the handles or give invalid
-handles to the union-find structures operations.
+the user cannot do uninteneded operations on the handles or give invalid handles
+to the union-find structures operations.
 
 The operations supported are \textit{create}, \textit{find}, and \textit{union}.
 The create function creates a union-find structure which is empty such that no
@@ -2011,20 +2011,7 @@ entry region_label_unionfind [h] [w] (img: [h][w]u32) =
 From the persepective of a user this is not work-efficient. The solution would
 do $O(hw \log(hw))$ work and have $O(\log^3(hw))$ span since $k=0$. It is likely
 this would be $O(hw)$ work due to how the constraints are formed but it seems
-tricky to analyze. A much easier way to do it work-efficient implementation is
-to make constraints of horizontal and vertical neighbours seperately:
-\begin{align*}
-  n_v((i, j)) = V \cap \{(i + 1, j)\} \qquad n_h((i, j)) = V \cap \{(i, j + 1)\}
-\end{align*}
-Now when trying to solve any of these the loop in Parallel Tree Union
-\ref{alg:parallel-tree-union} will only be ran once. Since there are no
-conflicts in which constraint to pick, all the constraints form a directed
-acyclic graph that just so happen to be a forest. So just unify the first the
-horizontal constraints and then the vertical or vice versa which leads to
-$O(hw)$ work and $O(\log^2(hw))$ span. This is still not optimal, it is possible
-to solve this problem using a connected components algorithm by Shiloach and
-Vishkin \cite{SHILOACH198257} which would do $O(hw)$ work and have $O(\log
-(hw))$ span.
+tricky to analyze.
 
 \subsection{Type Constraints}
 A use case for union-find is to type check programming languages, the following
